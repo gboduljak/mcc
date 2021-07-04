@@ -35,6 +35,8 @@ library
     , containers
     , megaparsec
     , mtl
+    , prettyprinter
+    , text
   default-language: Haskell2010
 
 executable mcc-exe
@@ -50,6 +52,8 @@ executable mcc-exe
     , mcc
     , megaparsec
     , mtl
+    , prettyprinter
+    , text
   default-language: Haskell2010
 
 test-suite mcc-test
@@ -66,4 +70,6 @@ test-suite mcc-test
     , mcc
     , megaparsec
     , mtl
+    , prettyprinter
+    , text
   default-language: Haskell2010
