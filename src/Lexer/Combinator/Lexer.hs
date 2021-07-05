@@ -321,12 +321,10 @@ tokenWithRecovery = do
       offset <- getOffset
       unexpectedChar <- anyChar
       registerParseError (buildError offset unexpectedChar expected)
-      skipManyTill anyChar (space <|> comment <|> void eol)
       junk
       return Error
     (Left error) -> do
       registerParseError error
-      skipManyTill anyChar (space <|> comment <|> void eol)
       junk
       return Error
     (Right tok') -> return tok'
