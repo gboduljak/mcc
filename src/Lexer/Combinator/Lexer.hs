@@ -1,7 +1,3 @@
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
 module Lexer.Combinator.Lexer (lex') where
@@ -9,13 +5,9 @@ module Lexer.Combinator.Lexer (lex') where
 import Control.Applicative (Alternative ((<|>)), optional)
 import Control.Monad (void)
 import Data.Char (isDigit, isSpace)
-import Data.Data
 import Data.Either (fromRight)
-import Data.Foldable (traverse_)
-import qualified Data.Foldable as E
-import Data.List.NonEmpty
-import Data.Maybe
-import qualified Data.Set
+import Data.List.NonEmpty (nonEmpty)
+import Data.Maybe (Maybe (Just, Nothing), fromJust)
 import Data.Text (Text, pack)
 import Data.Void (Void)
 import Lexer.Lexeme
