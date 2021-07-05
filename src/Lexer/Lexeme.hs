@@ -1,5 +1,9 @@
 module Lexer.Lexeme where
 
+import Data.Text
+import Data.Void
+import Text.Megaparsec (ParseError)
+
 data Lexeme
   = LitInt Int
   | LitDouble Double
@@ -43,6 +47,8 @@ data Lexeme
   | Dot
   | Arrow
   | Sizeof
-  deriving (Show)
+  | Eof
+  | Error
+  deriving (Show, Eq)
 
-data BuiltinType = Int | Double | Char | Void deriving (Show)
+data BuiltinType = Int | Double | Char | Void deriving (Show, Eq)

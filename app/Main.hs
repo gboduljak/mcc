@@ -1,6 +1,11 @@
 module Main where
 
-import Lib
+import Lexer.Combinator.Lexer (lex')
 
 main :: IO ()
-main = someFunc
+main = do
+  file <- getLine
+  input <- readFile file
+  let lexRes = lex' input
+  putStrLn lexRes
+  main
