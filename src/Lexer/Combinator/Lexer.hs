@@ -271,12 +271,6 @@ operator =
     <|> try notEqual
     <|> semi
     <|> assign
-    <|> lparen
-    <|> rparen
-    <|> lbrace
-    <|> rbrace
-    <|> lbrack
-    <|> rbrack
     <|> comma
     <|> dot
     <|> ampers
@@ -301,12 +295,22 @@ keyword =
     <|> sizeof
     <|> return' <?> "keyword"
 
+parens :: Lexer Lexeme
+parens =
+  lparen
+    <|> rparen
+    <|> lbrace
+    <|> rbrace
+    <|> lbrack
+    <|> rbrack
+
 token :: Lexer Lexeme
 token =
   keyword
     <|> typeName
     <|> identifier
     <|> literal
+    <|> parens
     <|> operator
 
 tokenWithRecovery :: Lexer Lexeme
