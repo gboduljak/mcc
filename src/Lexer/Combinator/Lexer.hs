@@ -69,16 +69,13 @@ comment = singleLine <|> multiLine
     singleLine :: Lexer ()
     singleLine = do
       string (pack "//")
-      manyTill anyChar (void eol <|> lookAhead (try eof))
+      manyTill anySingle (void eol <|> lookAhead (try eof))
       return ()
     multiLine :: Lexer ()
     multiLine = do
       try $ string (pack "/*")
-      manyTill (multiLine <|> void anyChar) (try $ string (pack "*/"))
+      manyTill (multiLine <|> void anySingle) (try $ string (pack "*/"))
       return ()
-
-anyChar :: Lexer Char
-anyChar = satisfy (const True)
 
 junk :: Lexer ()
 junk = skipMany (space <|> comment)
@@ -319,7 +316,7 @@ tokenWithRecovery = do
   case tok of
     (Left (TrivialError _ _ expected)) -> do
       offset <- getOffset
-      unexpectedChar <- anyChar
+      unexpectedChar <- anySingle
       registerParseError (buildError offset unexpectedChar expected)
       junk
       return Error
@@ -334,7 +331,8 @@ tokenWithRecovery = do
         offset
         ( Just
             ( Label
-                ( fromJust $ nonEmpty (show unexpected)
+                ( fromJust $
+                    nonEmpty (show unexpected)
                 )
             )
         )
