@@ -25,8 +25,13 @@ source-repository head
 
 library
   exposed-modules:
+      Lexer.AdHoc.Lexer
+      Lexer.AdHoc.LexError
+      Lexer.AdHoc.LexState
       Lexer.Combinator.Lexer
       Lexer.Lexeme
+      Lexer.Token
+      Lexer.TokenPos
   other-modules:
       Paths_mcc
   hs-source-dirs:
