@@ -94,8 +94,8 @@ keyword _ = Nothing
 tokenise :: Lexeme -> TokenPos -> Lexer Token
 tokenise lexeme pos = return (Token lexeme pos)
 
-token :: Lexeme -> TokenPos -> Lexer Token
-token x pos = do
+tokeniseAndAdvance :: Lexeme -> TokenPos -> Lexer Token
+tokeniseAndAdvance x pos = do
   x' <- tokenise x pos
   advance
   return x'
@@ -106,7 +106,7 @@ matchOrFallback char desired fallback pos = do
   lookAhead >>= \case
     (Just lookChar) ->
       if lookChar == char
-        then token desired pos
+        then tokeniseAndAdvance desired pos
         else tokenise fallback pos
     _ -> tokenise fallback pos
 
@@ -201,19 +201,19 @@ scan = do
     (Just '>') -> matchOrFallback '=' Geq Greater pos
     (Just '=') -> matchOrFallback '=' Equal Assign pos
     (Just '!') -> matchOrFallback '=' Neq Not pos
-    (Just ';') -> token Semi pos
-    (Just ',') -> token Comma pos
-    (Just '.') -> token Dot pos
-    (Just '*') -> token Asterisk pos
-    (Just '/') -> token Div pos
-    (Just '%') -> token Mod pos
-    (Just '^') -> token Caret pos
-    (Just '(') -> token LParen pos
-    (Just ')') -> token RParen pos
-    (Just '{') -> token LBrace pos
-    (Just '}') -> token RBrace pos
-    (Just '[') -> token LBrack pos
-    (Just ']') -> token RBrack pos
+    (Just ';') -> tokeniseAndAdvance Semi pos
+    (Just ',') -> tokeniseAndAdvance Comma pos
+    (Just '.') -> tokeniseAndAdvance Dot pos
+    (Just '*') -> tokeniseAndAdvance Asterisk pos
+    (Just '/') -> tokeniseAndAdvance Div pos
+    (Just '%') -> tokeniseAndAdvance Mod pos
+    (Just '^') -> tokeniseAndAdvance Caret pos
+    (Just '(') -> tokeniseAndAdvance LParen pos
+    (Just ')') -> tokeniseAndAdvance RParen pos
+    (Just '{') -> tokeniseAndAdvance LBrace pos
+    (Just '}') -> tokeniseAndAdvance RBrace pos
+    (Just '[') -> tokeniseAndAdvance LBrack pos
+    (Just ']') -> tokeniseAndAdvance RBrack pos
     (Just '\"') -> do string
     (Just x) -> do
       if isLetter x || x == '_'
