@@ -204,6 +204,7 @@ scan = do
     (Just ';') -> tokeniseAndAdvance Semi pos
     (Just ',') -> tokeniseAndAdvance Comma pos
     (Just '.') -> tokeniseAndAdvance Dot pos
+    (Just '+') -> tokeniseAndAdvance Plus pos
     (Just '*') -> tokeniseAndAdvance Asterisk pos
     (Just '/') -> tokeniseAndAdvance Div pos
     (Just '%') -> tokeniseAndAdvance Mod pos
