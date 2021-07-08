@@ -3,7 +3,7 @@
 module Lexer.AdHoc.Lexer where
 
 import Control.Monad.State (MonadState (get, put), State, gets, modify, runState, void, when)
-import Data.Char (isAlphaNum, isLetter, isNumber, isSpace)
+import Data.Char (isAlphaNum, isDigit, isLetter, isNumber, isSpace)
 import Data.Text (Text, head, null, pack, tail)
 import Lexer.AdHoc.LexError (LexError (UnexpectedChar, UnexpectedEof, pos))
 import Lexer.AdHoc.LexState (LexState (LexState, errors, input, offset, pos))
@@ -12,42 +12,28 @@ import Lexer.Lexeme (BuiltinType (Char, Double, Int, Void), Lexeme (..))
 import Lexer.Token (Token (Token))
 import qualified Lexer.Token as T
 import Lexer.TokenPos (TokenPos (..), next, nextLine)
-import Prelude hiding (and, head, null, or, tail, takeWhile)
+import Prelude hiding (and, head, or, tail, takeWhile)
 
 type Lexer a = State LexState a
 
-hasInput :: Lexer Bool
-hasInput = gets (not . null . input)
-
 lookAhead :: Lexer (Maybe Char)
 lookAhead = do
-  hasInput <- hasInput
+  hasInput <- gets (not . Data.Text.null . input)
   if hasInput
     then do
       lookCh <- gets (head . input)
       return (Just lookCh)
     else return Nothing
 
-lookAheadSat :: (Char -> Bool) -> Lexer Bool
-lookAheadSat pred = do
-  look <- lookAhead
-  case look of
-    (Just ch) -> return (pred ch)
-    _ -> return False
-
-expect :: Char -> Lexer Bool
-expect ch = lookAheadSat (== ch)
-
 isNewline :: Char -> Bool
 isNewline x = x `elem` "\r\n"
 
 advance :: Lexer ()
 advance = do
-  hasInput <- hasInput
-  when hasInput $ do
-    isNewline <- lookAheadSat isNewline
-    modify (`advancePos` isNewline)
-    return ()
+  lookAhead >>= \case
+    (Just x) -> do
+      modify (`advancePos` isNewline x)
+    _ -> return ()
   where
     advancePos state isNewline =
       LexState
@@ -75,7 +61,45 @@ reportError error state =
     }
 
 junk :: Lexer ()
-junk = void (takeWhile isSpace)
+junk = do
+  lookAhead >>= \case
+    (Just '/') -> do comment
+    (Just x) -> do
+      when (isSpace x) $ do
+        void (takeWhile isSpace) >> junk
+    Nothing -> return ()
+
+comment :: Lexer ()
+comment = do
+  state <- get
+  advance
+  lookAhead >>= \case
+    (Just '/') -> do
+      advance
+      takeUntil isNewline
+      advance
+      junk
+    (Just '*') -> multiLineComment >> junk
+    _ -> put state
+
+multiLineComment :: Lexer ()
+multiLineComment = do
+  advance
+  takeUntil (== '*')
+  lookAhead >>= \case
+    (Just '*') -> do
+      advance
+      lookAhead >>= \case
+        (Just '/') -> do
+          advance
+          return ()
+        (Just x) -> multiLineComment
+        Nothing -> do
+          pos <- gets LexSt.pos
+          recoverFrom (UnexpectedEof pos ["/", "character"])
+    _ -> do
+      pos <- gets LexSt.pos
+      recoverFrom (UnexpectedEof pos ["*"])
 
 keyword :: String -> Maybe Lexeme
 keyword "for" = Just For
@@ -134,7 +158,26 @@ identifierOrKeyword = do
     Nothing -> tokenise (Ident xs) pos
 
 integerOrReal :: Lexer Token
-integerOrReal = undefined
+integerOrReal = do
+  pos <- gets LexSt.pos
+  xs <- takeWhile isDigit
+  lookAhead >>= \case
+    (Just '.') -> do
+      advance
+      ys <- takeWhile isDigit
+      if Prelude.null ys
+        then do
+          pos <- gets LexSt.pos
+          lookAhead >>= \case
+            (Just x) -> do
+              recoverFrom (UnexpectedChar pos x ["digit"])
+              tokenise Error pos
+            Nothing -> do
+              modify (reportError (UnexpectedEof pos ["digit"]))
+              tokenise Error pos
+        else do
+          tokeniseAndAdvance (LitDouble (read (xs ++ "." ++ ys) :: Double)) pos
+    _ -> tokeniseAndAdvance (LitInt (read xs :: Int)) pos
 
 string :: Lexer Token
 string = do
