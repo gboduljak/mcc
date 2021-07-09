@@ -176,8 +176,8 @@ integerOrReal = do
               modify (reportError (UnexpectedEof pos ["digit"]))
               tokenise Error pos
         else do
-          tokeniseAndAdvance (LitDouble (read (xs ++ "." ++ ys) :: Double)) pos
-    _ -> tokeniseAndAdvance (LitInt (read xs :: Int)) pos
+          tokenise (LitDouble (read (xs ++ "." ++ ys) :: Double)) pos
+    _ -> tokenise (LitInt (read xs :: Int)) pos
 
 string :: Lexer Token
 string = do
