@@ -3,7 +3,7 @@
    ASD
    ASD */
 
-
+#include "stdio.h"
 /// single line
 int main() {
    // printf() displays the string inside quotation
@@ -15,8 +15,4 @@ int main() {
    */
    printf("Hello, World!");
    return 0;
-}/// single line
-/*
-   AD
-   ASD
-   ASD */
+}

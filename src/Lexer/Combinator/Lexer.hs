@@ -21,6 +21,7 @@ import Text.Megaparsec
     ParseError (FancyError, TrivialError),
     Parsec,
     anySingle,
+    anySingleBut,
     errorBundlePretty,
     errorOffset,
     getOffset,
@@ -56,7 +57,7 @@ space :: Lexer ()
 space = void $ satisfy isSpace
 
 comment :: Lexer ()
-comment = singleLine <|> multiLine
+comment = try singleLine <|> try multiLine
   where
     singleLine :: Lexer ()
     singleLine = do
@@ -65,7 +66,7 @@ comment = singleLine <|> multiLine
       return ()
     multiLine :: Lexer ()
     multiLine = do
-      try $ string (pack "/*")
+      string (pack "/*")
       manyTill anySingle (try $ string (pack "*/"))
       return ()
 
@@ -186,16 +187,16 @@ sizeof = reserved "sizeof" >> return Sizeof
 null :: Lexer Lexeme
 null = reserved "NULL" >> return LitNull
 
+include :: Lexer Lexeme
+include = reserved "#include" >> return Include
+
 literal :: Lexer Lexeme
 literal = string' <|> char' <|> null <|> number <?> "literal"
 
 string' :: Lexer Lexeme
-string' =
-  do
-    char '"'
-    x <- many (escapedChar <|> simpleChar)
-    char '"'
-    return (LitString x)
+string' = do
+  char '"'
+  LitString <$> manyTill (escapedChar <|> noneOf "\n\r") (char '"')
 
 char' :: Lexer Lexeme
 char' =
@@ -249,6 +250,9 @@ identifier = do
   xs <- many (alphaNumChar <|> char '_')
   return (Ident (x : xs)) <?> "identifier"
 
+directive :: Lexer Lexeme
+directive = include
+
 operator :: Lexer Lexeme
 operator =
   try arrow
@@ -301,10 +305,12 @@ token =
     <|> literal
     <|> parens
     <|> operator
+    <|> directive
 
 tokenWithRecovery :: Lexer Lexeme
 tokenWithRecovery = do
   tok <- observing token
+  junk
   case tok of
     (Left (TrivialError _ _ expected)) -> do
       offset <- getOffset
@@ -333,9 +339,9 @@ tokenWithRecovery = do
 tokens :: Lexer [Lexeme]
 tokens = do
   junk
-  toks <- sepEndBy tokenWithRecovery junk
+  toks <- many tokenWithRecovery
   eof
-  return toks
+  return (toks ++ [Eof])
 
 lex' :: String -> String
 lex' x = case res of

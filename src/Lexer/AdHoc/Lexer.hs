@@ -109,6 +109,7 @@ keyword "else" = Just Else
 keyword "struct" = Just Struct
 keyword "sizeof" = Just Sizeof
 keyword "return" = Just Return
+keyword "include" = Just Include
 keyword "int" = Just (Type Int)
 keyword "char" = Just (Type Char)
 keyword "double" = Just (Type Double)
@@ -150,8 +151,8 @@ takeWhile pred = do
 takeUntil :: (Char -> Bool) -> Lexer String
 takeUntil pred = takeWhile (not . pred)
 
-identifierOrKeyword :: Lexer Token
-identifierOrKeyword = do
+identifierOrKeywordOrDirective :: Lexer Token
+identifierOrKeywordOrDirective = do
   pos <- gets LexSt.pos
   xs <- takeWhile (\x -> x == '_' || isAlphaNum x)
   case keyword xs of
@@ -233,11 +234,17 @@ string = do
         error -> return error
     escapeable = ["\\", "\"", "a", "b", "n", "r", "t"]
 
+directive :: Lexer Token
+directive = do
+  advance
+  identifierOrKeywordOrDirective
+
 scan :: Lexer Token
 scan = do
   junk
   pos <- gets LexSt.pos
   lookAhead >>= \case
+    (Just '#') -> directive
     (Just '-') -> matchOrFallback '>' Arrow Minus pos
     (Just '&') -> matchOrFallback '&' And Ampers pos
     (Just '|') -> matchOrFallback '|' Or Bar pos
@@ -262,7 +269,7 @@ scan = do
     (Just '\"') -> do string
     (Just x) -> do
       if isLetter x || x == '_'
-        then do identifierOrKeyword
+        then do identifierOrKeywordOrDirective
         else
           if isNumber x
             then do integerOrReal

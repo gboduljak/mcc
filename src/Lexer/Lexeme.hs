@@ -48,6 +48,7 @@ data Lexeme
   | Arrow
   | Sizeof
   | Eof
+  | Include
   | Error
   deriving (Show, Eq)
 
