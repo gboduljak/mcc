@@ -66,7 +66,7 @@ comment = singleLine <|> multiLine
     multiLine :: Lexer ()
     multiLine = do
       try $ string (pack "/*")
-      manyTill (multiLine <|> void anySingle) (try $ string (pack "*/"))
+      manyTill anySingle (try $ string (pack "*/"))
       return ()
 
 junk :: Lexer ()

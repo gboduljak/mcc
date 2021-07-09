@@ -108,6 +108,7 @@ keyword "if" = Just If
 keyword "else" = Just Else
 keyword "struct" = Just Struct
 keyword "sizeof" = Just Sizeof
+keyword "return" = Just Return
 keyword "int" = Just (Type Int)
 keyword "char" = Just (Type Char)
 keyword "double" = Just (Type Double)

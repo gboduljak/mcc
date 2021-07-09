@@ -11,8 +11,4 @@ data Token = Token
   }
 
 instance Show Token where
-  show tok =
-    show (lexeme tok) ++ " pos: "
-      ++ show (line (pos tok))
-      ++ ":"
-      ++ show (col (pos tok))
+  show tok = show (lexeme tok)
