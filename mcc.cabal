@@ -34,10 +34,9 @@ library
       Lexer.TokenPos
       Preprocessor.IncludesGraph
       Preprocessor.IncludesPreprocessor
-      Preprocessor.IncludesResolution
-      Preprocessor.IncludesTopologicalOrder
       Preprocessor.IncludesVisualiser
       Preprocessor.PreprocessError
+      Preprocessor.TopologicalOrder
   other-modules:
       Paths_mcc
   hs-source-dirs:

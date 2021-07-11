@@ -13,10 +13,10 @@ import qualified Data.Set as Set
 import Data.Text (pack)
 import Lexer.Combinator.Lexer (lexIncludes)
 import Preprocessor.IncludesGraph (IncludesGraph)
-import Preprocessor.IncludesTopologicalOrder
-  ( IncludesTopologicalOrder,
-  )
 import Preprocessor.PreprocessError (PreprocessError (..))
+import Preprocessor.TopologicalOrder
+  ( TopologicalOrder,
+  )
 import System.Directory (doesFileExist)
 import System.FilePath (takeExtension)
 
@@ -25,7 +25,7 @@ data PreprocessorState = PreprocessorState
     processingFiles :: Set String,
     processedFiles :: Set String,
     includesPath :: [String],
-    includesTopologicalOrder :: IncludesTopologicalOrder,
+    includesTopologicalOrder :: TopologicalOrder,
     errors :: [PreprocessError]
   }
 
@@ -197,7 +197,7 @@ buildDependencyGraph files = do
     then return (Right includeGraph)
     else return (Left errors)
 
-topSort :: [String] -> Preprocessor (Either [PreprocessError] IncludesTopologicalOrder)
+topSort :: [String] -> Preprocessor (Either [PreprocessError] TopologicalOrder)
 topSort files = do
   traverse_
     ( \file -> do
@@ -243,7 +243,7 @@ topSortDfs file = do
       let cycle = takeWhile (/= from) (reverse includesPath)
        in return (reverse ([from] ++ cycle ++ [from]))
 
-processIncludes :: [String] -> Preprocessor (Either [PreprocessError] IncludesTopologicalOrder)
+processIncludes :: [String] -> Preprocessor (Either [PreprocessError] TopologicalOrder)
 processIncludes files = do
   graphResult <- buildDependencyGraph files
   case graphResult of
@@ -253,7 +253,7 @@ processIncludes files = do
 preprocess ::
   [String] ->
   IO
-    ( ( Either [PreprocessError] IncludesTopologicalOrder,
+    ( ( Either [PreprocessError] TopologicalOrder,
         IncludesGraph
       ),
       PreprocessorState
