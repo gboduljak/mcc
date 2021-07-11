@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
-module Lexer.Combinator.Lexer (lex') where
+module Lexer.Combinator.Lexer (lex', lexIncludes, lexIncludes') where
 
 import Control.Applicative (Alternative ((<|>)), optional)
 import Control.Monad (void)
@@ -19,6 +19,7 @@ import Text.Megaparsec
     ErrorItem (Label),
     MonadParsec (eof, lookAhead, notFollowedBy, observing, try, withRecovery),
     ParseError (FancyError, TrivialError),
+    ParseErrorBundle (ParseErrorBundle),
     Parsec,
     anySingle,
     anySingleBut,
@@ -191,15 +192,18 @@ include :: Lexer Lexeme
 include = reserved "#include" >> return Include
 
 literal :: Lexer Lexeme
-literal = string' <|> char' <|> null <|> number <?> "literal"
+literal = litString <|> litChar <|> null <|> number <?> "literal"
 
-string' :: Lexer Lexeme
+string' :: Lexer String
 string' = do
   char '"'
-  LitString <$> manyTill (escapedChar <|> noneOf "\n\r") (char '"')
+  manyTill (escapedChar <|> noneOf "\n\r") (char '"')
 
-char' :: Lexer Lexeme
-char' =
+litString :: Lexer Lexeme
+litString = LitString <$> string'
+
+litChar :: Lexer Lexeme
+litChar =
   do
     char '\''
     x <- escapedChar <|> simpleChar
@@ -249,6 +253,13 @@ identifier = do
   x <- letterChar <|> char '_'
   xs <- many (alphaNumChar <|> char '_')
   return (Ident (x : xs)) <?> "identifier"
+
+includeStmt :: Lexer String
+includeStmt = do
+  include >> skipMany space >> string'
+
+includes :: Lexer [String]
+includes = junk >> sepEndBy includeStmt junk
 
 directive :: Lexer Lexeme
 directive = include
@@ -342,6 +353,12 @@ tokens = do
   toks <- many tokenWithRecovery
   eof
   return (toks ++ [Eof])
+
+lexIncludes :: String -> Text -> Either (ParseErrorBundle Text Void) [String]
+lexIncludes = parse includes
+
+lexIncludes' :: String -> String -> Either (ParseErrorBundle Text Void) [String]
+lexIncludes' file input = parse includes file (pack input)
 
 lex' :: String -> String
 lex' x = case res of

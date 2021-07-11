@@ -3,7 +3,7 @@
    ASD
    ASD */
 
-#include "stdio.h"
+#include "a.c"
 /// single line
 int main() {
    // printf() displays the string inside quotation

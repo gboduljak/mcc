@@ -234,8 +234,8 @@ string = do
         error -> return error
     escapeable = ["\\", "\"", "a", "b", "n", "r", "t"]
 
-directive :: Lexer Token
-directive = do
+include :: Lexer Token
+include = do
   advance
   identifierOrKeywordOrDirective
 
@@ -244,7 +244,7 @@ scan = do
   junk
   pos <- gets LexSt.pos
   lookAhead >>= \case
-    (Just '#') -> directive
+    (Just '#') -> include
     (Just '-') -> matchOrFallback '>' Arrow Minus pos
     (Just '&') -> matchOrFallback '&' And Ampers pos
     (Just '|') -> matchOrFallback '|' Or Bar pos

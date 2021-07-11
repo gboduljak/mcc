@@ -32,6 +32,11 @@ library
       Lexer.Lexeme
       Lexer.Token
       Lexer.TokenPos
+      Preprocessor.IncludesGraph
+      Preprocessor.IncludesPreprocessor
+      Preprocessor.IncludesTopologicalOrder
+      Preprocessor.IncludesVisualiser
+      Preprocessor.PreprocessError
   other-modules:
       Paths_mcc
   hs-source-dirs:
@@ -39,6 +44,8 @@ library
   build-depends:
       base >=4.7 && <5
     , containers
+    , directory
+    , filepath
     , megaparsec
     , mtl
     , text
@@ -54,6 +61,8 @@ executable mcc-exe
   build-depends:
       base >=4.7 && <5
     , containers
+    , directory
+    , filepath
     , mcc
     , megaparsec
     , mtl
@@ -71,6 +80,8 @@ test-suite mcc-test
   build-depends:
       base >=4.7 && <5
     , containers
+    , directory
+    , filepath
     , mcc
     , megaparsec
     , mtl
