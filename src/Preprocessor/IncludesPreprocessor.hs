@@ -227,7 +227,9 @@ topSortDfs file = do
               processingFiles <- gets processingFiles
               processedFiles <- gets processedFiles
               if dependency `Set.member` processingFiles
-                then do logError (Cycle (includesPath ++ [dependency]))
+                then do
+                  cycle <- extractCycle dependency
+                  logError (Cycle cycle)
                 else do
                   if dependency `Set.member` processedFiles
                     then do return ()
@@ -235,6 +237,11 @@ topSortDfs file = do
           )
           adjacencyList
           >> markProcessed file
+  where
+    extractCycle from = do
+      includesPath <- gets includesPath
+      let cycle = takeWhile (/= from) (reverse includesPath)
+       in return (reverse ([from] ++ cycle ++ [from]))
 
 processIncludes :: [String] -> Preprocessor (Either [PreprocessError] IncludesTopologicalOrder)
 processIncludes files = do
