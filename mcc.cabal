@@ -29,6 +29,7 @@ library
       Lexer.AdHoc.LexError
       Lexer.AdHoc.LexState
       Lexer.Combinator.Lexer
+      Lexer.Generator.Lexer
       Lexer.Lexeme
       Lexer.Token
       Lexer.TokenPos
@@ -42,7 +43,8 @@ library
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5
+      array
+    , base >=4.7 && <5
     , containers
     , directory
     , filepath
@@ -59,7 +61,8 @@ executable mcc-exe
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      array
+    , base >=4.7 && <5
     , containers
     , directory
     , filepath
@@ -78,7 +81,8 @@ test-suite mcc-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      array
+    , base >=4.7 && <5
     , containers
     , directory
     , filepath

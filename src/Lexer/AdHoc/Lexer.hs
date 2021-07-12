@@ -212,27 +212,75 @@ string = do
                   return (Left (UnexpectedChar pos newline ["string character", "\""]))
             )
     handleEscaped lookahead prefix = case lookahead of
-      (Just '\\') -> escapeAndProcessRest '\\' prefix
-      (Just '"') -> escapeAndProcessRest '\"' prefix
-      (Just 'a') -> escapeAndProcessRest '\a' prefix
-      (Just 'b') -> escapeAndProcessRest '\b' prefix
-      (Just 'f') -> escapeAndProcessRest '\f' prefix
-      (Just 'n') -> escapeAndProcessRest '\n' prefix
-      (Just 'r') -> escapeAndProcessRest '\r' prefix
-      (Just 't') -> escapeAndProcessRest '\t' prefix
-      (Just unexpected) -> do
-        pos <- gets LexSt.pos
-        return (Left (UnexpectedChar pos unexpected escapeable))
+      (Just x) -> do
+        if x `elem` concat escapeable
+          then do
+            processRest (escape x) prefix
+          else do
+            pos <- gets LexSt.pos
+            return (Left (UnexpectedChar pos x escapeable))
       Nothing -> do
         pos <- gets LexSt.pos
         return (Left (UnexpectedEof pos ["string character", "\""]))
-    escapeAndProcessRest char prefix = do
+    processRest char prefix = do
       advance
       content <- processStringContent
       case content of
         (Right rest) -> return (Right (prefix ++ (char : rest)))
         error -> return error
-    escapeable = ["\\", "\"", "a", "b", "n", "r", "t"]
+
+char :: Lexer Token
+char = do
+  pos <- gets LexSt.pos
+  advance
+  lookAhead >>= \case
+    (Just '\\') -> do
+      advance
+      lookAhead >>= \case
+        (Just x) -> do
+          if x `elem` concat escapeable
+            then do
+              advance >> endOfChar (escape x) pos
+            else do
+              unexpectedChar x escapeable
+        Nothing -> unexpectedEndOfChar
+    (Just '\'') -> unexpectedChar '\'' ["character", "\\"]
+    (Just x) -> advance >> endOfChar x pos
+    Nothing -> unexpectedEndOfChar
+  where
+    unexpectedChar unexpected expected = do
+      pos <- gets LexSt.pos
+      recoverFrom (UnexpectedChar pos unexpected expected)
+      tokenise Error pos
+    unexpectedEndOfChar = do
+      pos' <- gets LexSt.pos
+      recoverFrom (UnexpectedEof pos' ["\'"])
+      tokenise Error pos'
+    endOfChar char pos = do
+      lookAhead >>= \case
+        (Just '\'') -> tokeniseAndAdvance (LitChar char) pos
+        (Just x) -> do
+          pos' <- gets LexSt.pos
+          recoverFrom (UnexpectedChar pos' x ["\'"])
+          tokenise Error pos'
+        Nothing -> do
+          pos' <- gets LexSt.pos
+          recoverFrom (UnexpectedEof pos' ["\'"])
+          tokenise Error pos'
+
+escape :: Char -> Char
+escape '\\' = '\\'
+escape '"' = '\"'
+escape 'a' = '\a'
+escape 'b' = '\b'
+escape 'f' = '\f'
+escape 'n' = '\n'
+escape 'r' = '\r'
+escape 't' = '\t'
+escape x = x
+
+escapeable :: [[Char]]
+escapeable = ["\\", "\"", "a", "b", "n", "r", "t"]
 
 include :: Lexer Token
 include = do
@@ -266,7 +314,8 @@ scan = do
     (Just '}') -> tokeniseAndAdvance RBrace pos
     (Just '[') -> tokeniseAndAdvance LBrack pos
     (Just ']') -> tokeniseAndAdvance RBrack pos
-    (Just '\"') -> do string
+    (Just '\"') -> string
+    (Just '\'') -> char
     (Just x) -> do
       if isLetter x || x == '_'
         then do identifierOrKeywordOrDirective

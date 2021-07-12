@@ -341,7 +341,7 @@ tokenWithRecovery = do
         ( Just
             ( Label
                 ( fromJust $
-                    nonEmpty (show unexpected)
+                    nonEmpty [unexpected]
                 )
             )
         )
