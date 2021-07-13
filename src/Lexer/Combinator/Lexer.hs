@@ -360,13 +360,6 @@ lexIncludes = parse (junk >> includes)
 lexIncludes' :: String -> String -> Either (ParseErrorBundle Text Void) [String]
 lexIncludes' file input = parse (junk >> includes) file (pack input)
 
--- lex' :: String -> String
--- lex' x = case res of
---   (Left p) -> errorBundlePretty p
---   (Right tokens) -> show tokens
---   where
---     res = parse tokens "" (pack x)
-
 lex :: String -> Text -> Either (ParseErrorBundle Text Void) [Lexeme]
 lex = parse tokens
 

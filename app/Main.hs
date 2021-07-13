@@ -32,11 +32,11 @@ main = do
       let lexRes = CombinatorLex.lex' fileToRead input
       case lexRes of
         (Left errors) -> (putStrLn . errorBundlePretty) errors
-        (Right lexemes) -> putStrLn $ renderString $ layoutPretty defaultLayoutOptions $ concatWith (surround space) [pretty lexeme | lexeme <- lexemes]
+        (Right lexemes) -> putStrLn $ renderString $ layoutCompact $ concatWith (surround space) [pretty lexeme | lexeme <- lexemes]
       let lexRes2 = AdHocLex.lex' fileToRead input
       case lexRes2 of
         (Left errors) -> print errors
         (Right tokens) -> do
-          putStrLn $ renderString $ layoutPretty defaultLayoutOptions $ concatWith (surround space) [pretty tok | tok <- tokens]
+          putStrLn $ renderString $ layoutCompact $ concatWith (surround space) [pretty tok | tok <- tokens]
       let lexemes3 = GeneratedLex.lex input
-      putStrLn $ renderString $ layoutPretty defaultLayoutOptions $ concatWith (surround space) [pretty lexeme | lexeme <- lexemes3]
+      putStrLn $ renderString $ layoutCompact $ concatWith (surround space) [pretty lexeme | lexeme <- lexemes3]
