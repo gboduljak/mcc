@@ -12,7 +12,7 @@ import Lexer.Lexeme (BuiltinType (Char, Double, Int, Void), Lexeme (..))
 import Lexer.Token (Token (Token))
 import qualified Lexer.Token as T
 import Lexer.TokenPos (TokenPos (..), next, nextLine)
-import Prelude hiding (and, head, or, tail, takeWhile)
+import Prelude hiding (and, head, lex, or, tail, takeWhile)
 
 type Lexer a = State LexState a
 
@@ -340,8 +340,8 @@ lexer = do
       toks <- lexer
       return (tok : toks)
 
-lex'' :: String -> Text -> Either [LexError] [Token]
-lex'' fileName input = case errors state of
+lex :: String -> Text -> Either [LexError] [Token]
+lex fileName input = case errors state of
   [] -> Right toks
   errors -> Left errors
   where
@@ -349,19 +349,5 @@ lex'' fileName input = case errors state of
     initState = LexState input 0 initPos []
     initPos = TokenPos fileName 0 0
 
-lex''' :: String -> String -> Either [LexError] [Token]
-lex''' fileName input = lex'' fileName (pack input)
-
-runLex :: String -> Text -> ([Token], LexState)
-runLex fileName input = runState lexer initState
-  where
-    (toks, state) = runState lexer initState
-    initState = LexState input 0 initPos []
-    initPos = TokenPos fileName 0 0
-
-runLex' :: String -> String -> ([Token], LexState)
-runLex' fileName input = runState lexer initState
-  where
-    (toks, state) = runState lexer initState
-    initState = LexState (pack input) 0 initPos []
-    initPos = TokenPos fileName 0 0
+lex' :: String -> String -> Either [LexError] [Token]
+lex' fileName input = lex fileName (pack input)

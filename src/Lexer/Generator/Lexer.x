@@ -16,13 +16,15 @@ tokens :-
  "//" [^$newline]* $newline ;
  \(       { const LParen   }
  \)       { const RParen   }
- \{       { const RBrace   }
+ \{       { const LBrace   }
  \}       { const RBrace   }
- \;       { const Semi    }
- \,       { const Comma   }
+ \[       { const LBrack   }
+ \]       { const RBrack   }
+ \;       { const Semi     }
+ \,       { const Comma    }
  \+       { const Plus     }
- \-       { const Minus     }
- \*       { const Asterisk     }
+ \-       { const Minus    }
+ \*       { const Asterisk }
  \/       { const Div     }
  \=       { const Assign  }
  \=\=     { const Equal   }

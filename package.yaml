@@ -25,6 +25,7 @@ dependencies:
 - megaparsec
 - mtl
 - containers
+- prettyprinter >= 1.7.0
 - text
 - directory
 - filepath
