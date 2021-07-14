@@ -14,6 +14,7 @@ import Lexer.Lexeme
   ( BuiltinType (Char, Double, Int, Void),
     Lexeme (..),
   )
+import Lexer.Token (Token (Token))
 import Text.Megaparsec
   ( ErrorFancy (ErrorFail),
     ErrorItem (Label),
@@ -21,13 +22,16 @@ import Text.Megaparsec
     ParseError (FancyError, TrivialError),
     ParseErrorBundle (ParseErrorBundle),
     Parsec,
+    SourcePos (sourceColumn),
     anySingle,
     anySingleBut,
     errorBundlePretty,
     errorOffset,
     getOffset,
+    getSourcePos,
     many,
     manyTill,
+    mkPos,
     noneOf,
     oneOf,
     parse,
@@ -44,6 +48,7 @@ import Text.Megaparsec
     skipManyTill,
     skipSomeTill,
     some,
+    unPos,
     unexpected,
     (<?>),
   )
@@ -318,6 +323,15 @@ token =
     <|> operator
     <|> directive
 
+withPos :: Lexer Lexeme -> Lexer Token
+withPos lexer = do
+  start <- getSourcePos
+  x <- lexer
+  end <- getSourcePos
+
+  let length = (unPos . sourceColumn) end - (unPos . sourceColumn) start
+  return (Token x start end length)
+
 tokenWithRecovery :: Lexer Lexeme
 tokenWithRecovery = do
   tok <- observing token
@@ -347,12 +361,15 @@ tokenWithRecovery = do
         )
         expected
 
-tokens :: Lexer [Lexeme]
+tokens :: Lexer [Token]
 tokens = do
   junk
-  toks <- many tokenWithRecovery
-  eof
-  return (toks ++ [Eof])
+  toks <- many (withPos tokenWithRecovery)
+  eof <- withPos lexEof
+  return (toks ++ [eof])
+  where
+    lexEof :: Lexer Lexeme
+    lexEof = eof >> return Eof
 
 lexIncludes :: String -> Text -> Either (ParseErrorBundle Text Void) [String]
 lexIncludes = parse (junk >> includes)
@@ -360,8 +377,8 @@ lexIncludes = parse (junk >> includes)
 lexIncludes' :: String -> String -> Either (ParseErrorBundle Text Void) [String]
 lexIncludes' file input = parse (junk >> includes) file (pack input)
 
-lex :: String -> Text -> Either (ParseErrorBundle Text Void) [Lexeme]
+lex :: String -> Text -> Either (ParseErrorBundle Text Void) [Token]
 lex = parse tokens
 
-lex' :: String -> String -> Either (ParseErrorBundle Text Void) [Lexeme]
+lex' :: String -> String -> Either (ParseErrorBundle Text Void) [Token]
 lex' file input = parse tokens file (pack input)

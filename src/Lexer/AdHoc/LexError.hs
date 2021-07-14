@@ -1,16 +1,16 @@
 module Lexer.AdHoc.LexError where
 
 import Data.Text (Text)
-import Lexer.TokenPos (TokenPos)
+import Text.Megaparsec (SourcePos)
 
 data LexError
   = UnexpectedChar
-      { pos :: TokenPos,
+      { pos :: SourcePos,
         unexpectedChar :: Char,
         expected :: [String]
       }
   | UnexpectedEof
-      { pos :: TokenPos,
+      { pos :: SourcePos,
         expected :: [String]
       }
   deriving (Show)

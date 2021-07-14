@@ -3,12 +3,14 @@ module Lexer.Token where
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc
 import Lexer.Lexeme (Lexeme)
-import Lexer.TokenPos (TokenPos (col, line))
+import Text.Megaparsec (SourcePos (..))
 import Prelude hiding (line)
 
 data Token = Token
   { lexeme :: Lexeme,
-    pos :: TokenPos
+    startPos :: SourcePos,
+    endPos :: SourcePos,
+    length :: Int
   }
 
 instance Show Token where

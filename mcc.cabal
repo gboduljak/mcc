@@ -32,7 +32,6 @@ library
       Lexer.Generator.Lexer
       Lexer.Lexeme
       Lexer.Token
-      Lexer.TokenPos
       Preprocessor.IncludesGraph
       Preprocessor.IncludesPreprocessor
       Preprocessor.IncludesVisualiser

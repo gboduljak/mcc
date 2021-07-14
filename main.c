@@ -9,6 +9,6 @@ int main() {
       ASD
       ASD
    */
-   printf("Hello, World!"); 
+   printf("Hello, World!");
    return 0;
 }

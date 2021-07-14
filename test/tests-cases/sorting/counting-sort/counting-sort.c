@@ -4,7 +4,7 @@ void CountingSort(int *A, int length) {
   int *B = (int *)malloc(sizeof(int) * length);
   int *C = (int *)malloc(sizeof(int) * length);
   int j = 0;
-
+  
   memset(C, 0, length);
 
   for (j = 0; j < length; j=j+1) {

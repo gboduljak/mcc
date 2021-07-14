@@ -35,7 +35,7 @@ main = do
         (Right lexemes) -> putStrLn $ renderString $ layoutCompact $ concatWith (surround space) [pretty lexeme | lexeme <- lexemes]
       let lexRes2 = AdHocLex.lex' fileToRead input
       case lexRes2 of
-        (Left errors) -> print errors
+        (Left errors2) -> print errors2
         (Right tokens) -> do
           putStrLn $ renderString $ layoutCompact $ concatWith (surround space) [pretty tok | tok <- tokens]
       let lexemes3 = GeneratedLex.lex input

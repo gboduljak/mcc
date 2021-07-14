@@ -11,7 +11,7 @@ import qualified Lexer.AdHoc.LexState as LexSt
 import Lexer.Lexeme (BuiltinType (Char, Double, Int, Void), Lexeme (..))
 import Lexer.Token (Token (Token))
 import qualified Lexer.Token as T
-import Lexer.TokenPos (TokenPos (..), next, nextLine)
+import Text.Megaparsec.Pos
 import Prelude hiding (and, head, lex, or, tail, takeWhile)
 
 type Lexer a = State LexState a
@@ -43,8 +43,23 @@ advance = do
           LexSt.pos = nextPos isNewline (LexSt.pos state)
         }
       where
-        nextPos True = nextLine
-        nextPos False = next
+        nextPos True = incrementLine
+        nextPos False = incrementColumn
+
+        incrementLine (SourcePos name line column) = SourcePos name (line <> pos1) pos1
+        incrementColumn (SourcePos name line column) = SourcePos name line (column <> pos1)
+
+unexpectedChar :: Char -> [String] -> Lexer Token
+unexpectedChar unexpected expected = do
+  pos <- gets LexSt.pos
+  recoverFrom (UnexpectedChar pos unexpected expected)
+  tokenise Error pos
+
+unexpectedEndOfFile :: [String] -> Lexer Token
+unexpectedEndOfFile expected = do
+  pos' <- gets LexSt.pos
+  recoverFrom (UnexpectedEof pos' expected)
+  tokenise Error pos'
 
 recoverFrom :: LexError -> Lexer ()
 recoverFrom error = do
@@ -117,16 +132,19 @@ keyword "void" = Just (Type Void)
 keyword "NULL" = Just LitNull
 keyword _ = Nothing
 
-tokenise :: Lexeme -> TokenPos -> Lexer Token
-tokenise lexeme pos = return (Token lexeme pos)
+tokenise :: Lexeme -> SourcePos -> Lexer Token
+tokenise lexeme sourcePos = do
+  endPos <- gets LexSt.pos
+  let lexemeLen = (unPos . sourceColumn) endPos - (unPos . sourceColumn) sourcePos
+   in do
+        return (Token lexeme sourcePos endPos lexemeLen)
 
-tokeniseAndAdvance :: Lexeme -> TokenPos -> Lexer Token
+tokeniseAndAdvance :: Lexeme -> SourcePos -> Lexer Token
 tokeniseAndAdvance x pos = do
-  x' <- tokenise x pos
   advance
-  return x'
+  tokenise x pos
 
-matchOrFallback :: Char -> Lexeme -> Lexeme -> TokenPos -> Lexer Token
+matchOrFallback :: Char -> Lexeme -> Lexeme -> SourcePos -> Lexer Token
 matchOrFallback char desired fallback pos = do
   advance
   lookAhead >>= \case
@@ -243,19 +261,11 @@ char = do
               advance >> endOfChar (escape x) pos
             else do
               unexpectedChar x escapeable
-        Nothing -> unexpectedEndOfChar
+        Nothing -> unexpectedEndOfFile ["\'"]
     (Just '\'') -> unexpectedChar '\'' ["character", "\\"]
     (Just x) -> advance >> endOfChar x pos
-    Nothing -> unexpectedEndOfChar
+    Nothing -> unexpectedEndOfFile ["\'"]
   where
-    unexpectedChar unexpected expected = do
-      pos <- gets LexSt.pos
-      recoverFrom (UnexpectedChar pos unexpected expected)
-      tokenise Error pos
-    unexpectedEndOfChar = do
-      pos' <- gets LexSt.pos
-      recoverFrom (UnexpectedEof pos' ["\'"])
-      tokenise Error pos'
     endOfChar char pos = do
       lookAhead >>= \case
         (Just '\'') -> tokeniseAndAdvance (LitChar char) pos
@@ -285,7 +295,10 @@ escapeable = ["\\", "\"", "a", "b", "n", "r", "t"]
 include :: Lexer Token
 include = do
   advance
-  identifierOrKeywordOrDirective
+  lookAhead >>= \case
+    (Just 'i') -> identifierOrKeywordOrDirective
+    (Just x) -> unexpectedChar x ["i"]
+    Nothing -> unexpectedEndOfFile ["i"]
 
 scan :: Lexer Token
 scan = do
@@ -346,8 +359,7 @@ lex fileName input = case errors state of
   errors -> Left errors
   where
     (toks, state) = runState lexer initState
-    initState = LexState input 0 initPos []
-    initPos = TokenPos fileName 0 0
+    initState = LexState input 0 (initialPos fileName) []
 
 lex' :: String -> String -> Either [LexError] [Token]
 lex' fileName input = lex fileName (pack input)
