@@ -1,10 +1,13 @@
 module Main where
 
+import Data.Foldable
 import Data.Text (pack)
 import Data.Text.Prettyprint.Doc
 import qualified Lexer.AdHoc.Lexer as AdHocLex (lex')
 import qualified Lexer.Combinator.Lexer as CombinatorLex (lex')
-import qualified Lexer.Generator.Lexer as GeneratedLex (lex)
+import qualified Lexer.Generator.Lexer as GeneratedLex (lex')
+import Lexer.Lexeme
+import Lexer.Token
 import Preprocessor.IncludesPreprocessor (preprocess)
 import Preprocessor.IncludesVisualiser (draw)
 import Prettyprinter
@@ -17,26 +20,41 @@ main :: IO ()
 main = do
   args <- getArgs
   ((result, graph), _) <- preprocess args
+
   putStrLn "Constructing dependency graph ... "
   putStrLn "Dependency graph is : "
   putStrLn (draw graph)
-
+  putStrLn "Resolving compilation order ..."
   case result of
     (Left errors) -> do
       putStrLn "Compilation halted due to"
       print errors
     (Right order) -> do
+      putStrLn "Compilation order resolved ... 💪"
       putStrLn ("Compilation order is : " ++ show order)
-      let fileToRead = last order
-      input <- readFile fileToRead
-      let lexRes = CombinatorLex.lex' fileToRead input
-      case lexRes of
-        (Left errors) -> (putStrLn . errorBundlePretty) errors
-        (Right lexemes) -> putStrLn $ renderString $ layoutCompact $ concatWith (surround space) [pretty lexeme | lexeme <- lexemes]
-      let lexRes2 = AdHocLex.lex' fileToRead input
-      case lexRes2 of
-        (Left errors2) -> print errors2
-        (Right tokens) -> do
-          putStrLn $ renderString $ layoutCompact $ concatWith (surround space) [pretty tok | tok <- tokens]
-      let lexemes3 = GeneratedLex.lex input
-      putStrLn $ renderString $ layoutCompact $ concatWith (surround space) [pretty lexeme | lexeme <- lexemes3]
+      putStrLn ""
+      traverse_ compileFile order
+
+compileFile :: String -> IO ()
+compileFile file = do
+  putStrLn ("Processing " ++ file ++ "...")
+  input <- readFile file
+  putStrLn "Combinator Lexer..."
+  let combResult = CombinatorLex.lex' file input
+  case combResult of
+    (Left errors) -> (putStrLn . errorBundlePretty) errors
+    (Right tokens) -> displayTokens tokens
+  putStrLn "AdHoc Lexer..."
+  let adHocResult = AdHocLex.lex' file input
+  case adHocResult of
+    (Left errors) -> print errors
+    (Right tokens) -> displayTokens tokens
+  putStrLn "Generated Lexer..."
+  let alexLexemes = GeneratedLex.lex' input
+  displayLexemes alexLexemes
+
+displayTokens :: [Token] -> IO ()
+displayTokens = displayLexemes . map lexeme
+
+displayLexemes :: [Lexeme] -> IO ()
+displayLexemes = putStrLn . renderString . layoutCompact . concatWith (surround space) . map pretty

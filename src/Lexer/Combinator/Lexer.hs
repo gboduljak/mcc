@@ -317,8 +317,8 @@ token :: Lexer Lexeme
 token =
   keyword
     <|> typeName
-    <|> identifier
     <|> literal
+    <|> identifier
     <|> parens
     <|> operator
     <|> directive
