@@ -1,3 +1,8 @@
+import LexerSpec (dynamicProgrammingSpec, sortingSpec, ticTacToeSpec)
+import Test.Hspec (hspec)
+
 main :: IO ()
 main = do
-  putStrLn "Test suite not yet implemented"
+  hspec sortingSpec
+  hspec dynamicProgrammingSpec
+  hspec ticTacToeSpec
