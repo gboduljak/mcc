@@ -1,0 +1,127 @@
+program ::= includes_list structdecl_list vardecl_list funcdecl_list EOF
+
+includes_list ::= include includes_list
+                | ε
+include ::= Include LitString
+
+structdecl_list ::= structdecl structdecl_list
+                  | ε
+structdecl ::= structtype LBrace vardecl_list_nonempty RBrace Semi
+
+vardecl_list ::= vardecl vardecl_list    
+               | ε
+vardecl_list_nonempty ::= vardecl vardecl_list
+vardecl := type Ident Semi
+         | type Ident LBrack LitInt RBrack Semi
+
+funcdecl_list ::= funcdecl funcdecl_list
+                | ε
+funcdecl ::= type Ident LParen formals RParen block
+
+type ::= primitivetype
+       | structtype
+
+primitivetype ::= (Type BuiltinType) stars
+structtype    ::= Struct Ident
+
+BuiltinType ::= Int
+              | Double
+              | Char
+              | Void
+
+stars ::= Asterisk stars
+        | ε
+
+formals ::= formal formals_list
+          | ε
+formal ::= type Ident
+formals_list ::= Comma formal formals_list
+               | ε
+
+stmt ::= block
+       | While LParen expr RParen
+       | For LParen opt_expr Semi expr Semi opt_expr RParen
+       | If LParen expr RParen stmt opt_else
+       | Return opt_expr Semi
+       | expr Assign expr Semi
+       | expr Semi
+
+stmt_list ::= stmt stmt_list
+            | ε
+
+block ::= LBrace vardecl_list stmt_list RBrace
+
+opt_else ::= Else stmt
+           | ε
+opt_expr ::= expr
+           | ε
+
+expr ::= logical_or_level_expr
+
+logical_or_level_expr ::= logical_or_level_expr Or logical_and_level_expr
+                        | logical_and_level_expr
+
+logical_and_level_expr ::= logical_and_level_expr And bitwise_or_level_expr
+                         | bitwise_or_level_expr
+
+bitwise_or_level_expr ::= bitwise_or_level_expr Bar xor_level_expr
+                        | xor_level_expr
+
+xor_level_expr ::= xor_level_expr Caret bitwise_and_level_expr
+                 | bitwise_and_level_expr
+
+bitwise_and_level_expr ::= and_level_expr Ampers eq_level_expr
+                 | eq_level_expr
+
+eq_level_expr ::= eq_level_expr Eq comp_level_expr
+                | eq_level_expr Neq comp_level_expr
+                | comp_level_expr
+
+comp_level_expr ::= comp_level_expr Less add_level_expr
+                  | comp_level_expr Leq add_level_expr
+                  | comp_level_expr Greater add_level_expr
+                  | comp_level_expr Geq add_level_expr
+                  | add_level_expr
+
+add_level_expr ::= add_level_expr Plus mult_level_expr
+                 | add_level_expr Minus mult_level_expr
+                 | mult_level_expr
+
+mult_level_expr ::= mult_level_expr Asterisk unary_level_expr
+                  | mult_level_expr Div unary_level_expr
+                  | mult_level_expr Mod unary_level_expr
+                  | unary_level_expr
+
+unary_level_expr ::= Minus unary_level_expr
+                   | Not unary_level_expr
+                   | typecast
+                   | deref
+                   | sizeof
+                   | call_level_expr
+
+typecast  ::= LParen type RParen unary_level_expr
+deref     ::= Asterisk unary_level_expr
+sizeof    ::= Sizeof LParen type RParen
+
+call_level_expr ::= call_level_expr funccall
+                  | call_level_expr arrayaccess
+                  | call_level_expr fieldaccess
+                  | base_expr
+
+funccall    ::=  LParen actuals RParen
+arrayaccess ::=  LBrack expr RBrack
+fieldaccess ::=  Dot Ident
+
+base_expr ::= LitInt
+            | LitString
+            | LitChar
+            | LitDouble
+            | LitNull
+            | Ident
+            | LParen expr RParen
+
+actuals ::= expr actuals_list
+          | ε
+
+actuals_list ::= Comma expr 
+               | ε

@@ -1,0 +1,76 @@
+program ::= (include)* (structdecl)* (vardecl)* (funcdecl)* EOF
+
+include ::= Include LitString
+
+structdecl ::= structtype LBrace (vardecl)+ RBrace Semi
+
+vardecl ::= type Ident Semi
+          | type Ident LBrack LitInt RBrack Semi
+
+funcdecl ::= type Ident LParen formals RParen block
+
+type ::= primitivetype
+       | structtype
+
+primitivetype ::= (Type BuiltinType) stars
+structtype    ::= Struct Ident
+
+BuiltinType ::= Int
+              | Double
+              | Char
+              | Void
+
+stars ::= (Asterisk)*
+
+formals ::= [ type Ident (Comma type Ident)* ]
+
+stmt ::= block
+       | While LParen expr RParen
+       | For LParen [expr] Semi expr Semi [expr] RParen
+       | If LParen expr RParen stmt [Else stmt]
+       | Return [expr] Semi
+       | expr Assign expr Semi
+       | expr Semi
+
+block ::= LBrace (vardecl)* (stmt)* RBrace
+
+expr ::= LitInt
+       | LitString
+       | LitChar
+       | LitDouble
+       | LitNull
+       | Ident
+       | (expr)
+       | expr op expr
+       | arrayaccess
+       | fieldaccess
+       | deref
+       | funccall
+       | sizeof
+       | typecast
+
+op ::= Less
+     | Leq
+     | Greater
+     | Geq
+     | Neq
+     | Equal
+     | Plus
+     | Minus
+     | Div
+     | Asterisk
+     | Mod
+     | Or
+     | And
+     | Caret
+     | Ampers
+     | Bar
+
+funccall    ::= Ident LParen actuals RParen
+arrayaccess ::= expr LBrack expr RBrack
+fieldaccess ::= expr Dot Ident
+deref       ::= Asterisk expr
+sizeof      ::= Sizeof LParen type RParen
+typecast    ::= LParen type RParen expr
+
+actuals ::= [expr (Comma expr)*]
