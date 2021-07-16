@@ -1,28 +1,32 @@
-program ::= includes_list structdecl_list vardecl_list funcdecl_list EOF
+program ::= includes_list construct_list EOF
+
+construct ::= structdecl
+            | vardecl
+            | funcdecl
+
+construct_list ::= construct construct_list
+                 | ε                   
 
 includes_list ::= include includes_list
                 | ε
 include ::= Include LitString
 
-structdecl_list ::= structdecl structdecl_list
-                  | ε
 structdecl ::= structtype LBrace vardecl_list_nonempty RBrace Semi
 
 vardecl_list ::= vardecl vardecl_list    
                | ε
 vardecl_list_nonempty ::= vardecl vardecl_list
+
 vardecl := type Ident Semi
          | type Ident LBrack LitInt RBrack Semi
 
-funcdecl_list ::= funcdecl funcdecl_list
-                | ε
 funcdecl ::= type Ident LParen formals RParen block
 
 type ::= primitivetype
        | structtype
 
 primitivetype ::= (Type BuiltinType) stars
-structtype    ::= Struct Ident
+structtype    ::= Struct Ident stars
 
 BuiltinType ::= Int
               | Double
@@ -39,17 +43,20 @@ formals_list ::= Comma formal formals_list
                | ε
 
 stmt ::= block
-       | While LParen expr RParen
-       | For LParen opt_expr Semi expr Semi opt_expr RParen
+       | While LParen expr RParen stmt
+       | For LParen opt_expr Semi expr Semi opt_expr RParen stmt
        | If LParen expr RParen stmt opt_else
        | Return opt_expr Semi
        | expr Assign expr Semi
        | expr Semi
 
-stmt_list ::= stmt stmt_list
-            | ε
+block ::= LBrace block_elements_list RBrace
 
-block ::= LBrace vardecl_list stmt_list RBrace
+block_elements_list ::= block_element block_elements_list
+                      | ε
+
+block_element ::= vardecl 
+                | stmt
 
 opt_else ::= Else stmt
            | ε
@@ -96,11 +103,13 @@ unary_level_expr ::= Minus unary_level_expr
                    | Not unary_level_expr
                    | typecast
                    | deref
+                   | addressof
                    | sizeof
                    | call_level_expr
 
 typecast  ::= LParen type RParen unary_level_expr
 deref     ::= Asterisk unary_level_expr
+addressof ::= Ampers unary_level_expr
 sizeof    ::= Sizeof LParen type RParen
 
 call_level_expr ::= call_level_expr funccall
@@ -111,6 +120,7 @@ call_level_expr ::= call_level_expr funccall
 funccall    ::=  LParen actuals RParen
 arrayaccess ::=  LBrack expr RBrack
 fieldaccess ::=  Dot Ident
+              |  Arrow Ident
 
 base_expr ::= LitInt
             | LitString
