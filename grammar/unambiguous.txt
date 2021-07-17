@@ -11,16 +11,16 @@ includes_list ::= include includes_list
                 | ε
 include ::= Include LitString
 
-structdecl ::= structtype LBrace vardecl_list_nonempty RBrace Semi
+structdecl ::= Struct Ident LBrace vardecl_list_nonempty RBrace Semi
 
 vardecl_list ::= vardecl vardecl_list    
                | ε
 vardecl_list_nonempty ::= vardecl vardecl_list
 
-vardecl := type Ident Semi
-         | type Ident LBrack LitInt RBrack Semi
+vardecl := type Ident array_sizes Semi
 
 funcdecl ::= type Ident LParen formals RParen block
+           | type Ident LParen RParen block
 
 type ::= primitivetype
        | structtype
@@ -36,34 +36,32 @@ BuiltinType ::= Int
 stars ::= Asterisk stars
         | ε
 
-formals ::= formal formals_list
-          | ε
-formal ::= type Ident
-formals_list ::= Comma formal formals_list
-               | ε
+formals ::= formal
+          | formals Comma formal
 
-stmt ::= block
+formal ::= type Ident brackets
+
+stmt ::= expr Semi
+       | block
        | While LParen expr RParen stmt
-       | For LParen opt_expr Semi expr Semi opt_expr RParen stmt
-       | If LParen expr RParen stmt opt_else
+       | For LParen opt_expr Semi opt_expr Semi opt_expr RParen stmt
+       | If LParen expr RParen stmt
+       | If LParen expr RParen stmt Else stmt
        | Return opt_expr Semi
-       | expr Assign expr Semi
-       | expr Semi
+       | vardecl
 
-block ::= LBrace block_elements_list RBrace
+block ::= LBrace block_stmts RBrace
 
-block_elements_list ::= block_element block_elements_list
-                      | ε
+block_stmts ::= stmt block_stmts
+              | ε
 
-block_element ::= vardecl 
-                | stmt
-
-opt_else ::= Else stmt
-           | ε
 opt_expr ::= expr
            | ε
 
-expr ::= logical_or_level_expr
+expr ::= assignment_level_expr
+
+assignment_level_expr ::= logical_or_level_expr Assign assignment_level_expr
+                        | logical_or_level_expr
 
 logical_or_level_expr ::= logical_or_level_expr Or logical_and_level_expr
                         | logical_and_level_expr
@@ -107,7 +105,7 @@ unary_level_expr ::= Minus unary_level_expr
                    | sizeof
                    | call_level_expr
 
-typecast  ::= LParen type RParen unary_level_expr
+typecast  ::= LParen type array_sizes RParen unary_level_expr
 deref     ::= Asterisk unary_level_expr
 addressof ::= Ampers unary_level_expr
 sizeof    ::= Sizeof LParen type RParen
@@ -117,7 +115,8 @@ call_level_expr ::= call_level_expr funccall
                   | call_level_expr fieldaccess
                   | base_expr
 
-funccall    ::=  LParen actuals RParen
+funccall    ::= Ident LParen actuals RParen
+              | Ident LParen RParen
 arrayaccess ::=  LBrack expr RBrack
 fieldaccess ::=  Dot Ident
               |  Arrow Ident
@@ -130,8 +129,11 @@ base_expr ::= LitInt
             | Ident
             | LParen expr RParen
 
-actuals ::= expr actuals_list
-          | ε
+actuals ::= expr
+          | actuals ',' expr
 
-actuals_list ::= Comma expr 
-               | ε
+array_sizes ::= array_sizes LBrack LitInt RBrack
+              | ε
+
+brackets ::= brackets LBrack RBrack 
+           | ε

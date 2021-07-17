@@ -32,6 +32,8 @@ library
       Lexer.Generator.Lexer
       Lexer.Lexeme
       Lexer.Token
+      Parser.Ast
+      Parser.Generated.Parser
       Preprocessor.IncludesGraph
       Preprocessor.IncludesPreprocessor
       Preprocessor.IncludesVisualiser

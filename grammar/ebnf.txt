@@ -6,18 +6,17 @@ construct ::= structdecl
 
 include ::= Include LitString
 
-structdecl ::= structtype LBrace (vardecl)+ RBrace Semi
+structdecl ::= Struct Ident LBrace (vardecl)+ RBrace Semi
 
-vardecl ::= type Ident Semi
-          | type Ident LBrack LitInt RBrack Semi
+vardecl ::= type Ident [LBrack LitInt RBrack]* Semi
 
 funcdecl ::= type Ident LParen formals RParen block
 
-type ::= primitivetype
-       | structtype
+type ::= primitive_type
+       | struct_type
 
-primitivetype ::= (Type BuiltinType) stars
-structtype    ::= Struct Ident stars
+primitive_type ::= (Type BuiltinType) stars
+struct_type    ::= Struct Ident stars
 
 BuiltinType ::= Int
               | Double
@@ -26,20 +25,18 @@ BuiltinType ::= Int
 
 stars ::= (Asterisk)*
 
-formals ::= [ type Ident (Comma type Ident)* ]
+formals ::= [ type Ident [LBrack RBrack]* (Comma type Ident [LBrack RBrack]*)* ]
 
-stmt ::= block
+stmt ::= expr Semi
+       | block
        | While LParen expr RParen stmt
-       | For LParen [expr] Semi expr Semi [expr] RParen stmt
-       | If LParen expr RParen stmt [Else stmt]
+       | For LParen [expr] Semi [expr] Semi [expr] RParen stmt
+       | If LParen expr RParen stmt
+       | If LParen expr RParen stmt Else stmt
        | Return [expr] Semi
-       | expr Assign expr Semi
-       | expr Semi
+       | vardecl
 
-block ::= LBrace (block_element)* RBrace
-
-block_element ::= vardecl
-                | stmt
+block ::= LBrace [stmt]* RBrace
 
 expr ::= LitInt
        | LitString
@@ -56,6 +53,7 @@ expr ::= LitInt
        | deref
        | addressof
        | funccall
+       | assign
        | sizeof
        | typecast
 
@@ -77,12 +75,15 @@ op ::= Less
      | Bar
 
 funccall    ::= Ident LParen actuals RParen
+              | Ident LParen RParen
 arrayaccess ::= expr LBrack expr RBrack
 fieldaccess ::= expr Dot Ident
               | expr Arrow Ident
 deref       ::= Asterisk expr
 addressof   ::= Ampers expr
 sizeof      ::= Sizeof LParen type RParen
-typecast    ::= LParen type RParen expr
+typecast    ::= LParen type [LBrack LitInt RBrack]* RParen expr
+assign      ::= expr Assign expr
 
-actuals ::= [expr (Comma expr)*]
+actuals ::= expr
+          | actuals ',' expr
