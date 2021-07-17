@@ -58,6 +58,7 @@ import Prelude hiding (fst, snd)
   '->'   { L.Arrow }
   sizeof { L.Sizeof }
   include { L.Include }
+  eof { L.Eof }
 
 %right '='
 %left '||'
@@ -75,7 +76,7 @@ import Prelude hiding (fst, snd)
 %nonassoc else
 %%
 
-program: includes construct_list { P.Program (reverse $2) }
+program: includes construct_list eof { P.Program (reverse $2) }
 
 construct_list: 
    {- empty -} { [] }
@@ -176,7 +177,7 @@ brackets: {- empty -} { 0 }
         | brackets '[' ']' { $1 + 1 }
 
 includes: {-empty-} { }
-        | includes include ident { }
+        | includes include string { }
 {
 parseError _ = error "Unable to parse tokens"
 fst (a, _, _) = a
