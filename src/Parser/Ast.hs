@@ -16,7 +16,7 @@ data FuncDecl = Func Type String [Formal] Block deriving (Show)
 
 data VarDecl = Var Type String [Int] deriving (Show)
 
-data Formal = Formal Type Int String deriving (Show)
+data Formal = Formal Type String deriving (Show)
 
 data Block = Block [Statement] deriving (Show)
 
@@ -47,8 +47,8 @@ data Expr
   | FieldAccess Expr String
   | ArrayAccess Expr Expr
   | Indirect Expr String
-  | Sizeof Type
-  | Typecast Type [Int] Expr
+  | Sizeof (Either Type Expr)
+  | Typecast Type Expr
   | Call String [Expr]
   | Assign Expr Expr
   deriving (Show)

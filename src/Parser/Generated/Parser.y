@@ -70,8 +70,9 @@ import Prelude hiding (fst, snd)
 %left '<' '>' '<=' '>='
 %left '+' '-'
 %left '*' '/' '%'
+%right CAST
 %left '!' NEG
-%left '.' '->' '['
+%left '.' '->' '[' 
 %nonassoc NOELSE
 %nonassoc else
 %%
@@ -98,7 +99,7 @@ vardecl_list: vardecl_list vardecl { $2 : $1 }
 
 formals: formal { [$1] }
        | formals ',' formal { $3 : $1 }
-formal: type ident brackets { P.Formal $1 $3 $2 }
+formal: type ident { P.Formal $1 $2 }
 
 block: '{' block_statements '}' { P.Block (reverse $2) }
 
@@ -121,6 +122,7 @@ expr:
   | string                 { P.LitString $1 }
   | null                   { P.Null }
   | ident                  { P.Ident $1 }
+  | expr '=' expr          { P.Assign $1 $3 }
   | expr '||' expr         { P.Binop $1 P.Or $3 }
   | expr '&&' expr         { P.Binop $1 P.And $3 }
   | expr '|' expr          { P.Binop $1 P.BitwiseOr $3 }
@@ -145,11 +147,11 @@ expr:
   | expr '.' ident         { P.FieldAccess $1 $3 }
   | expr '[' expr ']'      { P.ArrayAccess $1 $3 }
   | expr '->' ident        { P.Indirect $1 $3 }
-  | sizeof '(' type ')'    { P.Sizeof $3 }
-  | '(' type array_sizes ')' expr { P.Typecast $2 (reverse $3) $5}
+  | sizeof '(' type ')'    { P.Sizeof (Left $3) }
+  | sizeof '(' expr ')'    { P.Sizeof (Right $3) }
+  | '(' type ')' expr %prec CAST { P.Typecast $2 $4}
   | ident '(' actuals ')'  { P.Call $1 (reverse $3) }
   | ident '(' ')'          { P.Call $1 []}
-  | expr '=' expr          { P.Assign $1 $3 }
 
 opt_expr:  {- empty -} { Nothing }
         | expr { Just $1 }
@@ -172,9 +174,6 @@ array_sizes: {- empty -} { [] }
 
 actuals: expr { [$1] }
        | actuals ',' expr { $3 : $1 }
-
-brackets: {- empty -} { 0 }
-        | brackets '[' ']' { $1 + 1 }
 
 includes: {-empty-} { }
         | includes include string { }

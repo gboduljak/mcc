@@ -21,11 +21,11 @@ vardecl := type Ident array_sizes Semi
 funcdecl ::= type Ident LParen formals RParen block
            | type Ident LParen RParen block
 
-type ::= primitivetype
-       | structtype
+type ::= primitive_type
+       | struct_type
 
-primitivetype ::= (Type BuiltinType) stars
-structtype    ::= Struct Ident stars
+primitive_type ::= (Type BuiltinType) stars
+struct_type    ::= Struct Ident stars
 
 BuiltinType ::= Int
               | Double
@@ -91,11 +91,13 @@ add_level_expr ::= add_level_expr Plus mult_level_expr
 mult_level_expr ::= mult_level_expr Asterisk unary_level_expr
                   | mult_level_expr Div unary_level_expr
                   | mult_level_expr Mod unary_level_expr
+                  | cast_level_expr
+
+cast_level_expr ::= typecast
                   | unary_level_expr
 
 unary_level_expr ::= Minus unary_level_expr
                    | Not unary_level_expr
-                   | typecast
                    | deref
                    | addressof
                    | sizeof
@@ -103,7 +105,7 @@ unary_level_expr ::= Minus unary_level_expr
 
 deref     ::= Asterisk unary_level_expr
 addressof ::= Ampers unary_level_expr
-typecast  ::= LParen type RParen unary_level_expr
+typecast  ::= LParen type RParen cast_level_expr
 sizeof    ::= Sizeof LParen type RParen
             | Sizeof LParen expr RParen
 
