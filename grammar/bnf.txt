@@ -11,11 +11,10 @@ includes_list ::= include includes_list
                 | ε
 include ::= Include LitString
 
-structdecl ::= Struct Ident LBrace vardecl_list_nonempty RBrace Semi
+structdecl ::= Struct Ident LBrace vardecl vardecl_list RBrace Semi
 
 vardecl_list ::= vardecl vardecl_list    
                | ε
-vardecl_list_nonempty ::= vardecl vardecl_list
 
 vardecl := type Ident array_sizes Semi
 
@@ -33,13 +32,10 @@ BuiltinType ::= Int
               | Char
               | Void
 
-stars ::= Asterisk stars
-        | ε
-
 formals ::= formal
           | formals Comma formal
 
-formal ::= type Ident brackets
+formal ::= type Ident
 
 stmt ::= expr Semi
        | block
@@ -103,7 +99,8 @@ fieldaccess ::= expr Dot Ident
 deref       ::= Asterisk expr
 addressof   ::= Ampers expr
 sizeof      ::= Sizeof LParen type RParen
-typecast    ::= LParen type array_sizes RParen expr
+              | Sizeof LParen expr RParen
+typecast    ::= LParen type RParen expr
 assign      ::= expr Assign expr
        
 actuals ::= expr
@@ -112,5 +109,5 @@ actuals ::= expr
 array_sizes ::= array_sizes LBrack LitInt RBrack
               | ε
 
-brackets ::= brackets LBrack RBrack 
-           | ε
+stars ::= Asterisk stars
+        | ε

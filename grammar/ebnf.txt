@@ -25,7 +25,7 @@ BuiltinType ::= Int
 
 stars ::= (Asterisk)*
 
-formals ::= [ type Ident [LBrack RBrack]* (Comma type Ident [LBrack RBrack]*)* ]
+formals ::= [ type Ident (Comma type Ident)* ]
 
 stmt ::= expr Semi
        | block
@@ -82,7 +82,8 @@ fieldaccess ::= expr Dot Ident
 deref       ::= Asterisk expr
 addressof   ::= Ampers expr
 sizeof      ::= Sizeof LParen type RParen
-typecast    ::= LParen type [LBrack LitInt RBrack]* RParen expr
+              | Sizeof LParen expr RParen
+typecast    ::= LParen type RParen expr
 assign      ::= expr Assign expr
 
 actuals ::= expr
