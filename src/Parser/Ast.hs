@@ -100,9 +100,6 @@ data InfixOp
 indentAmount :: Int
 indentAmount = 4
 
-structDecl :: StructDecl
-structDecl = Struct "linked_list_node" [Var (PrimitiveType Int 0) "node" [], Var (PrimitiveType Int 1) "vode" [], Var (PrimitiveType Int 0) "t" [3, 12]]
-
 instance Pretty Formal where
   pretty (Formal typ name) = pretty typ <+> pretty name
 
