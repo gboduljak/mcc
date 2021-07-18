@@ -58,6 +58,12 @@ data Lexeme
 
 data BuiltinType = Int | Double | Char | Void deriving (Show, Eq)
 
+instance Pretty BuiltinType where
+  pretty Int = pretty "int"
+  pretty Double = pretty "double"
+  pretty Char = pretty "char"
+  pretty Void = pretty "void"
+
 instance Pretty Lexeme where
   pretty = \case
     (LitInt x) -> pretty x

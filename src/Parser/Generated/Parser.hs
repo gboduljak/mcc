@@ -1448,9 +1448,9 @@ action_157 _ = happyReduce_22
 happyReduce_1 = happySpecReduce_3  4 happyReduction_1
 happyReduction_1 _
 	(HappyAbsSyn5  happy_var_2)
-	_
+	(HappyAbsSyn24  happy_var_1)
 	 =  HappyAbsSyn4
-		 (P.Program (reverse happy_var_2)
+		 (P.Program (reverse happy_var_1) (reverse happy_var_2)
 	)
 happyReduction_1 _ _ _  = notHappyAtAll 
 
@@ -2093,16 +2093,17 @@ happyReduction_77 _ _ _  = notHappyAtAll
 
 happyReduce_78 = happySpecReduce_0  24 happyReduction_78
 happyReduction_78  =  HappyAbsSyn24
-		 (
+		 ([]
 	)
 
 happyReduce_79 = happySpecReduce_3  24 happyReduction_79
-happyReduction_79 _
+happyReduction_79 (HappyTerminal (L.LitString happy_var_3))
 	_
-	_
+	(HappyAbsSyn24  happy_var_1)
 	 =  HappyAbsSyn24
-		 (
+		 (happy_var_3 : happy_var_1
 	)
+happyReduction_79 _ _ _  = notHappyAtAll 
 
 happyNewToken action sts stk [] =
 	action 72 72 notHappyAtAll (HappyState action) sts stk []

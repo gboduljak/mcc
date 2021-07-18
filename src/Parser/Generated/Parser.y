@@ -77,7 +77,7 @@ import Prelude hiding (fst, snd)
 %nonassoc else
 %%
 
-program: includes construct_list eof { P.Program (reverse $2) }
+program: includes construct_list eof { P.Program (reverse $1) (reverse $2) }
 
 construct_list: 
    {- empty -} { [] }
@@ -175,8 +175,8 @@ array_sizes: {- empty -} { [] }
 actuals: expr { [$1] }
        | actuals ',' expr { $3 : $1 }
 
-includes: {-empty-} { }
-        | includes include string { }
+includes: {-empty-} { [] }
+        | includes include string { $3 : $1 }
 {
 parseError _ = error "Unable to parse tokens"
 fst (a, _, _) = a
