@@ -4,7 +4,6 @@
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeSynonymInstances #-}
-{-# OPTIONS_GHC -Wno-deferred-type-errors #-}
 
 module Parser.AstVisualiser where
 
