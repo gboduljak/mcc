@@ -2101,7 +2101,7 @@ happyReduction_79 (HappyTerminal (L.LitString happy_var_3))
 	_
 	(HappyAbsSyn24  happy_var_1)
 	 =  HappyAbsSyn24
-		 (happy_var_3 : happy_var_1
+		 ((P.Include happy_var_3) : happy_var_1
 	)
 happyReduction_79 _ _ _  = notHappyAtAll 
 
@@ -2194,9 +2194,6 @@ happySeq = happyDontSeq
 
 
 parseError _ = error "Unable to parse tokens"
-fst (a, _, _) = a
-snd (_, b, _) = b
-thd (_, _, c) = c
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 -- $Id: GenericTemplate.hs,v 1.26 2005/01/14 14:47:22 simonmar Exp $
 

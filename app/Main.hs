@@ -9,6 +9,8 @@ import qualified Lexer.Generator.Lexer as GeneratedLex (lex')
 import Lexer.Lexeme
 import Lexer.Token
 import Parser.Ast
+import Parser.AstPrettyPrinter
+import Parser.AstVisualiser
 import qualified Parser.Generated.Parser as GeneratedParser (parse)
 import Preprocessor.IncludesPreprocessor (preprocess)
 import Preprocessor.IncludesVisualiser (draw)
@@ -58,7 +60,9 @@ compileFile file = do
   putStrLn ("Parsing " ++ file ++ " ...")
   let ast = GeneratedParser.parse alexLexemes
   putStrLn ("Parsed " ++ file ++ " ...")
-  prettyPrintAst ast
+  writeFile (file ++ ".ast.raw.txt") (show ast)
+  writeFile (file ++ ".ast.txt") (prettyPrintAst ast)
+  writeFile (file ++ ".ast.dot") (visualiseAst ast)
 
 displayTokens :: [Token] -> IO ()
 displayTokens = displayLexemes . map lexeme
@@ -66,5 +70,5 @@ displayTokens = displayLexemes . map lexeme
 displayLexemes :: [Lexeme] -> IO ()
 displayLexemes = putStrLn . renderString . layoutCompact . concatWith (surround space) . map pretty
 
-prettyPrintAst :: Program -> IO ()
-prettyPrintAst = putStrLn . renderString . layoutSmart defaultLayoutOptions . pretty
+prettyPrintAst :: Program -> String
+prettyPrintAst = renderString . layoutSmart defaultLayoutOptions . pretty

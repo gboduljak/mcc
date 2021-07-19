@@ -10,6 +10,11 @@ import System.Directory (getDirectoryContents)
 import System.FilePath (takeExtension)
 import Test.Hspec (Spec, SpecWith, describe, expectationFailure, it, shouldBe)
 
+miniProgramsSpec :: Spec
+miniProgramsSpec = do
+  describe "lexing mini programs ..." $ do
+    program miniPrograms
+
 sortingSpec :: Spec
 sortingSpec = do
   describe "lexing sorting programs ..." $ do
@@ -58,6 +63,9 @@ lexAdHoc file input = case result of
 
 lexGenerator :: String -> Maybe [Lexeme]
 lexGenerator input = Just (Generator.lex' input)
+
+miniPrograms :: String
+miniPrograms = "./test/tests-cases/mini/"
 
 sortingPrograms :: [String]
 sortingPrograms =

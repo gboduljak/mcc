@@ -176,10 +176,7 @@ actuals: expr { [$1] }
        | actuals ',' expr { $3 : $1 }
 
 includes: {-empty-} { [] }
-        | includes include string { $3 : $1 }
+        | includes include string { (P.Include $3) : $1 }
 {
 parseError _ = error "Unable to parse tokens"
-fst (a, _, _) = a
-snd (_, b, _) = b
-thd (_, _, c) = c
 }

@@ -33,6 +33,8 @@ library
       Lexer.Lexeme
       Lexer.Token
       Parser.Ast
+      Parser.AstPrettyPrinter
+      Parser.AstVisualiser
       Parser.Generated.Parser
       Preprocessor.IncludesGraph
       Preprocessor.IncludesPreprocessor
