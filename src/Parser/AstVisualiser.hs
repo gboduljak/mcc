@@ -57,8 +57,6 @@ visualiseAst ast = intercalate "\n" (output state)
       emit "}"
       reverseOutput
 
-hello = Program [Include "stdio.h"] [FuncDecl (Func (PrimitiveType L.Int 0) "main" [] (Block [Expr (Call "printf" [LitString "Hello, World!"]), Return (Just (LitInt 0))]))]
-
 instance AstDrawable Program where
   visualise (Program includes constructs) = do
     programId <- nextId
