@@ -54,9 +54,9 @@ data Lexeme
   | Eof
   | Include
   | Error
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
-data BuiltinType = Int | Double | Char | Void deriving (Show, Eq)
+data BuiltinType = Int | Double | Char | Void deriving (Show, Eq, Ord)
 
 instance Pretty BuiltinType where
   pretty Int = pretty "int"

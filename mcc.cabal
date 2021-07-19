@@ -35,6 +35,8 @@ library
       Parser.Ast
       Parser.AstPrettyPrinter
       Parser.AstVisualiser
+      Parser.Combinator.Parser
+      Parser.Combinator.TokenStream
       Parser.Generated.Parser
       Preprocessor.IncludesGraph
       Preprocessor.IncludesPreprocessor

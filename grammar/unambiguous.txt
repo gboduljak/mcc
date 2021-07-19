@@ -16,7 +16,7 @@ structdecl ::= Struct Ident LBrace vardecl vardecl_list RBrace Semi
 vardecl_list ::= vardecl vardecl_list    
                | ε
 
-vardecl := type Ident array_sizes Semi
+vardecl ::= type Ident array_sizes Semi
 
 funcdecl ::= type Ident LParen formals RParen block
            | type Ident LParen RParen block

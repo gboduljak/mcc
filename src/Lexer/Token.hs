@@ -12,6 +12,7 @@ data Token = Token
     endPos :: SourcePos,
     length :: Int
   }
+  deriving (Eq, Ord)
 
 instance Show Token where
   show tok = show (lexeme tok)
