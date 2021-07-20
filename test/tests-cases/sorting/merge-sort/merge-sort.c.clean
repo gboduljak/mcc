@@ -11,10 +11,10 @@ n2 = r - q;
 
 
   int *L;
-*L = malloc(sizeof(int) * (n1 + 1));
+L = malloc(sizeof(int) * (n1 + 1));
 
   int *R;
-*R = malloc(sizeof(int) * (n2 + 1));
+R = malloc(sizeof(int) * (n2 + 1));
 
 
   int i;
@@ -75,7 +75,7 @@ i = 0;
 
   scanf("%d", &length);
   int *A;
-*A = malloc(sizeof(int) * length);
+A = malloc(sizeof(int) * length);
 
   for (i = 0; i < length; i=i+1) {
     scanf("%d", &A[i]);

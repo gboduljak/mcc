@@ -12,10 +12,10 @@ prev_power = pow(10, d - 1);
 
 void CountingSortOnDigit(int *A, int d, int length) {
   int *B;
-*B = (int *)malloc(sizeof(int) * length);
+B = (int *)malloc(sizeof(int) * length);
 
   int *C;
-*C = (int *)malloc(sizeof(int) * (10));
+C = (int *)malloc(sizeof(int) * (10));
 
   int i;
 i = 0;

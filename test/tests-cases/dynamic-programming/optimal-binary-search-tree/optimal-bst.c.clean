@@ -7,13 +7,13 @@ optimal_bst_result OptimalBst(double *p, double *q, int n) {
   optimal_bst_result result;
 
   double **e;
-**e = (double **)malloc(sizeof(double *) * (n + 2));
+e = (double **)malloc(sizeof(double *) * (n + 2));
 
   double **w;
-**w = (double **)malloc(sizeof(double *) * (n + 2));
+w = (double **)malloc(sizeof(double *) * (n + 2));
 
   int **root;
-**root = (int **)malloc(sizeof(int *) * (n + 2));
+root = (int **)malloc(sizeof(int *) * (n + 2));
 
   int i, j, l, r;
   double t;
@@ -73,7 +73,7 @@ root_key = root[i][j];
     return;
 
   char *next_level_prefix;
-*next_level_prefix = concat(prefix, is_left ? "│   " : "    ");
+next_level_prefix = concat(prefix, is_left ? "│   " : "    ");
 
 
   PrettyPrint(next_level_prefix, root, i, root_key - 1, 1);

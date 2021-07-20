@@ -14,7 +14,7 @@ i = 0;
   scanf("%d %d", &length, &digits);
 
   int *A;
-*A = malloc(sizeof(int) * length);
+A = malloc(sizeof(int) * length);
 
   for (i = 0; i < length; i=i+1) {
     scanf("%d", &A[i]);

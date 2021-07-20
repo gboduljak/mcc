@@ -17,10 +17,10 @@ matrix_chain_multiply_result MatrixChainOrder(int *p, int length) {
 n = length, i, j, k, l, q;
 
   int **m;
-**m = malloc(sizeof(int *) * (length + 1));
+m = malloc(sizeof(int *) * (length + 1));
 
   int **s;
-**s = malloc(sizeof(int *) * (length + 1));
+s = malloc(sizeof(int *) * (length + 1));
 
 
   for (i = 0; i < (n + 1); i++) {

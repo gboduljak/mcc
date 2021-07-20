@@ -24,7 +24,7 @@ q = -1, i;
 int MemoisedCutRod(int *p, int n) {
   int i;
   int *r;
-*r = malloc(sizeof(int) * (n + 1));
+r = malloc(sizeof(int) * (n + 1));
 
   for (i = 0; i <= n; i++)
     r[i] = -1;
@@ -38,7 +38,7 @@ solution = MemoisedCutRodAux(p, r, n);
 int BottomUpCutRod(int *p, int n) {
   int j, i, q;
   int *r;
-*r = malloc(sizeof(int) * (n + 1));
+r = malloc(sizeof(int) * (n + 1));
 
 
   r[0] = 0;
@@ -56,10 +56,10 @@ cut_rod_result ExtendedBottomUpCutRod(int *p, int n) {
   cut_rod_result result;
   int j, i, q;
   int *r;
-*r = malloc(sizeof(int) * (n + 1));
+r = malloc(sizeof(int) * (n + 1));
 
   int *s;
-*s = malloc(sizeof(int) * (n + 1));
+s = malloc(sizeof(int) * (n + 1));
 
 
   result.r = r;
@@ -82,7 +82,7 @@ cut_rod_result ExtendedBottomUpCutRod(int *p, int n) {
 void PrintCutRodSolution(int *p, int n) {
   cut_rod_result result = ExtendedBottomUpCutRod(p, n);
   int *s;
-*s = result.s;
+s = result.s;
 
   while (n > 0)
     printf("|%d|", s[n]), n -= s[n];

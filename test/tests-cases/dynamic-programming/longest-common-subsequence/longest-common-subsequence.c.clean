@@ -16,10 +16,10 @@ i = 0;
 j = 0;
 
   int **c;
-**c = (int **)malloc(sizeof(int *) * (m + 1));
+c = (int **)malloc(sizeof(int *) * (m + 1));
 
   int **b;
-**b = (int **)malloc(sizeof(int *) * (m + 1));
+b = (int **)malloc(sizeof(int *) * (m + 1));
 
 
   for (i = 0; i <= m; i=i+1) {
@@ -85,10 +85,10 @@ i = 0;
 j = 0;
 
   int **c;
-**c = (int **)malloc(sizeof(int *) * (m + 1));
+c = (int **)malloc(sizeof(int *) * (m + 1));
 
   int **b;
-**b = (int **)malloc(sizeof(int *) * (m + 1));
+b = (int **)malloc(sizeof(int *) * (m + 1));
 
 
   for (i = 0; i <= m; i=i+1) {

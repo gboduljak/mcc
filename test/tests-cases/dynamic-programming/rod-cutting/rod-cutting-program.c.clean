@@ -7,7 +7,7 @@ int main() {
   scanf("%d", &length);
   int i;
   int *p;
-*p = malloc(sizeof(int) * (length + 1));
+p = malloc(sizeof(int) * (length + 1));
 
   for (i = 1; i <= length; i++)
     scanf("%d", &p[i]);
