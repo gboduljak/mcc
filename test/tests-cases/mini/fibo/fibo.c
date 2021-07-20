@@ -19,11 +19,12 @@ int main()
    scanf("%d",&count);
  
    printf("\nFibonacci series:\n");
-  //  for (i = 1; i <= count ; i=i+1 )
-  //  {
-  //     printf("%d\n", fibonacci_series(c));
-  //     c = c+1; 
-  //  }
+   
+   for (i = 1; i <= count ; i=i+1 )
+   {
+      printf("%d\n", fibonacci_series(c));
+      c = c+1; 
+   }
  
    return 0;
 }
