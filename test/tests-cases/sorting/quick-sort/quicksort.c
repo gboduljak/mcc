@@ -1,11 +1,23 @@
 #include "quicksort.h"
 
-int Partition(int *A, int p, int r) {
-  int x = A[r];
-  int i = p - 1;
-  int j = 0;
+void Swap(int *A, int i, int j) {
+  int temp;
+  temp = A[i];
+  A[i] = A[j];
+  A[j] = temp;
+}
 
-  for (j = p; j < r; j=j+1) {
+int Partition(int *A, int p, int r) {
+  int x;
+  x = A[r];
+
+  int i;
+  i = p - 1;
+
+  int j;
+  j = 0;
+
+  for (j = p; j < r; j = j + 1) {
     if (A[j] <= x) {
       i = i + 1;
       Swap(A, i, j);
@@ -21,7 +33,9 @@ void QuickSort(int *A, int p, int r) {
   if (p >= r) {
     return;
   }
-  int q = Partition(A, p, r);
+  int q;
+  q = Partition(A, p, r);
+
   QuickSort(A, p, q - 1);
   QuickSort(A, q + 1, r);
 }
