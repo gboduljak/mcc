@@ -70,6 +70,7 @@ instance Pretty StructDecl where
       <> hardline
       <> rbrace
       <> pretty ";"
+      <> hardline
 
 instance Pretty Block where
   pretty (Block stmts) = (vsep . map pretty) stmts
@@ -99,7 +100,14 @@ instance Pretty Statement where
   pretty (Return expr) = pretty "return" <+> pretty expr <> semi
 
 instance Pretty FuncDecl where
-  pretty (Func rettyp name formals body) =
+  pretty (Func rettyp name formals) =
+    pretty rettyp <+> pretty name
+      <+> tupled (map pretty formals)
+      <> pretty ';'
+      <> hardline
+
+instance Pretty FuncDef where
+  pretty (FuncDef rettyp name formals body) =
     pretty rettyp <+> pretty name
       <+> tupled (map pretty formals)
       <> hardline
@@ -113,6 +121,7 @@ instance Pretty FuncDecl where
 instance Pretty Construct where
   pretty (StructDecl sdecl) = pretty sdecl
   pretty (FuncDecl fdecl) = pretty fdecl
+  pretty (FuncDefn fdefn) = pretty fdefn
   pretty (VarDecl vdecl) = pretty vdecl
 
 instance Pretty Directive where

@@ -5,7 +5,7 @@ struct test
 
 int fibonacci_series(int num)
 {
-   if ( num =+= 0 ) 
+   if ( num == 0 ) 
      return 0;
    else if ( num == 1 )
      return 1; 
@@ -19,14 +19,15 @@ int main()
    int c;
    int i;
    
-   c = + 0;
+   c = 1+ 0;
+   c = NULL;
    printf("Enter number of terms:");
    scanf("%d",&count);
  
    printf("\nFibonacci series:\n");
    for (i = 1; i <= count ; i=i+1 )
    {
-      printf("%d\n", fibonacci_series(c);
+      printf("%d\n", fibonacci_series(c));
       c = c+1; 
    }
  

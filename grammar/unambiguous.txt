@@ -3,6 +3,7 @@ program ::= includes_list construct_list EOF
 construct ::= structdecl
             | vardecl
             | funcdecl
+            | funcdefn
 
 construct_list ::= construct construct_list
                  | ε                   
@@ -18,8 +19,10 @@ vardecl_list ::= vardecl vardecl_list
 
 vardecl ::= type Ident array_sizes Semi
 
-funcdecl ::= type Ident LParen formals RParen block
-           | type Ident LParen RParen block
+funcdecl ::= type Ident LParen formals RParen Semi
+           | type Ident LParen RParen Semi
+
+funcdefn ::= type Ident LParen formals RParen block
 
 type ::= primitive_type
        | struct_type

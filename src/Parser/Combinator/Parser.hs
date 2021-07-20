@@ -47,7 +47,7 @@ constructs = many construct
 
 construct :: Parser Ast.Construct
 construct = do
-  constr <- observing (structDecl <|> funcOrVarDecl)
+  constr <- observing (structDecl <|> funcDefOrFuncDefOrVarDecl)
   case constr of
     (Right decl) -> return decl
     (Left error) -> do
@@ -74,20 +74,26 @@ structDecl = do
       varDecl typ (name nameId)
     name (Ast.Ident x) = x
 
-funcOrVarDecl :: Parser Ast.Construct
-funcOrVarDecl = do
+funcDefOrFuncDefOrVarDecl :: Parser Ast.Construct
+funcDefOrFuncDefOrVarDecl = do
   typ <- type'
   nameId <- ident
-  funcDecl' typ nameId <|> varDecl' typ nameId
+  func' typ (name nameId) <|> varDecl' typ nameId
   where
-    funcDecl' typ nameId = Ast.FuncDecl <$> funcDecl typ (name nameId)
+    func' typ name = do
+      args <- between (expect L.LParen) (expect L.RParen) formals
+      Ast.FuncDecl <$> funcDecl typ name args <|> Ast.FuncDefn <$> funcDefn typ name args
     varDecl' typ nameId = Ast.VarDecl <$> varDecl typ (name nameId)
     name (Ast.Ident x) = x
 
-funcDecl :: Ast.Type -> String -> Parser Ast.FuncDecl
-funcDecl rettyp funcName = do
-  args <- between (expect L.LParen) (expect L.RParen) formals
-  Ast.Func rettyp funcName args <$> block
+funcDecl :: Ast.Type -> String -> [Ast.Formal] -> Parser Ast.FuncDecl
+funcDecl rettyp funcName formals = do
+  expect L.Semi
+  return (Ast.Func rettyp funcName formals)
+
+funcDefn :: Ast.Type -> String -> [Ast.Formal] -> Parser Ast.FuncDef
+funcDefn rettyp funcName formals = do
+  Ast.FuncDef rettyp funcName formals <$> block
 
 varDecl :: Ast.Type -> String -> Parser Ast.VarDecl
 varDecl typ name = do

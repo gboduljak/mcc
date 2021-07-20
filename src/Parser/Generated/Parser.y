@@ -84,13 +84,17 @@ construct_list:
    | construct_list construct { ($2 : $1) }
 
 construct: funcdecl   { P.FuncDecl $1 }
+         | funcdefn   { P.FuncDefn $1 }
          | structdecl { P.StructDecl $1 }
          | vardecl    { P.VarDecl $1 }
          
 structdecl: struct ident '{' vardecl_list '}' ';' { P.Struct $2 (reverse $4) }
 
-funcdecl: type ident '(' ')' block { P.Func $1 $2 [] $5 }
-        | type ident '(' formals ')' block { P.Func $1 $2 (reverse $4) $6 }
+funcdecl: type ident '(' ')' ';' { P.Func $1 $2 [] }
+        | type ident '(' formals ')' ';' { P.Func $1 $2 (reverse $4) }
+
+funcdefn: type ident '(' ')' block { P.FuncDef $1 $2 [] $5 }
+        | type ident '(' formals ')' block { P.FuncDef $1 $2 (reverse $4) $6 }
 
 vardecl: type ident array_sizes ';' { P.Var $1 $2 (reverse $3) }
 

@@ -89,6 +89,7 @@ instance AstDrawable Program where
 
 instance AstDrawable Construct where
   visualise (FuncDecl decl) = visualise decl
+  visualise (FuncDefn defn) = visualise defn
   visualise (StructDecl decl) = visualise decl
   visualise (VarDecl decl) = visualise decl
 
@@ -172,13 +173,13 @@ instance AstDrawable Formal where
       )
     return formalId
 
-instance AstDrawable FuncDecl where
-  visualise decl@(Func rettyp name formals body) = do
+instance AstDrawable FuncDef where
+  visualise decl@(FuncDef rettyp name formals body) = do
     declNodeId <- nextId
     emit
       ( "    node"
           ++ show declNodeId
-          ++ "[label=\"<f0>FuncDecl"
+          ++ "[label=\"<f0>FuncDef"
           ++ " | <f1>"
           ++ display rettyp
           ++ " | <f2> "
@@ -198,6 +199,30 @@ instance AstDrawable FuncDecl where
 
     bodyId <- visualise body
     emit ("    node" ++ show declNodeId ++ ":f4 -> node" ++ show bodyId)
+
+    return declNodeId
+
+instance AstDrawable FuncDecl where
+  visualise decl@(Func rettyp name formals) = do
+    declNodeId <- nextId
+    emit
+      ( "    node"
+          ++ show declNodeId
+          ++ "[label=\"<f0>FuncDecl"
+          ++ " | <f1>"
+          ++ display rettyp
+          ++ " | <f2> "
+          ++ escape name
+          ++ " | <f3> "
+          ++ "formals"
+          ++ "\", shape=record]"
+      )
+    traverse_
+      ( \formal -> do
+          formalId <- visualise formal
+          emit ("    node" ++ show declNodeId ++ ":f3 -> node" ++ show formalId)
+      )
+      formals
 
     return declNodeId
 

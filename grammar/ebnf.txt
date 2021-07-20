@@ -3,6 +3,7 @@ program ::= (include)* (construct)* EOF
 construct ::= structdecl
             | vardecl
             | funcdecl
+            | funcdefn
 
 include ::= Include LitString
 
@@ -10,7 +11,10 @@ structdecl ::= Struct Ident LBrace (vardecl)+ RBrace Semi
 
 vardecl ::= type Ident [LBrack LitInt RBrack]* Semi
 
-funcdecl ::= type Ident LParen formals RParen block
+funcdecl ::= type Ident LParen formals RParen Semi
+           | type Ident LParen RParen Semi
+
+funcdefn ::= type Ident LParen formals RParen block
 
 type ::= primitive_type
        | struct_type

@@ -30,13 +30,16 @@ data Directive = Include String deriving (Show)
 data Construct
   = StructDecl StructDecl
   | FuncDecl FuncDecl
+  | FuncDefn FuncDef
   | VarDecl VarDecl
   | ConstructError
   deriving (Show)
 
 data StructDecl = Struct String [VarDecl] deriving (Show)
 
-data FuncDecl = Func Type String [Formal] Block deriving (Show)
+data FuncDecl = Func Type String [Formal] deriving (Show)
+
+data FuncDef = FuncDef Type String [Formal] Block deriving (Show)
 
 data VarDecl = Var Type String [Int] deriving (Show)
 
