@@ -11,6 +11,7 @@ import Lexer.Token
 import Parser.Ast
 import Parser.AstPrettyPrinter
 import Parser.AstVisualiser
+import qualified Parser.Combinator.Parser as CombinatorParser (parse)
 import qualified Parser.Generated.Parser as GeneratedParser (parse)
 import Preprocessor.IncludesPreprocessor (preprocess)
 import Preprocessor.IncludesVisualiser (draw)
@@ -47,22 +48,34 @@ compileFile file = do
   let combResult = CombinatorLex.lex' file input
   case combResult of
     (Left errors) -> (putStrLn . errorBundlePretty) errors
-    (Right tokens) -> displayTokens tokens
-  putStrLn "AdHoc Lexer..."
-  let adHocResult = AdHocLex.lex' file input
-  case adHocResult of
-    (Left errors) -> print errors
-    (Right tokens) -> displayTokens tokens
-  putStrLn "Generated Lexer..."
-  let alexLexemes = GeneratedLex.lex' input
-  displayLexemes alexLexemes
+    (Right tokens) -> do
+      displayTokens tokens
+      putStrLn "Combinator Parser..."
+      putStrLn ("Parsing " ++ file ++ " using combinator ...")
+      putStrLn ("Parsed " ++ file ++ " ...")
+      case CombinatorParser.parse input tokens of
+        (Left error) -> putStrLn (errorBundlePretty error)
+        (Right ast) -> do
+          writeFile (file ++ ".ast.comb.raw.txt") (show ast)
+          writeFile (file ++ ".ast.comb.txt") (prettyPrintAst ast)
+          writeFile (file ++ ".ast.comb.dot") (visualiseAst ast)
 
-  putStrLn ("Parsing " ++ file ++ " ...")
-  let ast = GeneratedParser.parse alexLexemes
-  putStrLn ("Parsed " ++ file ++ " ...")
-  writeFile (file ++ ".ast.raw.txt") (show ast)
-  writeFile (file ++ ".ast.txt") (prettyPrintAst ast)
-  writeFile (file ++ ".ast.dot") (visualiseAst ast)
+-- putStrLn "AdHoc Lexer..."
+-- let adHocResult = AdHocLex.lex' file input
+-- case adHocResult of
+--   (Left errors) -> print errors
+--   (Right tokens) -> displayTokens tokens
+-- putStrLn "Generated Lexer..."
+-- let alexLexemes = GeneratedLex.lex' input
+-- displayLexemes alexLexemes
+
+-- putStrLn "Generated Parser..."
+-- putStrLn ("Parsing " ++ file ++ " using generator ...")
+-- let ast = GeneratedParser.parse alexLexemes
+-- putStrLn ("Parsed " ++ file ++ " ...")
+-- writeFile (file ++ ".ast.gen.raw.txt") (show ast)
+-- writeFile (file ++ ".ast.gen.txt") (prettyPrintAst ast)
+-- writeFile (file ++ ".ast.gen.dot") (visualiseAst ast)
 
 displayTokens :: [Token] -> IO ()
 displayTokens = displayLexemes . map lexeme

@@ -95,6 +95,8 @@ mult_level_expr ::= mult_level_expr Asterisk unary_level_expr
 
 cast_level_expr ::= typecast
                   | unary_level_expr
+                  
+typecast  ::= LParen type RParen cast_level_expr
 
 unary_level_expr ::= Minus unary_level_expr
                    | Not unary_level_expr
@@ -105,20 +107,22 @@ unary_level_expr ::= Minus unary_level_expr
 
 deref     ::= Asterisk unary_level_expr
 addressof ::= Ampers unary_level_expr
-typecast  ::= LParen type RParen cast_level_expr
 sizeof    ::= Sizeof LParen type RParen
             | Sizeof LParen expr RParen
 
-call_level_expr ::= call_level_expr funccall
-                  | call_level_expr arrayaccess
+call_level_expr ::= call_level_expr arrayaccess
                   | call_level_expr fieldaccess
-                  | base_expr
+                  | call_level_expr indirect
+                  | base_expr_or_call
+
+base_expr_or_call ::= base_expr
+                  | funccall
 
 funccall    ::= Ident LParen actuals RParen
               | Ident LParen RParen
 arrayaccess ::=  LBrack expr RBrack
 fieldaccess ::=  Dot Ident
-              |  Arrow Ident
+indirect    ::=  Arrow Ident
 
 base_expr ::= LitInt
             | LitString

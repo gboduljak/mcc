@@ -58,6 +58,10 @@ data Lexeme
 
 data BuiltinType = Int | Double | Char | Void deriving (Show, Eq, Ord)
 
+isType :: Lexeme -> Bool
+isType (Type _) = True
+isType _ = False
+
 instance Pretty BuiltinType where
   pretty Int = pretty "int"
   pretty Double = pretty "double"

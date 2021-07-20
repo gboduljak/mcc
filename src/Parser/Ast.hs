@@ -23,7 +23,7 @@ import Data.Text.Prettyprint.Doc
   )
 import Lexer.Lexeme (BuiltinType (Int))
 
-data Program = Program [Directive] [Construct] deriving (Show)
+data Program = Program [Directive] [Construct] | Error deriving (Show)
 
 data Directive = Include String deriving (Show)
 
@@ -31,6 +31,7 @@ data Construct
   = StructDecl StructDecl
   | FuncDecl FuncDecl
   | VarDecl VarDecl
+  | ConstructError
   deriving (Show)
 
 data StructDecl = Struct String [VarDecl] deriving (Show)
@@ -51,6 +52,7 @@ data Statement
   | For (Maybe Expr) (Maybe Expr) (Maybe Expr) Statement
   | If Expr Statement (Maybe Statement)
   | Return (Maybe Expr)
+  | StatementError
   deriving (Show)
 
 data Expr
@@ -73,6 +75,7 @@ data Expr
   | Typecast Type Expr
   | Call String [Expr]
   | Assign Expr Expr
+  | ExprError
   deriving (Show)
 
 data Type

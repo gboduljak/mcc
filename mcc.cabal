@@ -35,6 +35,7 @@ library
       Parser.Ast
       Parser.AstPrettyPrinter
       Parser.AstVisualiser
+      Parser.Combinator.Chains
       Parser.Combinator.Parser
       Parser.Combinator.TokenStream
       Parser.Generated.Parser
