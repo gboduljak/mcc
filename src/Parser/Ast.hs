@@ -23,7 +23,7 @@ import Data.Text.Prettyprint.Doc
   )
 import Lexer.Lexeme (BuiltinType (Int))
 
-data Program = Program [Directive] [Construct] | Error deriving (Show, Eq)
+data Program = Program [Directive] [Construct] deriving (Show, Eq)
 
 data Directive = Include String deriving (Show, Eq)
 

@@ -46,19 +46,11 @@ constructs :: Parser [Ast.Construct]
 constructs = many construct
 
 construct :: Parser Ast.Construct
-construct = do
-  constr <- observing (structDecl <|> funcDefOrFuncDefOrVarDecl)
-  case constr of
-    (Right decl) -> return decl
-    (Left error) -> do
-      registerParseError error
-      takeWhile1P (Just "") (not . followsConstruct . lexeme)
-      return (Ast.ConstructError)
-  where
-    followsConstruct L.Struct = True
-    followsConstruct (L.Type _) = True
-    followsConstruct (L.Eof) = True
-    followsConstruct _ = False
+construct =
+  recoverUsingFollows
+    (structDecl <|> funcDefOrFuncDefOrVarDecl)
+    followsConstruct
+    (return Ast.ConstructError)
 
 structDecl :: Parser Ast.Construct
 structDecl = do
@@ -102,22 +94,18 @@ varDecl typ name = do
   return (Ast.Var typ name sizes)
 
 statement :: Parser Ast.Statement
-statement = do
-  stmt <-
-    observing
-      ( exprStmt <|> varDeclStmt
-          <|> blockStmt
-          <|> returnStmt
-          <|> while
-          <|> for
-          <|> if'
-          <|> varDeclStmt
-      )
-  case stmt of
-    (Right s) -> return s
-    (Left error) -> do
-      registerParseError error
-      recoverUsingFollow
+statement =
+  recoverUsingFollows
+    ( exprStmt <|> varDeclStmt
+        <|> blockStmt
+        <|> returnStmt
+        <|> while
+        <|> for
+        <|> if'
+        <|> varDeclStmt
+    )
+    followsStatement
+    (return Ast.StatementError)
   where
     exprStmt = do exp <- expr; expect Semi; return (Ast.Expr exp)
     blockStmt = do Ast.BlockStatement <$> block
@@ -128,76 +116,29 @@ statement = do
       Ast.VarDeclStatement <$> varDecl typ (varName nameId)
       where
         varName (Ast.Ident name) = name
-    recoverUsingFollow = do
-      takeWhile1P (Just "") (not . followsStatement . lexeme)
-      return Ast.StatementError
-
-    followsStatement L.Else = True
-    followsStatement L.While = True
-    followsStatement L.For = True
-    followsStatement L.If = True
-    followsStatement L.Return = True
-    followsStatement L.LBrace = True
-    followsStatement L.Struct = True
-    followsStatement (L.Type _) = True
-    followsStatement L.LParen = True
-    followsStatement L.Minus = True
-    followsStatement L.Not = True
-    followsStatement L.Asterisk = True
-    followsStatement L.Ampers = True
-    followsStatement L.Sizeof = True
-    followsStatement (L.LitInt _) = True
-    followsStatement (L.LitDouble _) = True
-    followsStatement (L.LitChar _) = True
-    followsStatement (L.LitString _) = True
-    followsStatement (L.LitNull) = True
-    followsStatement (L.Ident _) = True
-    followsStatement (L.RBrace) = True
-    followsStatement _ = False
-
--- statement :: Parser Ast.Statement
--- statement =
---   exprStmt
---     <|> blockStmt
---     <|> returnStmt
---     <|> while
---     <|> for
---     <|> if'
---     <|> varDeclStmt
---   where
---     exprStmt = do exp <- expr; expect Semi; return (Ast.Expr exp)
---     blockStmt = do Ast.BlockStatement <$> block
---     returnStmt = do ret <- return'; expect Semi; return ret
---     varDeclStmt = do
---       typ <- type'
---       nameId <- ident
---       Ast.VarDeclStatement <$> varDecl typ (varName nameId)
---       where
---         varName (Ast.Ident name) = name
---     followStatement = [Semi]
 
 while :: Parser Ast.Statement
 while = do
   expect L.While
-  cond <- between (expect L.LParen) (expect L.RParen) recoverExp
+  cond <- between (expect L.LParen) (expect L.RParen) expr'
   Ast.While cond <$> statement
 
 for :: Parser Ast.Statement
 for = do
   expect L.For
   expect L.LParen
-  init <- optional recoverExp
+  init <- optional expr'
   expect L.Semi
-  cond <- optional recoverExp
+  cond <- optional expr'
   expect L.Semi
-  incr <- optional recoverExp
+  incr <- optional expr'
   expect L.RParen
   Ast.For init cond incr <$> statement
 
 if' :: Parser Ast.Statement
 if' = do
   expect L.If
-  cond <- between (expect L.LParen) (expect L.RParen) recoverExp
+  cond <- between (expect L.LParen) (expect L.RParen) expr'
   conseq <- statement
   alt <- optional (expect L.Else >> statement)
   return (Ast.If cond conseq alt)
@@ -211,24 +152,10 @@ block :: Parser Ast.Block
 block = do
   expect L.LBrace
   stmts <- manyTill statement (expect L.RBrace)
-
   return (Ast.Block stmts)
 
-recoverExp :: Parser Ast.Expr
-recoverExp = do
-  exp <- observing assignLevelExpr
-  case exp of
-    (Right exp) -> return exp
-    (Left error) -> do
-      registerParseError error
-      takeWhile1P (Just "") (not . followsExp . lexeme)
-      return Ast.ExprError
-  where
-    followsExp L.Semi = True
-    followsExp L.RParen = True
-    followsExp L.RBrack = True
-    followsExp L.Comma = True
-    followsExp _ = False
+expr' :: Parser Ast.Expr
+expr' = recoverUsingFollows expr followsExp (return Ast.ExprError)
 
 expr :: Parser Ast.Expr
 expr = assignLevelExpr
@@ -468,7 +395,7 @@ formal = do
     formalName (Ast.Ident x) = x
 
 actuals :: Parser [Ast.Expr]
-actuals = sepBy recoverExp (expect L.Comma)
+actuals = sepBy expr' (expect L.Comma)
 
 arraySizes :: Parser [Int]
 arraySizes = many (between (expect L.LBrack) (expect L.RBrack) size)
@@ -490,6 +417,53 @@ include = do
 
 includes :: Parser [Ast.Directive]
 includes = many include
+
+recoverUsingFollows :: Parser a -> (L.Lexeme -> Bool) -> Parser a -> Parser a
+recoverUsingFollows p f e = do
+  withRecovery
+    ( \error -> do
+        registerParseError error
+        takeWhile1P (Just "") (not . f . lexeme)
+        e
+    )
+    p
+
+followsExp :: Lexeme -> Bool
+followsExp L.Semi = True
+followsExp L.RParen = True
+followsExp L.RBrack = True
+followsExp L.Comma = True
+followsExp _ = False
+
+followsStatement :: Lexeme -> Bool
+followsStatement L.Else = True
+followsStatement L.While = True
+followsStatement L.For = True
+followsStatement L.If = True
+followsStatement L.Return = True
+followsStatement L.LBrace = True
+followsStatement L.Struct = True
+followsStatement (L.Type _) = True
+followsStatement L.LParen = True
+followsStatement L.Minus = True
+followsStatement L.Not = True
+followsStatement L.Asterisk = True
+followsStatement L.Ampers = True
+followsStatement L.Sizeof = True
+followsStatement (L.LitInt _) = True
+followsStatement (L.LitDouble _) = True
+followsStatement (L.LitChar _) = True
+followsStatement (L.LitString _) = True
+followsStatement (L.LitNull) = True
+followsStatement (L.Ident _) = True
+followsStatement (L.RBrace) = True
+followsStatement _ = False
+
+followsConstruct :: Lexeme -> Bool
+followsConstruct L.Struct = True
+followsConstruct (L.Type _) = True
+followsConstruct (L.Eof) = True
+followsConstruct _ = False
 
 -- streamify :: String -> TokenStream
 -- streamify input = case lex' "" input of
