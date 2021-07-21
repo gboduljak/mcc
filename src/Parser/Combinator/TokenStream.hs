@@ -5,12 +5,14 @@
 
 module Parser.Combinator.TokenStream where
 
+import Data.List
 import qualified Data.List as DL
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Proxy
 import qualified Data.Set as Set
 import Data.Void
+import qualified Lexer.Lexeme as L
 import qualified Lexer.Token as T
 import Text.Megaparsec
 
@@ -51,9 +53,9 @@ instance Stream TokenStream where
 
 instance VisualStream TokenStream where
   showTokens Proxy =
-    unwords
+    intercalate ", "
       . NE.toList
-      . fmap (show . T.lexeme)
+      . fmap (L.display . T.lexeme)
   tokensLength Proxy xs = sum (T.length <$> xs)
 
 instance TraversableStream TokenStream where

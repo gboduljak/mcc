@@ -37,7 +37,10 @@ library
       Parser.AstVisualiser
       Parser.Combinator.Chains
       Parser.Combinator.Parser
+      Parser.Combinator.Predictive
+      Parser.Combinator.Prim
       Parser.Combinator.TokenStream
+      Parser.Combinator.When
       Parser.Generated.Parser
       Preprocessor.IncludesGraph
       Preprocessor.IncludesPreprocessor

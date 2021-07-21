@@ -4,9 +4,10 @@
 module Lexer.Lexeme where
 
 import Data.Char (chr)
-import Data.Text
+import Data.Text hiding (any)
 import Data.Text.Prettyprint.Doc
 import Data.Void
+import Prelude hiding (any)
 
 data Lexeme
   = LitInt Int
@@ -61,6 +62,41 @@ data BuiltinType = Int | Double | Char | Void deriving (Show, Eq, Ord)
 isType :: Lexeme -> Bool
 isType (Type _) = True
 isType _ = False
+
+isLitInt :: Lexeme -> Bool
+isLitInt (LitInt _) = True
+isLitInt _ = False
+
+isLitDouble :: Lexeme -> Bool
+isLitDouble (LitDouble _) = True
+isLitDouble _ = False
+
+isLitChar :: Lexeme -> Bool
+isLitChar (LitChar _) = True
+isLitChar _ = False
+
+isLitString :: Lexeme -> Bool
+isLitString (LitString _) = True
+isLitString _ = False
+
+isLit :: Lexeme -> Bool
+isLit lexeme =
+  or
+    [ isLitInt lexeme,
+      isLitDouble lexeme,
+      isLitChar lexeme,
+      isLitString lexeme
+    ]
+
+isIdent :: Lexeme -> Bool
+isIdent (Ident _) = True
+isIdent _ = False
+
+any :: [Lexeme] -> Lexeme -> Bool
+any opts = (`elem` opts)
+
+is :: Lexeme -> Lexeme -> Bool
+is lexeme = any [lexeme]
 
 instance Pretty BuiltinType where
   pretty Int = pretty "int"
@@ -118,3 +154,106 @@ instance Pretty Lexeme where
     Include -> pretty "#include"
     Error -> pretty "error"
     Eof -> emptyDoc
+
+display :: Lexeme -> String
+display = \case
+  (LitInt x) -> "integer literal"
+  (LitDouble x) -> "double literal"
+  (LitChar c) -> "char literal"
+  (LitString s) -> "string literal"
+  LitNull -> "NULL"
+  (Ident x) -> "identifier"
+  (Type Int) -> "int"
+  (Type Double) -> "double"
+  (Type Char) -> "char"
+  (Type Void) -> "void"
+  Struct -> "struct"
+  Return -> "return"
+  Assign -> "\'=\'"
+  Comma -> "\',\'"
+  Semi -> "\';\'"
+  LParen -> "\'(\'"
+  RParen -> "\')\'"
+  LBrace -> "\'{\'"
+  RBrace -> "\'}\'"
+  LBrack -> "\'[\'"
+  RBrack -> "\']\'"
+  For -> "for"
+  While -> "while"
+  If -> "if"
+  Else -> "else"
+  Plus -> "+"
+  Minus -> "\'-\'"
+  Asterisk -> "\'*\'"
+  Div -> "\'/\'"
+  Mod -> "\'%\'"
+  Equal -> "\'==\'"
+  Neq -> "\'!=\'"
+  Less -> "\'<\'"
+  Leq -> "\'<=\'"
+  Greater -> "\'>\'"
+  Geq -> "\'>=\'"
+  And -> "\'&&\'"
+  Or -> "\'||\'"
+  Not -> "\'!\'"
+  Ampers -> "\'&\'"
+  Bar -> "\'|\'"
+  Caret -> "\'^\'"
+  Dot -> "\'.\'"
+  Arrow -> "\'->\'"
+  Sizeof -> "sizeof"
+  Include -> "#include"
+  Error -> "error"
+  Eof -> "EOF"
+
+defaultLexemes :: [Lexeme]
+defaultLexemes =
+  [ LitInt 0,
+    LitDouble 0,
+    LitString "",
+    LitChar ' ',
+    LitNull,
+    Ident "",
+    Type Int,
+    Type Double,
+    Type Char,
+    Type Void,
+    Struct,
+    Return,
+    Assign,
+    Comma,
+    Semi,
+    LParen,
+    RParen,
+    LBrace,
+    RBrace,
+    LBrack,
+    RBrack,
+    For,
+    While,
+    If,
+    Else,
+    Plus,
+    Minus,
+    Asterisk,
+    Div,
+    Mod,
+    Equal,
+    Neq,
+    Less,
+    Leq,
+    Greater,
+    Geq,
+    And,
+    Or,
+    Not,
+    Ampers,
+    Bar,
+    Caret,
+    Dot,
+    Arrow,
+    Sizeof,
+    Eof,
+    Include,
+    Error
+  ]

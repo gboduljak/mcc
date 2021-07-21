@@ -5,6 +5,7 @@ import qualified Lexer.Combinator.Lexer as CombinatorLexer (lex')
 import Lexer.Lexeme (Lexeme)
 import Lexer.Token (Token (lexeme))
 import qualified Parser.Combinator.Parser as CombinatorParser (parse)
+import qualified Parser.Combinator.Predictive as PredictiveCombinatorParser (parse)
 import qualified Parser.Generated.Parser as GeneratedParser (parse)
 import System.Directory (getDirectoryContents)
 import System.FilePath (takeExtension)
@@ -47,9 +48,15 @@ parseProgram folder = it ("parses program " ++ folder ++ "...") $ do
         let tokens = lexCombinator file input
         let astParsedWithGen = GeneratedParser.parse (map lexeme tokens)
         let parsedWithComb = CombinatorParser.parse input tokens
+        let parsedWithPredComb = PredictiveCombinatorParser.parse input tokens
         case parsedWithComb of
-          (Left error) -> expectationFailure ("expected successfull parse of " ++ file)
-          (Right ast) -> astParsedWithGen `shouldBe` ast
+          (Left error) -> expectationFailure ("with combinator, expected successfull parse of " ++ file)
+          (Right ast) -> do
+            ast `shouldBe` astParsedWithGen
+        case parsedWithPredComb of
+          (Left error) -> expectationFailure ("with predictive combinator, expected successfull parse of " ++ file)
+          (Right ast) -> do
+            ast `shouldBe` astParsedWithGen
     )
     filesToLex
 

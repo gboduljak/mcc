@@ -12,6 +12,7 @@ import Parser.Ast
 import Parser.AstPrettyPrinter
 import Parser.AstVisualiser
 import qualified Parser.Combinator.Parser as CombinatorParser (parse)
+import qualified Parser.Combinator.Predictive as PredictiveCombinatorParser (parse)
 import qualified Parser.Generated.Parser as GeneratedParser (parse)
 import Preprocessor.IncludesPreprocessor (preprocess)
 import Preprocessor.IncludesVisualiser (draw)
@@ -53,7 +54,7 @@ compileFile file = do
       putStrLn "Combinator Parser..."
       putStrLn ("Parsing " ++ file ++ " using combinator ...")
       putStrLn ("Parsed " ++ file ++ " ...")
-      case CombinatorParser.parse input tokens of
+      case PredictiveCombinatorParser.parse input tokens of
         (Left error) -> putStrLn (errorBundlePretty error)
         (Right ast) -> do
           writeFile (file ++ ".ast.comb.raw.txt") (show ast)

@@ -1,6 +1,7 @@
+{-# LANGUAGE LambdaCase #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
-module Parser.Combinator.Parser where
+module Parser.Combinator.Predictive where
 
 import qualified Data.List as DL
 import Data.List.NonEmpty (NonEmpty (..), nonEmpty)
@@ -16,8 +17,47 @@ import Parser.AstVisualiser (visualiseAst)
 import Parser.Combinator.Chains
 import Parser.Combinator.Prim
 import Parser.Combinator.TokenStream
+import Parser.Combinator.When
 import Text.Megaparsec
 import Prelude hiding (negate)
+
+predChainr1 :: Parser a -> [(L.Lexeme -> Bool, Parser (a -> a -> a))] -> Parser a
+predChainr1 p opts = do left <- p; rest left
+  where
+    rest left =
+      look >>= \lexeme -> do
+        let ops = [op | (pred, op) <- opts, pred lexeme]
+        case ops of
+          [] -> return left
+          op : _ -> do
+            f <- op
+            right <- predChainr1 p opts
+            rest (f left right)
+
+predChainl1 :: Parser a -> [(L.Lexeme -> Bool, Parser (a -> a -> a))] -> Parser a
+predChainl1 p opts = do left <- p; rest left
+  where
+    rest left =
+      look >>= \lexeme -> do
+        let ops = [op | (pred, op) <- opts, pred lexeme]
+        case ops of
+          [] -> return left
+          op : _ -> do
+            f <- op
+            right <- p
+            rest (f left right)
+
+predChainl1' :: Parser a -> [(L.Lexeme -> Bool, Parser (a -> a))] -> Parser a
+predChainl1' p opts = do left <- p; rest left
+  where
+    rest left =
+      look >>= \lexeme -> do
+        let ops = [op | (pred, op) <- opts, pred lexeme]
+        case ops of
+          [] -> return left
+          op : _ -> do
+            f <- op
+            rest (f left)
 
 program :: Parser Ast.Program
 program = do
@@ -33,7 +73,11 @@ constructs = many construct
 construct :: Parser Ast.Construct
 construct =
   recoverUsingFollows
-    (structDecl <|> funcDefOrFuncDefOrVarDecl)
+    ( (>?)
+        [ (L.is Struct, structDecl),
+          (const True, funcDefOrFuncDefOrVarDecl)
+        ]
+    )
     followsConstruct
     (return Ast.ConstructError)
 
@@ -55,12 +99,19 @@ funcDefOrFuncDefOrVarDecl :: Parser Ast.Construct
 funcDefOrFuncDefOrVarDecl = do
   typ <- type'
   nameId <- ident
-  func' typ (name nameId) <|> varDecl' typ nameId
+  (>?)
+    [ (L.is LParen, func' typ (name nameId)),
+      (L.is LBrack, varDecl' typ (name nameId)),
+      (L.is Semi, varDecl' typ (name nameId))
+    ]
   where
     func' typ name = do
       args <- between (expect L.LParen) (expect L.RParen) formals
-      Ast.FuncDecl <$> funcDecl typ name args <|> Ast.FuncDefn <$> funcDefn typ name args
-    varDecl' typ nameId = Ast.VarDecl <$> varDecl typ (name nameId)
+      (>?)
+        [ (L.is Semi, Ast.FuncDecl <$> funcDecl typ name args),
+          (L.is LBrace, Ast.FuncDefn <$> funcDefn typ name args)
+        ]
+    varDecl' typ name = Ast.VarDecl <$> varDecl typ name
     name (Ast.Ident x) = x
 
 funcDecl :: Ast.Type -> String -> [Ast.Formal] -> Parser Ast.FuncDecl
@@ -81,12 +132,15 @@ varDecl typ name = do
 statement :: Parser Ast.Statement
 statement =
   recoverUsingFollows
-    ( exprStmt <|> varDeclStmt
-        <|> blockStmt
-        <|> returnStmt
-        <|> while
-        <|> for
-        <|> if'
+    ( (>?)
+        [ (L.is L.While, while),
+          (L.is L.For, for),
+          (L.is L.If, if'),
+          (L.is L.Return, returnStmt),
+          (L.is L.LBrace, blockStmt),
+          (L.isType, varDeclStmt),
+          (startsExpr, exprStmt)
+        ]
     )
     followsStatement
     (return Ast.StatementError)
@@ -104,33 +158,37 @@ statement =
 while :: Parser Ast.Statement
 while = do
   expect L.While
-  cond <- between (expect L.LParen) (expect L.RParen) expr'
+  cond <- between (expect L.LParen) (expect L.RParen) expr
   Ast.While cond <$> statement
 
 for :: Parser Ast.Statement
 for = do
   expect L.For
   expect L.LParen
-  init <- optional expr'
+  init <- optionalExpr
   expect L.Semi
-  cond <- optional expr'
+  cond <- optionalExpr
   expect L.Semi
-  incr <- optional expr'
+  incr <- optionalExpr
   expect L.RParen
   Ast.For init cond incr <$> statement
 
 if' :: Parser Ast.Statement
 if' = do
   expect L.If
-  cond <- between (expect L.LParen) (expect L.RParen) expr'
+  cond <- between (expect L.LParen) (expect L.RParen) expr
   conseq <- statement
-  alt <- optional (expect L.Else >> statement)
-  return (Ast.If cond conseq alt)
+  Ast.If cond conseq <$> alt
+  where
+    alt =
+      look >>= \case
+        L.Else -> expect L.Else >> Just <$> statement
+        _ -> return Nothing
 
 return' :: Parser Ast.Statement
 return' = do
   expect L.Return
-  Ast.Return <$> optional expr
+  Ast.Return <$> optionalExpr
 
 block :: Parser Ast.Block
 block = do
@@ -138,49 +196,69 @@ block = do
   stmts <- manyTill statement (expect L.RBrace)
   return (Ast.Block stmts)
 
-expr' :: Parser Ast.Expr
-expr' = recoverUsingFollows expr followsExp (return Ast.ExprError)
+recoverUsingFollows :: Parser a -> (L.Lexeme -> Bool) -> Parser a -> Parser a
+recoverUsingFollows p f e = do
+  withRecovery
+    ( \error -> do
+        registerParseError error
+        takeWhile1P (Just "") (not . f . lexeme)
+        e
+    )
+    p
+
+startsExpr :: Lexeme -> Bool
+startsExpr lexeme =
+  L.any [LParen, Minus, Not, Asterisk, Ampers, Sizeof, LitNull] lexeme
+    || L.isLit lexeme
+    || L.isIdent lexeme
+
+optionalExpr :: Parser (Maybe Ast.Expr)
+optionalExpr =
+  (>?)
+    [ (startsExpr, Just <$> expr),
+      (const True, return Nothing)
+    ]
 
 expr :: Parser Ast.Expr
-expr = assignLevelExpr
+expr = recoverUsingFollows assignLevelExpr followsExp (return Ast.ExprError)
 
 assignLevelExpr :: Parser Ast.Expr
-assignLevelExpr = logicalOrLevelExpr `chainr1` binop assign
+assignLevelExpr = logicalOrLevelExpr `predChainr1` binop assign
   where
     assign = [(L.Assign, Ast.Assign)]
 
 logicalOrLevelExpr :: Parser Ast.Expr
-logicalOrLevelExpr = logicalAndLevelExpr `chainl1` binop logicorop
+logicalOrLevelExpr = logicalAndLevelExpr `predChainl1` binop logicorop
   where
     logicorop =
       [(L.Or, (`Ast.Binop` Ast.Or))]
 
 logicalAndLevelExpr :: Parser Ast.Expr
-logicalAndLevelExpr = bitwiseOrLevelExpr `chainl1` binop logicandop
+logicalAndLevelExpr = bitwiseOrLevelExpr `predChainl1` binop logicandop
   where
     logicandop =
       [(L.And, (`Ast.Binop` Ast.And))]
 
 bitwiseOrLevelExpr :: Parser Ast.Expr
-bitwiseOrLevelExpr = xorLevelExpr `chainl1` binop bitorop
+bitwiseOrLevelExpr = xorLevelExpr `predChainl1` binop bitorop
   where
     bitorop =
       [(L.Bar, (`Ast.Binop` Ast.BitwiseOr))]
 
 xorLevelExpr :: Parser Ast.Expr
-xorLevelExpr = bitwiseAndLevelExpr `chainl1` binop bitxorop
+xorLevelExpr = bitwiseAndLevelExpr `predChainl1` binop bitxorop
   where
     bitxorop =
       [(L.Caret, (`Ast.Binop` Ast.BitwiseXor))]
 
 bitwiseAndLevelExpr :: Parser Ast.Expr
-bitwiseAndLevelExpr = eqLevelExpr `chainl1` binop bitandop
+bitwiseAndLevelExpr = eqLevelExpr `predChainl1` binop bitandop
   where
     bitandop =
       [(L.Ampers, (`Ast.Binop` Ast.BitwiseAnd))]
 
 eqLevelExpr :: Parser Ast.Expr
-eqLevelExpr = compLevelExpr `chainl1` binop eqops
+eqLevelExpr = compLevelExpr `predChainl1` binop eqops
   where
     eqops =
       [ (L.Equal, (`Ast.Binop` Ast.Equal)),
@@ -188,7 +266,7 @@ eqLevelExpr = compLevelExpr `chainl1` binop eqops
       ]
 
 compLevelExpr :: Parser Ast.Expr
-compLevelExpr = addLevelExpr `chainl1` binop compops
+compLevelExpr = addLevelExpr `predChainl1` binop compops
   where
     compops =
       [ (L.Less, (`Ast.Binop` Ast.Less)),
@@ -198,7 +276,7 @@ compLevelExpr = addLevelExpr `chainl1` binop compops
       ]
 
 addLevelExpr :: Parser Ast.Expr
-addLevelExpr = multLevelExpr `chainl1` binop addops
+addLevelExpr = multLevelExpr `predChainl1` binop addops
   where
     addops =
       [ (L.Plus, (`Ast.Binop` Ast.Add)),
@@ -206,7 +284,7 @@ addLevelExpr = multLevelExpr `chainl1` binop addops
       ]
 
 multLevelExpr :: Parser Ast.Expr
-multLevelExpr = castLevelExpr `chainl1` binop mulops
+multLevelExpr = castLevelExpr `predChainl1` binop mulops
   where
     mulops =
       [ (L.Asterisk, (`Ast.Binop` Ast.Mul)),
@@ -214,32 +292,56 @@ multLevelExpr = castLevelExpr `chainl1` binop mulops
         (L.Mod, (`Ast.Binop` Ast.Mod))
       ]
 
-binop :: [(L.Lexeme, Ast.Expr -> Ast.Expr -> Ast.Expr)] -> Parser (Ast.Expr -> Ast.Expr -> Ast.Expr)
-binop ops = choice [expect op >> return action | (op, action) <- ops]
+binop ::
+  [(L.Lexeme, Ast.Expr -> Ast.Expr -> Ast.Expr)] ->
+  [(L.Lexeme -> Bool, Parser (Ast.Expr -> Ast.Expr -> Ast.Expr))]
+binop ops = [(L.is op, expect op >> return action) | (op, action) <- ops]
 
 castLevelExpr :: Parser Ast.Expr
-castLevelExpr = try typecast <|> unaryLevelExpr
+castLevelExpr =
+  (>?)
+    [ (L.is LParen, castTypeOrExp),
+      (const True, unaryLevelExpr)
+    ]
 
-typecast :: Parser Ast.Expr
-typecast = do
-  typ <- between (expect L.LParen) (expect L.RParen) type'
-  Ast.Typecast typ <$> castLevelExpr
+castTypeOrExp :: Parser Ast.Expr
+castTypeOrExp = do
+  expect L.LParen
+  (>?)
+    [ (L.isType, castType),
+      (const True, nestedExpr)
+    ]
+  where
+    castType = do
+      typ <- type'
+      expect L.RParen
+      Ast.Typecast typ <$> castLevelExpr
+    nestedExpr = do
+      exp <- expr
+      expect L.RParen
+      return (Ast.Nested exp)
 
 unaryLevelExpr :: Parser Ast.Expr
 unaryLevelExpr =
-  negative
-    <|> negate
-    <|> deref
-    <|> addressOf
-    <|> sizeof
-    <|> callLevelExpr
+  (>?)
+    [ (L.is Minus, negative),
+      (L.is Not, negate),
+      (L.is Asterisk, deref),
+      (L.is Ampers, addressOf),
+      (L.is Sizeof, sizeof),
+      (const True, callLevelExpr)
+    ]
 
 sizeof :: Parser Ast.Expr
 sizeof = do
   expect L.Sizeof
   between (expect L.LParen) (expect L.RParen) sizeOfArg
   where
-    sizeOfArg = (do Ast.Sizeof . Left <$> type') <|> (do Ast.Sizeof . Right <$> expr)
+    sizeOfArg =
+      (>?)
+        [ (L.isType, Ast.Sizeof . Left <$> type'),
+          (const True, Ast.Sizeof . Right <$> expr)
+        ]
 
 addressOf :: Parser Ast.Expr
 addressOf = do
@@ -262,18 +364,21 @@ negate = do
   Ast.Negate <$> unaryLevelExpr
 
 callLevelExpr :: Parser Ast.Expr
-callLevelExpr =
+callLevelExpr = do
   baseExprOrFuncCall
-    `chainl1'` ( fieldAccess
-                   <|> arrayAccess
-                   <|> indirect
-               )
+    `predChainl1'` [ (L.is Dot, fieldAccess),
+                     (L.is LBrack, arrayAccess),
+                     (L.is Arrow, indirect)
+                   ]
 
 baseExprOrFuncCall :: Parser Ast.Expr
 baseExprOrFuncCall = do
   base <- baseExpr
   case base of
-    (Ast.Ident func) -> funcCall func <|> return base
+    (Ast.Ident func) -> do
+      look >>= \case
+        LParen -> funcCall func
+        _ -> return base
     _ -> return base
 
 funcCall :: String -> Parser Ast.Expr
@@ -306,19 +411,43 @@ fieldAccess = do
 
 baseExpr :: Parser Ast.Expr
 baseExpr =
-  litInt
-    <|> litDouble
-    <|> litString
-    <|> litChar
-    <|> litNull
-    <|> ident
-    <|> Ast.Nested <$> between (expect L.LParen) (expect L.RParen) expr
+  (>?)
+    [ (isLitInt, litInt),
+      (isLitDouble, litDouble),
+      (isLitString, litString),
+      (isLitChar, litChar),
+      (L.is L.LitNull, litNull),
+      (L.isIdent, ident),
+      (L.is L.LParen, Ast.Nested <$> between (expect L.LParen) (expect L.RParen) expr)
+    ]
 
 ident :: Parser Ast.Expr
 ident = token test Set.empty <?> "identifier"
   where
     test (Token (L.Ident name) _ _ _) = Just (Ast.Ident name)
     test _ = Nothing
+
+type' :: Parser Ast.Type
+type' =
+  (>?)
+    [ (L.isType, primitiveType),
+      (L.is Struct, structType)
+    ]
+
+primitiveType :: Parser Ast.Type
+primitiveType = do
+  typeTok <- satisfy (L.isType . T.lexeme)
+  Ast.PrimitiveType (getType typeTok) <$> stars
+  where
+    getType (T.Token (Type typ) _ _ _) = typ
+
+structType :: Parser Ast.Type
+structType = do
+  expect L.Struct
+  id <- ident
+  Ast.StructType (structName id) <$> stars
+  where
+    structName (Ast.Ident x) = x
 
 end :: Parser L.Lexeme
 end = expect L.Eof
@@ -350,36 +479,10 @@ litChar = token test Set.empty <?> "char literal"
 litNull :: Parser Ast.Expr
 litNull = expect L.LitNull >> return Ast.Null <?> "NULL"
 
-type' :: Parser Ast.Type
-type' = primitiveType <|> structType
-
-primitiveType :: Parser Ast.Type
-primitiveType = do
-  typeTok <- satisfy (L.isType . T.lexeme)
-  Ast.PrimitiveType (getType typeTok) <$> stars
-  where
-    getType (T.Token (Type typ) _ _ _) = typ
-
-structType :: Parser Ast.Type
-structType = do
-  expect L.Struct
-  id <- ident
-  Ast.StructType (structName id) <$> stars
-  where
-    structName (Ast.Ident x) = x
-
-formals :: Parser [Ast.Formal]
-formals = sepBy formal (expect Comma)
-
-formal :: Parser Ast.Formal
-formal = do
-  typ <- type'
-  Ast.Formal typ . formalName <$> ident
-  where
-    formalName (Ast.Ident x) = x
-
-actuals :: Parser [Ast.Expr]
-actuals = sepBy expr' (expect L.Comma)
+stars :: Parser Int
+stars = do
+  xs <- many (expect L.Asterisk)
+  return (Prelude.length xs)
 
 arraySizes :: Parser [Int]
 arraySizes = many (between (expect L.LBrack) (expect L.RBrack) size)
@@ -387,10 +490,18 @@ arraySizes = many (between (expect L.LBrack) (expect L.RBrack) size)
     size = getSize <$> litInt
     getSize (Ast.LitInt x) = x
 
-stars :: Parser Int
-stars = do
-  xs <- many (expect L.Asterisk)
-  return (Prelude.length xs)
+actuals :: Parser [Ast.Expr]
+actuals = sepBy expr (expect L.Comma)
+
+formals :: Parser [Ast.Formal]
+formals = sepBy formal (expect L.Comma)
+
+formal :: Parser Ast.Formal
+formal = do
+  typ <- type'
+  Ast.Formal typ . formalName <$> ident
+  where
+    formalName (Ast.Ident x) = x
 
 include :: Parser Ast.Directive
 include = do
@@ -401,16 +512,6 @@ include = do
 
 includes :: Parser [Ast.Directive]
 includes = many include
-
-recoverUsingFollows :: Parser a -> (L.Lexeme -> Bool) -> Parser a -> Parser a
-recoverUsingFollows p f e = do
-  withRecovery
-    ( \error -> do
-        registerParseError error
-        takeWhile1P (Just "") (not . f . lexeme)
-        e
-    )
-    p
 
 followsExp :: Lexeme -> Bool
 followsExp L.Semi = True
@@ -454,6 +555,12 @@ followsConstruct _ = False
 --   (Left error) -> TokenStream {tokenStreamInput = input, unTokenStream = []}
 --   (Right stream) -> TokenStream {tokenStreamInput = input, unTokenStream = stream}
 
+-- parse'' input tokens = Text.Megaparsec.parse baseExpr "" $ stream input tokens
+
+-- parseComb input = case Text.Megaparsec.parse statement "" (streamify input) of
+--   (Left error) -> putStrLn (errorBundlePretty error)
+--   (Right ast) -> putStrLn $ visualiseAst ast
+
 stream :: String -> [T.Token] -> TokenStream
 stream input tokens =
   TokenStream
@@ -463,8 +570,3 @@ stream input tokens =
 
 parse :: String -> [T.Token] -> Either (ParseErrorBundle TokenStream Void) Ast.Program
 parse input tokens = Text.Megaparsec.parse program "" $ stream input tokens
-
--- parse' :: String -> [T.Token] -> IO ()
--- parse' input tokens = case Parser.Combinator.Parser.parse input tokens of
---   (Left error) -> putStrLn (errorBundlePretty error)
---   (Right ast) -> putStrLn $ visualiseAst ast
