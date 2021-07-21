@@ -23,6 +23,7 @@ funcdecl ::= type Ident LParen formals RParen Semi
            | type Ident LParen RParen Semi
 
 funcdefn ::= type Ident LParen formals RParen block
+           | type Ident LParen RParen block
 
 type ::= primitive_type
        | struct_type
@@ -35,8 +36,8 @@ BuiltinType ::= Int
               | Char
               | Void
 
-formals ::= formal
-          | formals Comma formal
+formals ::= formals Comma formal
+          | formal
 
 formal ::= type Ident
 
@@ -123,9 +124,9 @@ base_expr_or_call ::= base_expr
 
 funccall    ::= Ident LParen actuals RParen
               | Ident LParen RParen
-arrayaccess ::=  LBrack expr RBrack
-fieldaccess ::=  Dot Ident
-indirect    ::=  Arrow Ident
+arrayaccess ::= LBrack expr RBrack
+fieldaccess ::= Dot Ident
+indirect    ::= Arrow Ident
 
 base_expr ::= LitInt
             | LitString

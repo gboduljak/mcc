@@ -1,0 +1,414 @@
+{
+    "program": [
+        null,
+        "Include",
+        "Struct",
+        "Int",
+        "Double",
+        "Char",
+        "Void"
+    ],
+    "construct": [
+        "Struct",
+        "Int",
+        "Double",
+        "Char",
+        "Void"
+    ],
+    "construct_list": [
+        null,
+        "Struct",
+        "Int",
+        "Double",
+        "Char",
+        "Void"
+    ],
+    "includes_list": [
+        null,
+        "Include"
+    ],
+    "include": [
+        "Include"
+    ],
+    "structdecl": [
+        "Struct"
+    ],
+    "vardecl_list": [
+        null,
+        "Struct",
+        "Int",
+        "Double",
+        "Char",
+        "Void"
+    ],
+    "vardecl": [
+        "Struct",
+        "Int",
+        "Double",
+        "Char",
+        "Void"
+    ],
+    "funcdecl": [
+        "Struct",
+        "Int",
+        "Double",
+        "Char",
+        "Void"
+    ],
+    "funcdefn": [
+        "Struct",
+        "Int",
+        "Double",
+        "Char",
+        "Void"
+    ],
+    "type": [
+        "Struct",
+        "Int",
+        "Double",
+        "Char",
+        "Void"
+    ],
+    "primitive_type": [
+        "Int",
+        "Double",
+        "Char",
+        "Void"
+    ],
+    "struct_type": [
+        "Struct"
+    ],
+    "BuiltinType": [
+        "Int",
+        "Double",
+        "Char",
+        "Void"
+    ],
+    "formals": [
+        "Struct",
+        "Int",
+        "Double",
+        "Char",
+        "Void"
+    ],
+    "formal": [
+        "Struct",
+        "Int",
+        "Double",
+        "Char",
+        "Void"
+    ],
+    "stmt": [
+        "While",
+        "For",
+        "If",
+        "Return",
+        "LBrace",
+        "Struct",
+        "Int",
+        "Double",
+        "Char",
+        "Void",
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "block": [
+        "LBrace"
+    ],
+    "block_stmts": [
+        "While",
+        "For",
+        "If",
+        "Return",
+        null,
+        "LBrace",
+        "Struct",
+        "Int",
+        "Double",
+        "Char",
+        "Void",
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "opt_expr": [
+        null,
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "expr": [
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "assignment_level_expr": [
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "logical_or_level_expr": [
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "logical_and_level_expr": [
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "bitwise_or_level_expr": [
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "xor_level_expr": [
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "bitwise_and_level_expr": [
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "eq_level_expr": [
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "comp_level_expr": [
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "add_level_expr": [
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "mult_level_expr": [
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "cast_level_expr": [
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "unary_level_expr": [
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident",
+        "LParen"
+    ],
+    "deref": [
+        "Asterisk"
+    ],
+    "addressof": [
+        "Ampers"
+    ],
+    "typecast": [
+        "LParen"
+    ],
+    "sizeof": [
+        "Sizeof"
+    ],
+    "call_level_expr": [
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident",
+        "LParen"
+    ],
+    "funccall": [
+        "Ident"
+    ],
+    "arrayaccess": [
+        "LBrack"
+    ],
+    "fieldaccess": [
+        "Dot"
+    ],
+    "indirect": [
+        "Arrow"
+    ],
+    "base_expr": [
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident",
+        "LParen"
+    ],
+    "actuals": [
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "array_sizes": [
+        null,
+        "LBrack"
+    ],
+    "stars": [
+        "Asterisk",
+        null
+    ]
+}

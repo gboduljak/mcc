@@ -1,0 +1,772 @@
+[
+    {
+        "left": "program",
+        "right": [
+            "includes_list",
+            "construct_list"
+        ]
+    },
+    {
+        "left": "construct",
+        "right": [
+            "structdecl"
+        ]
+    },
+    {
+        "left": "construct",
+        "right": [
+            "vardecl"
+        ]
+    },
+    {
+        "left": "construct",
+        "right": [
+            "funcdecl"
+        ]
+    },
+    {
+        "left": "construct",
+        "right": [
+            "funcdefn"
+        ]
+    },
+    {
+        "left": "construct_list",
+        "right": [
+            "construct",
+            "construct_list"
+        ]
+    },
+    {
+        "left": "construct_list",
+        "right": [
+            null
+        ]
+    },
+    {
+        "left": "includes_list",
+        "right": [
+            "include",
+            "includes_list"
+        ]
+    },
+    {
+        "left": "includes_list",
+        "right": [
+            null
+        ]
+    },
+    {
+        "left": "include",
+        "right": [
+            "Include",
+            "LitString"
+        ]
+    },
+    {
+        "left": "structdecl",
+        "right": [
+            "Struct",
+            "Ident",
+            "LBrace",
+            "vardecl",
+            "vardecl_list",
+            "RBrace",
+            "Semi"
+        ]
+    },
+    {
+        "left": "vardecl_list",
+        "right": [
+            "vardecl",
+            "vardecl_list"
+        ]
+    },
+    {
+        "left": "vardecl_list",
+        "right": [
+            null
+        ]
+    },
+    {
+        "left": "vardecl",
+        "right": [
+            "type",
+            "Ident",
+            "array_sizes",
+            "Semi"
+        ]
+    },
+    {
+        "left": "funcdecl",
+        "right": [
+            "type",
+            "Ident",
+            "LParen",
+            "formals",
+            "RParen",
+            "Semi"
+        ]
+    },
+    {
+        "left": "funcdecl",
+        "right": [
+            "type",
+            "Ident",
+            "LParen",
+            "RParen",
+            "Semi"
+        ]
+    },
+    {
+        "left": "funcdefn",
+        "right": [
+            "type",
+            "Ident",
+            "LParen",
+            "formals",
+            "RParen",
+            "block"
+        ]
+    },
+    {
+        "left": "funcdefn",
+        "right": [
+            "type",
+            "Ident",
+            "LParen",
+            "RParen",
+            "block"
+        ]
+    },
+    {
+        "left": "type",
+        "right": [
+            "primitive_type"
+        ]
+    },
+    {
+        "left": "type",
+        "right": [
+            "struct_type"
+        ]
+    },
+    {
+        "left": "primitive_type",
+        "right": [
+            "BuiltinType",
+            "stars"
+        ]
+    },
+    {
+        "left": "struct_type",
+        "right": [
+            "Struct",
+            "Ident",
+            "stars"
+        ]
+    },
+    {
+        "left": "BuiltinType",
+        "right": [
+            "Int"
+        ]
+    },
+    {
+        "left": "BuiltinType",
+        "right": [
+            "Double"
+        ]
+    },
+    {
+        "left": "BuiltinType",
+        "right": [
+            "Char"
+        ]
+    },
+    {
+        "left": "BuiltinType",
+        "right": [
+            "Void"
+        ]
+    },
+    {
+        "left": "formals",
+        "right": [
+            "formal"
+        ]
+    },
+    {
+        "left": "formals",
+        "right": [
+            "formals",
+            "Comma",
+            "formal"
+        ]
+    },
+    {
+        "left": "formal",
+        "right": [
+            "type",
+            "Ident"
+        ]
+    },
+    {
+        "left": "stmt",
+        "right": [
+            "expr",
+            "Semi"
+        ]
+    },
+    {
+        "left": "stmt",
+        "right": [
+            "block"
+        ]
+    },
+    {
+        "left": "stmt",
+        "right": [
+            "While",
+            "LParen",
+            "expr",
+            "RParen",
+            "stmt"
+        ]
+    },
+    {
+        "left": "stmt",
+        "right": [
+            "For",
+            "LParen",
+            "opt_expr",
+            "Semi",
+            "opt_expr",
+            "Semi",
+            "opt_expr",
+            "RParen",
+            "stmt"
+        ]
+    },
+    {
+        "left": "stmt",
+        "right": [
+            "If",
+            "LParen",
+            "expr",
+            "RParen",
+            "stmt"
+        ]
+    },
+    {
+        "left": "stmt",
+        "right": [
+            "If",
+            "LParen",
+            "expr",
+            "RParen",
+            "stmt",
+            "Else",
+            "stmt"
+        ]
+    },
+    {
+        "left": "stmt",
+        "right": [
+            "Return",
+            "opt_expr",
+            "Semi"
+        ]
+    },
+    {
+        "left": "stmt",
+        "right": [
+            "vardecl"
+        ]
+    },
+    {
+        "left": "block",
+        "right": [
+            "LBrace",
+            "block_stmts",
+            "RBrace"
+        ]
+    },
+    {
+        "left": "block_stmts",
+        "right": [
+            "stmt",
+            "block_stmts"
+        ]
+    },
+    {
+        "left": "block_stmts",
+        "right": [
+            null
+        ]
+    },
+    {
+        "left": "opt_expr",
+        "right": [
+            "expr"
+        ]
+    },
+    {
+        "left": "opt_expr",
+        "right": [
+            null
+        ]
+    },
+    {
+        "left": "expr",
+        "right": [
+            "assignment_level_expr"
+        ]
+    },
+    {
+        "left": "assignment_level_expr",
+        "right": [
+            "logical_or_level_expr",
+            "Assign",
+            "assignment_level_expr"
+        ]
+    },
+    {
+        "left": "assignment_level_expr",
+        "right": [
+            "logical_or_level_expr"
+        ]
+    },
+    {
+        "left": "logical_or_level_expr",
+        "right": [
+            "logical_or_level_expr",
+            "Or",
+            "logical_and_level_expr"
+        ]
+    },
+    {
+        "left": "logical_or_level_expr",
+        "right": [
+            "logical_and_level_expr"
+        ]
+    },
+    {
+        "left": "logical_and_level_expr",
+        "right": [
+            "logical_and_level_expr",
+            "And",
+            "bitwise_or_level_expr"
+        ]
+    },
+    {
+        "left": "logical_and_level_expr",
+        "right": [
+            "bitwise_or_level_expr"
+        ]
+    },
+    {
+        "left": "bitwise_or_level_expr",
+        "right": [
+            "bitwise_or_level_expr",
+            "Bar",
+            "xor_level_expr"
+        ]
+    },
+    {
+        "left": "bitwise_or_level_expr",
+        "right": [
+            "xor_level_expr"
+        ]
+    },
+    {
+        "left": "xor_level_expr",
+        "right": [
+            "xor_level_expr",
+            "Caret",
+            "bitwise_and_level_expr"
+        ]
+    },
+    {
+        "left": "xor_level_expr",
+        "right": [
+            "bitwise_and_level_expr"
+        ]
+    },
+    {
+        "left": "bitwise_and_level_expr",
+        "right": [
+            "bitwise_and_level_expr",
+            "Ampers",
+            "eq_level_expr"
+        ]
+    },
+    {
+        "left": "bitwise_and_level_expr",
+        "right": [
+            "eq_level_expr"
+        ]
+    },
+    {
+        "left": "eq_level_expr",
+        "right": [
+            "eq_level_expr",
+            "Eq",
+            "comp_level_expr"
+        ]
+    },
+    {
+        "left": "eq_level_expr",
+        "right": [
+            "eq_level_expr",
+            "Neq",
+            "comp_level_expr"
+        ]
+    },
+    {
+        "left": "eq_level_expr",
+        "right": [
+            "comp_level_expr"
+        ]
+    },
+    {
+        "left": "comp_level_expr",
+        "right": [
+            "comp_level_expr",
+            "Less",
+            "add_level_expr"
+        ]
+    },
+    {
+        "left": "comp_level_expr",
+        "right": [
+            "comp_level_expr",
+            "Leq",
+            "add_level_expr"
+        ]
+    },
+    {
+        "left": "comp_level_expr",
+        "right": [
+            "comp_level_expr",
+            "Greater",
+            "add_level_expr"
+        ]
+    },
+    {
+        "left": "comp_level_expr",
+        "right": [
+            "comp_level_expr",
+            "Geq",
+            "add_level_expr"
+        ]
+    },
+    {
+        "left": "comp_level_expr",
+        "right": [
+            "add_level_expr"
+        ]
+    },
+    {
+        "left": "add_level_expr",
+        "right": [
+            "add_level_expr",
+            "Plus",
+            "mult_level_expr"
+        ]
+    },
+    {
+        "left": "add_level_expr",
+        "right": [
+            "add_level_expr",
+            "Minus",
+            "mult_level_expr"
+        ]
+    },
+    {
+        "left": "add_level_expr",
+        "right": [
+            "mult_level_expr"
+        ]
+    },
+    {
+        "left": "mult_level_expr",
+        "right": [
+            "mult_level_expr",
+            "Asterisk",
+            "unary_level_expr"
+        ]
+    },
+    {
+        "left": "mult_level_expr",
+        "right": [
+            "mult_level_expr",
+            "Div",
+            "unary_level_expr"
+        ]
+    },
+    {
+        "left": "mult_level_expr",
+        "right": [
+            "mult_level_expr",
+            "Mod",
+            "unary_level_expr"
+        ]
+    },
+    {
+        "left": "mult_level_expr",
+        "right": [
+            "cast_level_expr"
+        ]
+    },
+    {
+        "left": "cast_level_expr",
+        "right": [
+            "typecast"
+        ]
+    },
+    {
+        "left": "cast_level_expr",
+        "right": [
+            "unary_level_expr"
+        ]
+    },
+    {
+        "left": "unary_level_expr",
+        "right": [
+            "Minus",
+            "unary_level_expr"
+        ]
+    },
+    {
+        "left": "unary_level_expr",
+        "right": [
+            "Not",
+            "unary_level_expr"
+        ]
+    },
+    {
+        "left": "unary_level_expr",
+        "right": [
+            "deref"
+        ]
+    },
+    {
+        "left": "unary_level_expr",
+        "right": [
+            "addressof"
+        ]
+    },
+    {
+        "left": "unary_level_expr",
+        "right": [
+            "sizeof"
+        ]
+    },
+    {
+        "left": "unary_level_expr",
+        "right": [
+            "call_level_expr"
+        ]
+    },
+    {
+        "left": "deref",
+        "right": [
+            "Asterisk",
+            "unary_level_expr"
+        ]
+    },
+    {
+        "left": "addressof",
+        "right": [
+            "Ampers",
+            "unary_level_expr"
+        ]
+    },
+    {
+        "left": "typecast",
+        "right": [
+            "LParen",
+            "type",
+            "RParen",
+            "cast_level_expr"
+        ]
+    },
+    {
+        "left": "sizeof",
+        "right": [
+            "Sizeof",
+            "LParen",
+            "type",
+            "RParen"
+        ]
+    },
+    {
+        "left": "sizeof",
+        "right": [
+            "Sizeof",
+            "LParen",
+            "expr",
+            "RParen"
+        ]
+    },
+    {
+        "left": "call_level_expr",
+        "right": [
+            "call_level_expr",
+            "funccall"
+        ]
+    },
+    {
+        "left": "call_level_expr",
+        "right": [
+            "call_level_expr",
+            "arrayaccess"
+        ]
+    },
+    {
+        "left": "call_level_expr",
+        "right": [
+            "call_level_expr",
+            "fieldaccess"
+        ]
+    },
+    {
+        "left": "call_level_expr",
+        "right": [
+            "call_level_expr",
+            "indirect"
+        ]
+    },
+    {
+        "left": "call_level_expr",
+        "right": [
+            "base_expr"
+        ]
+    },
+    {
+        "left": "funccall",
+        "right": [
+            "Ident",
+            "LParen",
+            "actuals",
+            "RParen"
+        ]
+    },
+    {
+        "left": "funccall",
+        "right": [
+            "Ident",
+            "LParen",
+            "RParen"
+        ]
+    },
+    {
+        "left": "arrayaccess",
+        "right": [
+            "LBrack",
+            "expr",
+            "RBrack"
+        ]
+    },
+    {
+        "left": "fieldaccess",
+        "right": [
+            "Dot",
+            "Ident"
+        ]
+    },
+    {
+        "left": "indirect",
+        "right": [
+            "Arrow",
+            "Ident"
+        ]
+    },
+    {
+        "left": "base_expr",
+        "right": [
+            "LitInt"
+        ]
+    },
+    {
+        "left": "base_expr",
+        "right": [
+            "LitString"
+        ]
+    },
+    {
+        "left": "base_expr",
+        "right": [
+            "LitChar"
+        ]
+    },
+    {
+        "left": "base_expr",
+        "right": [
+            "LitDouble"
+        ]
+    },
+    {
+        "left": "base_expr",
+        "right": [
+            "LitNull"
+        ]
+    },
+    {
+        "left": "base_expr",
+        "right": [
+            "Ident"
+        ]
+    },
+    {
+        "left": "base_expr",
+        "right": [
+            "LParen",
+            "expr",
+            "RParen"
+        ]
+    },
+    {
+        "left": "actuals",
+        "right": [
+            "expr"
+        ]
+    },
+    {
+        "left": "actuals",
+        "right": [
+            "actuals",
+            "Comma",
+            "expr"
+        ]
+    },
+    {
+        "left": "array_sizes",
+        "right": [
+            "array_sizes",
+            "LBrack",
+            "LitInt",
+            "RBrack"
+        ]
+    },
+    {
+        "left": "array_sizes",
+        "right": [
+            null
+        ]
+    },
+    {
+        "left": "stars",
+        "right": [
+            "Asterisk",
+            "stars"
+        ]
+    },
+    {
+        "left": "stars",
+        "right": [
+            null
+        ]
+    }
+]

@@ -54,6 +54,7 @@ expr ::= LitInt
        | Not expr
        | arrayaccess
        | fieldaccess
+       | indirect
        | deref
        | addressof
        | funccall
@@ -82,7 +83,7 @@ funccall    ::= Ident LParen actuals RParen
               | Ident LParen RParen
 arrayaccess ::= expr LBrack expr RBrack
 fieldaccess ::= expr Dot Ident
-              | expr Arrow Ident
+indirect    ::= expr Arrow Ident
 deref       ::= Asterisk expr
 addressof   ::= Ampers expr
 sizeof      ::= Sizeof LParen type RParen

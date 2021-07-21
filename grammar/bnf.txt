@@ -23,6 +23,7 @@ funcdecl ::= type Ident LParen formals RParen Semi
            | type Ident LParen RParen Semi
 
 funcdefn ::= type Ident LParen formals RParen block
+           | type Ident LParen RParen block
 
 type ::= primitive_type
        | struct_type
@@ -35,8 +36,8 @@ BuiltinType ::= Int
               | Char
               | Void
 
-formals ::= formal
-          | formals Comma formal
+formals ::= formals Comma formal
+          | formal
 
 formal ::= type Ident
 
@@ -69,6 +70,7 @@ expr ::= LitInt
        | Not expr
        | arrayaccess
        | fieldaccess
+       | indirect
        | deref
        | addressof
        | funccall
@@ -98,7 +100,7 @@ funccall    ::= Ident LParen actuals RParen
 
 arrayaccess ::= expr LBrack expr RBrack
 fieldaccess ::= expr Dot Ident
-              | expr Arrow Ident
+indirect    ::= expr Arrow Ident
 deref       ::= Asterisk expr
 addressof   ::= Ampers expr
 sizeof      ::= Sizeof LParen type RParen

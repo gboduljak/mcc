@@ -1,0 +1,144 @@
+program ::= includes_list construct_list
+
+construct ::= structdecl
+construct ::= vardecl
+construct ::= funcdecl
+construct ::= funcdefn
+
+construct_list ::= construct construct_list
+construct_list ::= epsilon                   
+
+includes_list ::= include includes_list
+includes_list ::= epsilon
+
+include ::= Include LitString
+
+structdecl ::= Struct Ident LBrace vardecl vardecl_list RBrace Semi
+
+vardecl_list ::= vardecl vardecl_list    
+vardecl_list ::= epsilon
+
+vardecl ::= type Ident array_sizes Semi
+
+funcdecl ::= type Ident LParen formals RParen Semi
+funcdecl ::= type Ident LParen RParen Semi
+
+funcdefn ::= type Ident LParen formals RParen block
+funcdefn ::= type Ident LParen RParen block
+
+type ::= primitive_type
+type ::= struct_type
+
+primitive_type ::= BuiltinType stars
+struct_type    ::= Struct Ident stars
+
+BuiltinType ::= Int
+BuiltinType ::= Double
+BuiltinType ::= Char
+BuiltinType ::= Void
+
+formals ::= formal
+formals ::= formals Comma formal
+
+formal ::= type Ident
+
+stmt ::= expr Semi
+stmt ::= block
+stmt ::= While LParen expr RParen stmt
+stmt ::= For LParen opt_expr Semi opt_expr Semi opt_expr RParen stmt
+stmt ::= If LParen expr RParen stmt
+stmt ::= If LParen expr RParen stmt Else stmt
+stmt ::= Return opt_expr Semi
+stmt ::= vardecl
+
+block ::= LBrace block_stmts RBrace
+
+block_stmts ::= stmt block_stmts
+block_stmts ::= epsilon
+
+opt_expr ::= expr
+opt_expr ::= epsilon
+
+expr ::= assignment_level_expr
+
+assignment_level_expr ::= logical_or_level_expr Assign assignment_level_expr
+assignment_level_expr ::= logical_or_level_expr
+
+logical_or_level_expr ::= logical_or_level_expr Or logical_and_level_expr
+logical_or_level_expr::= logical_and_level_expr
+
+logical_and_level_expr ::= logical_and_level_expr And bitwise_or_level_expr
+logical_and_level_expr ::= bitwise_or_level_expr
+
+bitwise_or_level_expr ::= bitwise_or_level_expr Bar xor_level_expr
+bitwise_or_level_expr ::= xor_level_expr
+
+xor_level_expr ::= xor_level_expr Caret bitwise_and_level_expr
+xor_level_expr ::= bitwise_and_level_expr
+
+bitwise_and_level_expr ::= bitwise_and_level_expr Ampers eq_level_expr
+bitwise_and_level_expr ::= eq_level_expr
+
+eq_level_expr ::= eq_level_expr Eq comp_level_expr
+eq_level_expr ::= eq_level_expr Neq comp_level_expr
+eq_level_expr ::= comp_level_expr
+
+comp_level_expr ::= comp_level_expr Less add_level_expr
+comp_level_expr ::= comp_level_expr Leq add_level_expr
+comp_level_expr ::= comp_level_expr Greater add_level_expr
+comp_level_expr ::= comp_level_expr Geq add_level_expr
+comp_level_expr ::= add_level_expr
+
+add_level_expr ::= add_level_expr Plus mult_level_expr
+add_level_expr ::= add_level_expr Minus mult_level_expr
+add_level_expr ::= mult_level_expr
+
+mult_level_expr ::= mult_level_expr Asterisk unary_level_expr
+mult_level_expr ::= mult_level_expr Div unary_level_expr
+mult_level_expr ::= mult_level_expr Mod unary_level_expr
+mult_level_expr ::= cast_level_expr
+
+cast_level_expr ::= typecast
+cast_level_expr ::= unary_level_expr
+
+unary_level_expr ::= Minus unary_level_expr
+unary_level_expr ::= Not unary_level_expr
+unary_level_expr ::= deref
+unary_level_expr ::= addressof
+unary_level_expr ::= sizeof
+unary_level_expr ::= call_level_expr
+
+deref     ::= Asterisk unary_level_expr
+addressof ::= Ampers unary_level_expr
+typecast  ::= LParen type RParen cast_level_expr
+sizeof    ::= Sizeof LParen type RParen
+sizeof    ::= Sizeof LParen expr RParen
+
+call_level_expr ::= call_level_expr funccall
+call_level_expr ::= call_level_expr arrayaccess
+call_level_expr ::= call_level_expr fieldaccess
+call_level_expr ::= call_level_expr indirect
+call_level_expr ::= base_expr
+
+funccall    ::= Ident LParen actuals RParen
+funccall    ::= Ident LParen RParen
+arrayaccess ::= LBrack expr RBrack
+fieldaccess ::= Dot Ident
+indirect    ::= Arrow Ident
+
+base_expr ::= LitInt
+base_expr ::= LitString
+base_expr ::= LitChar
+base_expr ::= LitDouble
+base_expr ::= LitNull
+base_expr ::= Ident
+base_expr ::= LParen expr RParen
+
+actuals ::= expr
+actuals ::= actuals Comma expr
+
+array_sizes ::= array_sizes LBrack LitInt RBrack
+array_sizes ::= epsilon
+
+stars ::= Asterisk stars
+stars ::= epsilon
