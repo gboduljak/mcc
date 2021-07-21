@@ -87,6 +87,8 @@ test-suite mcc-test
   main-is: Spec.hs
   other-modules:
       LexerSpec
+      ParserSpec
+      TestCases
       Paths_mcc
   hs-source-dirs:
       test

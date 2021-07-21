@@ -401,7 +401,7 @@ baseExpr =
     <|> litChar
     <|> litNull
     <|> ident
-    <|> between (expect L.LParen) (expect L.RParen) expr
+    <|> Ast.Nested <$> between (expect L.LParen) (expect L.RParen) expr
 
 ident :: Parser Ast.Expr
 ident = token test Set.empty <?> "identifier"

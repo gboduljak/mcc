@@ -144,8 +144,8 @@ expr:
   | expr '/' expr          { P.Binop $1 P.Div $3 }
   | expr '%' expr          { P.Binop $1 P.Mod $3 }
   | '(' expr ')'           { P.Nested $2  }
-  | '!' expr               { P.Negative $2 }
-  | '-' expr %prec NEG     { P.Negate $2   }
+  | '!' expr               { P.Negate $2 }
+  | '-' expr %prec NEG     { P.Negative $2   }
   | '&' expr %prec NEG     { P.AddressOf $2 }
   | '*' expr %prec NEG     { P.Deref $2 }
   | expr '.' ident         { P.FieldAccess $1 $3 }

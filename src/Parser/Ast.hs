@@ -23,9 +23,9 @@ import Data.Text.Prettyprint.Doc
   )
 import Lexer.Lexeme (BuiltinType (Int))
 
-data Program = Program [Directive] [Construct] | Error deriving (Show)
+data Program = Program [Directive] [Construct] | Error deriving (Show, Eq)
 
-data Directive = Include String deriving (Show)
+data Directive = Include String deriving (Show, Eq)
 
 data Construct
   = StructDecl StructDecl
@@ -33,19 +33,19 @@ data Construct
   | FuncDefn FuncDef
   | VarDecl VarDecl
   | ConstructError
-  deriving (Show)
+  deriving (Show, Eq)
 
-data StructDecl = Struct String [VarDecl] deriving (Show)
+data StructDecl = Struct String [VarDecl] deriving (Show, Eq)
 
-data FuncDecl = Func Type String [Formal] deriving (Show)
+data FuncDecl = Func Type String [Formal] deriving (Show, Eq)
 
-data FuncDef = FuncDef Type String [Formal] Block deriving (Show)
+data FuncDef = FuncDef Type String [Formal] Block deriving (Show, Eq)
 
-data VarDecl = Var Type String [Int] deriving (Show)
+data VarDecl = Var Type String [Int] deriving (Show, Eq)
 
-data Formal = Formal Type String deriving (Show)
+data Formal = Formal Type String deriving (Show, Eq)
 
-data Block = Block [Statement] deriving (Show)
+data Block = Block [Statement] deriving (Show, Eq)
 
 data Statement
   = Expr Expr
@@ -56,7 +56,7 @@ data Statement
   | If Expr Statement (Maybe Statement)
   | Return (Maybe Expr)
   | StatementError
-  deriving (Show)
+  deriving (Show, Eq)
 
 data Expr
   = LitInt Int
@@ -79,12 +79,12 @@ data Expr
   | Call String [Expr]
   | Assign Expr Expr
   | ExprError
-  deriving (Show)
+  deriving (Show, Eq)
 
 data Type
   = PrimitiveType BuiltinType Int
   | StructType String Int
-  deriving (Show)
+  deriving (Show, Eq)
 
 data InfixOp
   = Add
@@ -103,7 +103,7 @@ data InfixOp
   | BitwiseAnd
   | BitwiseOr
   | BitwiseXor
-  deriving (Show)
+  deriving (Show, Eq)
 
 isPointer :: Type -> Bool
 isPointer (PrimitiveType _ ptrs) = ptrs > 0

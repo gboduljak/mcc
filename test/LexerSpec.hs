@@ -9,29 +9,34 @@ import Lexer.Token (Token (lexeme))
 import System.Directory (getDirectoryContents)
 import System.FilePath (takeExtension)
 import Test.Hspec (Spec, SpecWith, describe, expectationFailure, it, shouldBe)
+import TestCases
+  ( dynamicProgrammingPrograms,
+    miniPrograms,
+    sortingPrograms,
+  )
 
 miniProgramsSpec :: Spec
 miniProgramsSpec = do
   describe "lexing mini programs ..." $ do
-    program miniPrograms
+    mapM_ lexProgram miniPrograms
 
 sortingSpec :: Spec
 sortingSpec = do
   describe "lexing sorting programs ..." $ do
-    mapM_ program sortingPrograms
+    mapM_ lexProgram sortingPrograms
 
 dynamicProgrammingSpec :: Spec
 dynamicProgrammingSpec = do
   describe "lexing dynamic programming programs ..." $ do
-    mapM_ program dynamicProgrammingPrograms
+    mapM_ lexProgram dynamicProgrammingPrograms
 
 ticTacToeSpec :: Spec
 ticTacToeSpec =
   describe "lexing tic tac toe program ..." $ do
-    program "./test/tests-cases/tictactoe/"
+    lexProgram "./test/tests-cases/tictactoe/"
 
-program :: String -> SpecWith ()
-program folder = it ("lexes program " ++ folder ++ "...") $ do
+lexProgram :: String -> SpecWith ()
+lexProgram folder = it ("lexes program " ++ folder ++ "...") $ do
   files <- getDirectoryContents folder
   let filesToLex = [file | file <- files, takeExtension file `elem` [".c", ".h"]]
 
@@ -63,21 +68,3 @@ lexAdHoc file input = case result of
 
 lexGenerator :: String -> Maybe [Lexeme]
 lexGenerator input = Just (Generator.lex' input)
-
-miniPrograms :: String
-miniPrograms = "./test/tests-cases/mini/"
-
-sortingPrograms :: [String]
-sortingPrograms =
-  [ "./test/tests-cases/sorting/counting-sort/",
-    "./test/tests-cases/sorting/insertion-sort/",
-    "./test/tests-cases/sorting/merge-sort/",
-    "./test/tests-cases/sorting/quick-sort/",
-    "./test/tests-cases/sorting/radix-sort/"
-  ]
-
-dynamicProgrammingPrograms :: [String]
-dynamicProgrammingPrograms =
-  [ "./test/tests-cases/dynamic-programming/coin-changing/",
-    "./test/tests-cases/dynamic-programming/longest-common-subsequence/"
-  ]

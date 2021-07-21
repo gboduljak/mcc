@@ -1,9 +1,14 @@
-import LexerSpec (dynamicProgrammingSpec, miniProgramsSpec, sortingSpec, ticTacToeSpec)
+import qualified LexerSpec as LexerSpec (dynamicProgrammingSpec, miniProgramsSpec, sortingSpec, ticTacToeSpec)
+import qualified ParserSpec as ParserSpec (dynamicProgrammingSpec, miniProgramsSpec, sortingSpec, ticTacToeSpec)
 import Test.Hspec (hspec)
 
 main :: IO ()
 main = do
-  hspec miniProgramsSpec
-  hspec sortingSpec
-  hspec dynamicProgrammingSpec
-  hspec ticTacToeSpec
+  hspec LexerSpec.miniProgramsSpec
+  hspec LexerSpec.sortingSpec
+  hspec LexerSpec.dynamicProgrammingSpec
+  hspec LexerSpec.ticTacToeSpec
+  hspec ParserSpec.miniProgramsSpec
+  hspec ParserSpec.sortingSpec
+  hspec ParserSpec.dynamicProgrammingSpec
+  hspec ParserSpec.ticTacToeSpec
