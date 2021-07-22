@@ -36,6 +36,7 @@ library
       Parser.AstPrettyPrinter
       Parser.AstVisualiser
       Parser.Combinator.Chains
+      Parser.Combinator.ErrorBundlePrettyPrinter
       Parser.Combinator.Parser
       Parser.Combinator.Predictive
       Parser.Combinator.Prim
