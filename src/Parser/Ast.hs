@@ -41,7 +41,7 @@ data FuncDecl = Func Type String [Formal] deriving (Show, Eq)
 
 data FuncDef = FuncDef Type String [Formal] Block deriving (Show, Eq)
 
-data VarDecl = Var Type String [Int] deriving (Show, Eq)
+data VarDecl = Var Type String [Int] | VarDeclError deriving (Show, Eq)
 
 data Formal = Formal Type String deriving (Show, Eq)
 

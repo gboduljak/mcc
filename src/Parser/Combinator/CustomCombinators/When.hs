@@ -1,4 +1,4 @@
-module Parser.Combinator.When where
+module Parser.Combinator.CustomCombinators.When where
 
 import Data.List
 import qualified Data.List.NonEmpty as Ne

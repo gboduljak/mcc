@@ -13,9 +13,11 @@ import Lexer.Lexeme as L
 import Lexer.Token as T
 import qualified Parser.Ast as Ast
 import Parser.AstVisualiser (visualiseAst)
-import Parser.Combinator.Chains
+import Parser.Combinator.CustomCombinators.Chains
+import Parser.Combinator.CustomCombinators.Recover
 import Parser.Combinator.Prim
 import Parser.Combinator.TokenStream
+import Parser.Grammar.Follows (followsConstruct, followsExp, followsStatement)
 import Text.Megaparsec
 import Prelude hiding (negate)
 
@@ -401,53 +403,6 @@ include = do
 
 includes :: Parser [Ast.Directive]
 includes = many include
-
-recoverUsingFollows :: Parser a -> (L.Lexeme -> Bool) -> Parser a -> Parser a
-recoverUsingFollows p f e = do
-  withRecovery
-    ( \error -> do
-        registerParseError error
-        takeWhile1P (Just "") (not . f . lexeme)
-        e
-    )
-    p
-
-followsExp :: Lexeme -> Bool
-followsExp L.Semi = True
-followsExp L.RParen = True
-followsExp L.RBrack = True
-followsExp L.Comma = True
-followsExp _ = False
-
-followsStatement :: Lexeme -> Bool
-followsStatement L.Else = True
-followsStatement L.While = True
-followsStatement L.For = True
-followsStatement L.If = True
-followsStatement L.Return = True
-followsStatement L.LBrace = True
-followsStatement L.Struct = True
-followsStatement (L.Type _) = True
-followsStatement L.LParen = True
-followsStatement L.Minus = True
-followsStatement L.Not = True
-followsStatement L.Asterisk = True
-followsStatement L.Ampers = True
-followsStatement L.Sizeof = True
-followsStatement (L.LitInt _) = True
-followsStatement (L.LitDouble _) = True
-followsStatement (L.LitChar _) = True
-followsStatement (L.LitString _) = True
-followsStatement (L.LitNull) = True
-followsStatement (L.Ident _) = True
-followsStatement (L.RBrace) = True
-followsStatement _ = False
-
-followsConstruct :: Lexeme -> Bool
-followsConstruct L.Struct = True
-followsConstruct (L.Type _) = True
-followsConstruct (L.Eof) = True
-followsConstruct _ = False
 
 -- streamify :: String -> TokenStream
 -- streamify input = case lex' "" input of
