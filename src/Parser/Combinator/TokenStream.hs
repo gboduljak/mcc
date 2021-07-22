@@ -23,7 +23,6 @@ import qualified Data.List.NonEmpty as NE
 import Data.Proxy
 import qualified Data.Set as Set
 import Data.Void
-import Debug.Trace
 import qualified Lexer.Lexeme as L
 import qualified Lexer.Token as T
 import Text.Megaparsec
@@ -92,7 +91,7 @@ instance TraversableStream TokenStream where
       { pstateInput =
           TokenStream
             { tokenStreamInput = intercalate ", " . map (L.display . T.lexeme) $ remainingToks,
-              unTokenStream = traceShowId remainingToks
+              unTokenStream = remainingToks
             },
         pstateOffset = max pstateOffset o,
         pstateSourcePos = newSourcePos,
