@@ -11,6 +11,7 @@ import Lexer.Token
 import Parser.Ast
 import Parser.AstPrettyPrinter
 import Parser.AstVisualiser
+import Parser.Combinator.ErrorBundlePrettyPrinter (errorBundlePretty)
 import qualified Parser.Combinator.Parser as CombinatorParser (parse)
 import qualified Parser.Combinator.Predictive as PredictiveCombinatorParser (parse)
 import qualified Parser.Generated.Parser as GeneratedParser (parse)
@@ -19,7 +20,7 @@ import Preprocessor.IncludesVisualiser (draw)
 import Prettyprinter
 import Prettyprinter.Render.String
 import System.Environment (getArgs)
-import Text.Megaparsec (ParseErrorBundle (ParseErrorBundle), errorBundlePretty)
+import Text.Megaparsec (ParseErrorBundle (ParseErrorBundle))
 import Prelude hiding (lex)
 
 main :: IO ()

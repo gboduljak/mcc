@@ -1,10 +1,21 @@
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Parser.Combinator.TokenStream where
 
+import Control.Exception
+import Data.Data
+import qualified Data.Foldable as E
 import Data.List
 import qualified Data.List as DL
 import Data.List.NonEmpty (NonEmpty (..))
@@ -12,9 +23,26 @@ import qualified Data.List.NonEmpty as NE
 import Data.Proxy
 import qualified Data.Set as Set
 import Data.Void
+import Debug.Trace
 import qualified Lexer.Lexeme as L
 import qualified Lexer.Token as T
 import Text.Megaparsec
+  ( ErrorFancy (..),
+    ErrorItem (..),
+    ParseError (..),
+    ParseErrorBundle (..),
+    PosState (..),
+    ShowErrorComponent (..),
+    SourcePos (SourcePos, sourceColumn, sourceLine),
+    Stream (..),
+    TraversableStream (reachOffset),
+    VisualStream (..),
+    errorOffset,
+    parseErrorTextPretty,
+    sourcePosPretty,
+    unPos,
+  )
+import Text.Megaparsec.Stream
 
 data TokenStream = TokenStream
   { tokenStreamInput :: String, -- for showing offending lines
@@ -59,37 +87,26 @@ instance VisualStream TokenStream where
   tokensLength Proxy xs = sum (T.length <$> xs)
 
 instance TraversableStream TokenStream where
-  reachOffset o PosState {..} =
-    ( Just $ prefix ++ restOfLine,
-      PosState
-        { pstateInput =
-            TokenStream
-              { tokenStreamInput = postStr,
-                unTokenStream = post
-              },
-          pstateOffset = max pstateOffset o,
-          pstateSourcePos = newSourcePos,
-          pstateTabWidth = pstateTabWidth,
-          pstateLinePrefix = prefix
-        }
-    )
+  reachOffsetNoLine o PosState {..} =
+    PosState
+      { pstateInput =
+          TokenStream
+            { tokenStreamInput = intercalate ", " . map (L.display . T.lexeme) $ remainingToks,
+              unTokenStream = traceShowId remainingToks
+            },
+        pstateOffset = max pstateOffset o,
+        pstateSourcePos = newSourcePos,
+        pstateTabWidth = pstateTabWidth,
+        pstateLinePrefix = pstateLinePrefix -- fix this
+      }
     where
-      prefix =
-        if sameLine
-          then pstateLinePrefix ++ preStr
-          else preStr
-      sameLine = sourceLine newSourcePos == sourceLine pstateSourcePos
+      currentTokOffset = o - pstateOffset
+      allInputTokens = unTokenStream pstateInput
       newSourcePos =
-        case post of
+        case remainingToks of
           [] -> pstateSourcePos
-          (x : _) -> T.startPos x
-      (pre, post) = splitAt (o - pstateOffset) (unTokenStream pstateInput)
-      (preStr, postStr) = splitAt tokensConsumed (tokenStreamInput pstateInput)
-      tokensConsumed =
-        case NE.nonEmpty pre of
-          Nothing -> 0
-          Just nePre -> tokensLength pxy nePre
-      restOfLine = takeWhile (/= '\n') postStr
+          (nextTok : _) -> T.startPos nextTok
+      (_, remainingToks) = splitAt currentTokOffset allInputTokens
 
 pxy :: Proxy TokenStream
 pxy = Proxy
