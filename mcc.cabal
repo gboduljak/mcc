@@ -38,8 +38,8 @@ library
       Parser.Combinator.CustomCombinators.Chains
       Parser.Combinator.CustomCombinators.Recover
       Parser.Combinator.CustomCombinators.When
-      Parser.Combinator.Parser
-      Parser.Combinator.Predictive
+      Parser.Combinator.Naive.Parser
+      Parser.Combinator.Predictive.Parser
       Parser.Combinator.Prim
       Parser.Combinator.TokenStream
       Parser.Generated.Parser
