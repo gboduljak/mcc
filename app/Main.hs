@@ -11,6 +11,7 @@ import Lexer.Token
 import Parser.Ast
 import Parser.AstPrettyPrinter
 import Parser.AstVisualiser
+import Parser.Combinator.Errors.PrettyPrinter (errorBundlePretty)
 import qualified Parser.Combinator.Naive.Parser as CombinatorParser (parse)
 import qualified Parser.Combinator.Predictive.Parser as PredictiveCombinatorParser (parse)
 import qualified Parser.Generated.Parser as GeneratedParser (parse)
@@ -19,7 +20,7 @@ import Preprocessor.IncludesVisualiser (draw)
 import Prettyprinter
 import Prettyprinter.Render.String
 import System.Environment (getArgs)
-import Text.Megaparsec (ParseErrorBundle (ParseErrorBundle), errorBundlePretty)
+import Text.Megaparsec (ParseErrorBundle (ParseErrorBundle))
 import Prelude hiding (lex)
 
 main :: IO ()
@@ -48,14 +49,18 @@ compileFile file = do
   putStrLn "Combinator Lexer..."
   let combResult = CombinatorLex.lex' file input
   case combResult of
-    (Left errors) -> (putStrLn . errorBundlePretty) errors
+    (Left errors) -> do
+      errors <- errorBundlePretty errors (pack input)
+      putStrLn errors
     (Right tokens) -> do
       displayTokens tokens
       putStrLn "Combinator Parser..."
       putStrLn ("Parsing " ++ file ++ " using combinator ...")
       putStrLn ("Parsed " ++ file ++ " ...")
       case PredictiveCombinatorParser.parse input tokens of
-        (Left error) -> putStrLn (errorBundlePretty error)
+        (Left error) -> do
+          errors <- errorBundlePretty error (pack input)
+          putStrLn errors
         (Right ast) -> do
           writeFile (file ++ ".ast.comb.raw.txt") (show ast)
           writeFile (file ++ ".ast.comb.txt") (prettyPrintAst ast)

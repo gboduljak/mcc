@@ -12,6 +12,7 @@ import Lexer.Lexeme (BuiltinType (Char, Double, Int, Void), Lexeme (..))
 import Lexer.Token (Token (Token))
 import qualified Lexer.Token as T
 import Text.Megaparsec.Pos
+import Utils.CharPredicates
 import Prelude hiding (and, head, lex, or, tail, takeWhile)
 
 type Lexer a = State LexState a
@@ -24,9 +25,6 @@ lookAhead = do
       lookCh <- gets (head . input)
       return (Just lookCh)
     else return Nothing
-
-isNewline :: Char -> Bool
-isNewline x = x `elem` "\r\n"
 
 advance :: Lexer ()
 advance = do
