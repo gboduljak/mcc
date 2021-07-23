@@ -11,9 +11,9 @@ import Lexer.Token
 import Parser.Ast
 import Parser.AstPrettyPrinter
 import Parser.AstVisualiser
-import Parser.Combinator.Errors.PrettyPrinter (errorBundlePretty)
 import qualified Parser.Combinator.Naive.Parser as CombinatorParser (parse)
 import qualified Parser.Combinator.Predictive.Parser as PredictiveCombinatorParser (parse)
+import Parser.Errors.PrettyPrinter (errorBundlePretty)
 import qualified Parser.Generated.Parser as GeneratedParser (parse)
 import Preprocessor.IncludesPreprocessor (preprocess)
 import Preprocessor.IncludesVisualiser (draw)

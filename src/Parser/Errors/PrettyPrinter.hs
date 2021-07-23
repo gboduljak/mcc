@@ -10,7 +10,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Parser.Combinator.Errors.PrettyPrinter where
+module Parser.Errors.PrettyPrinter where
 
 import Control.Monad
 import Data.Data (Proxy (Proxy))
