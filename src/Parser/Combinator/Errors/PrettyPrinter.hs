@@ -42,26 +42,36 @@ errorBundlePretty ParseErrorBundle {..} input = do
   (errorMessages, _) <- foldM displayError (id, bundlePosState) bundleErrors
   return (errorMessages "")
   where
-    displayError (out, !initPosState) error = do
+    displayError (out, !headState) error = do
       isStyled <- supportsPretty
-      displayedError <- offendingLine
-
-      let errorMessage =
-            "\n" <> bold isStyled (sourcePosPretty errorPos) <> ":\n"
-              <> displayedError
-              <> parseErrorTextPretty error
-
+      errorMessage <- prettyErrorMessage offendingLine error errorPos
       return (out . (errorMessage ++), errorPosState')
       where
         linesByNum = M.fromList (zip [1 ..] (T.split isNewline input))
-        (_, errorPosState') = reachOffset (errorOffset error) initPosState
+        (_, errorPosState') = reachOffset (errorOffset error) headState
 
         errorPos = pstateSourcePos errorPosState'
         errorLineNum = (unPos . sourceLine) errorPos
-        offendingLine =
-          case M.lookup errorLineNum linesByNum of
-            Nothing -> return ""
-            Just errorLine -> prettyErrorLine (T.unpack errorLine) error errorPos
+        offendingLine = maybe "" T.unpack (M.lookup errorLineNum linesByNum)
+
+prettyErrorMessage ::
+  forall s e.
+  ( VisualStream s,
+    TraversableStream s,
+    ShowErrorComponent e
+  ) =>
+  String ->
+  ParseError s e ->
+  SourcePos ->
+  IO String
+prettyErrorMessage inputErrorLine error errorPos = do
+  isStyled <- supportsPretty
+  offendingLine <- prettyErrorLine inputErrorLine error errorPos
+  return
+    ( "\n" <> bold isStyled (sourcePosPretty errorPos) <> ":\n"
+        <> offendingLine
+        <> parseErrorTextPretty error
+    )
 
 prettyErrorLine ::
   forall s e.

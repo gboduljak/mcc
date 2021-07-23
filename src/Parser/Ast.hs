@@ -118,3 +118,4 @@ isStruct = not . isPrimitive
 
 isArray :: VarDecl -> Bool
 isArray (Var _ _ x) = (not . null) x
+isArray _ = False
