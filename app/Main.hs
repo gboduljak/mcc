@@ -13,12 +13,13 @@ import Parser.AstPrettyPrinter
 import Parser.AstVisualiser
 import qualified Parser.Combinator.Naive.Parser as CombinatorParser (parse)
 import qualified Parser.Combinator.Predictive.Parser as PredictiveCombinatorParser (parse)
-import Parser.Errors.PrettyPrinter (errorBundlePretty)
+import Parser.Errors.PrettyPrinter (prettyPrintErrors)
 import qualified Parser.Generated.Parser as GeneratedParser (parse)
 import Preprocessor.IncludesPreprocessor (preprocess)
 import Preprocessor.IncludesVisualiser (draw)
 import Prettyprinter
 import Prettyprinter.Render.String
+import System.Console.Pretty
 import System.Environment (getArgs)
 import Text.Megaparsec (ParseErrorBundle (ParseErrorBundle))
 import Prelude hiding (lex)
@@ -44,23 +45,27 @@ main = do
 
 compileFile :: String -> IO ()
 compileFile file = do
+  supportsFancyTerminal <- supportsPretty
+
   putStrLn ("Processing " ++ file ++ "...")
   input <- readFile file
   putStrLn "Combinator Lexer..."
   let combResult = CombinatorLex.lex' file input
   case combResult of
     (Left errors) -> do
-      errors <- errorBundlePretty errors (pack input)
-      putStrLn errors
+      let errorMessages = prettyPrintErrors errors (pack input) supportsFancyTerminal
+       in do
+            putStrLn errorMessages
     (Right tokens) -> do
       displayTokens tokens
       putStrLn "Combinator Parser..."
       putStrLn ("Parsing " ++ file ++ " using combinator ...")
       putStrLn ("Parsed " ++ file ++ " ...")
       case PredictiveCombinatorParser.parse input tokens of
-        (Left error) -> do
-          errors <- errorBundlePretty error (pack input)
-          putStrLn errors
+        (Left errors) -> do
+          let errorMessages = prettyPrintErrors errors (pack input) supportsFancyTerminal
+           in do
+                putStrLn errorMessages
         (Right ast) -> do
           writeFile (file ++ ".ast.comb.raw.txt") (show ast)
           writeFile (file ++ ".ast.comb.txt") (prettyPrintAst ast)

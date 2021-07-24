@@ -17,19 +17,34 @@ import Data.Data (Proxy (Proxy))
 import qualified Data.Foldable as E
 import qualified Data.Map as M
 import qualified Data.Text as T
-import Debug.Trace
 import System.Console.Pretty
-  ( Color (..),
-    Pretty (color),
-    Style (..),
-    bgColor,
-    style,
-    supportsPretty,
+  ( Color (Red),
+    Pretty (color, style),
+    Style (Bold),
   )
 import Text.Megaparsec
+  ( ErrorFancy (..),
+    ErrorItem (Tokens),
+    ParseError (..),
+    ParseErrorBundle (..),
+    PosState (pstateSourcePos),
+    ShowErrorComponent (..),
+    SourcePos (sourceColumn, sourceLine),
+    Stream (Token),
+    TraversableStream (reachOffset),
+    VisualStream (tokensLength),
+    errorOffset,
+    parseErrorTextPretty,
+    sourcePosPretty,
+    unPos,
+  )
 import Utils.CharPredicates (isNewline)
 
-errorBundlePretty ::
+-- This module is based on https://github.com/mrkkrp/megaparsec/blob/master/Text/Megaparsec/Error.hs
+-- It is a customized versions of the module above. Main difference is a support for colorised error messages
+-- and a simplified, possibly slower calculation of error line
+
+prettyPrintErrors ::
   forall s e.
   ( VisualStream s,
     TraversableStream s,
@@ -37,15 +52,12 @@ errorBundlePretty ::
   ) =>
   ParseErrorBundle s e ->
   T.Text ->
-  IO String
-errorBundlePretty ParseErrorBundle {..} input = do
-  (errorMessages, _) <- foldM displayError (id, bundlePosState) bundleErrors
-  return (errorMessages "")
+  Bool ->
+  String
+prettyPrintErrors ParseErrorBundle {..} input supportsFancyTerminal = join . reverse $ errorMessages
   where
-    displayError (out, !headState) error = do
-      isStyled <- supportsPretty
-      errorMessage <- prettyErrorMessage offendingLine error errorPos
-      return (out . (errorMessage ++), errorPosState')
+    (errorMessages, _) = foldl buildErrorMessage ([], bundlePosState) bundleErrors
+    buildErrorMessage (!errorMessages, !headState) error = (errorMessage <> "\n" : errorMessages, errorPosState')
       where
         linesByNum = M.fromList (zip [1 ..] (T.split isNewline input))
         (_, errorPosState') = reachOffset (errorOffset error) headState
@@ -53,6 +65,7 @@ errorBundlePretty ParseErrorBundle {..} input = do
         errorPos = pstateSourcePos errorPosState'
         errorLineNum = (unPos . sourceLine) errorPos
         offendingLine = maybe "" T.unpack (M.lookup errorLineNum linesByNum)
+        errorMessage = prettyErrorMessage offendingLine error errorPos supportsFancyTerminal
 
 prettyErrorMessage ::
   forall s e.
@@ -63,15 +76,12 @@ prettyErrorMessage ::
   String ->
   ParseError s e ->
   SourcePos ->
-  IO String
-prettyErrorMessage inputErrorLine error errorPos = do
-  isStyled <- supportsPretty
-  offendingLine <- prettyErrorLine inputErrorLine error errorPos
-  return
-    ( "\n" <> bold isStyled (sourcePosPretty errorPos) <> ":\n"
-        <> offendingLine
-        <> parseErrorTextPretty error
-    )
+  Bool ->
+  String
+prettyErrorMessage inputErrorLine error errorPos isStyled =
+  bold isStyled (sourcePosPretty errorPos) <> ":\n"
+    <> prettyErrorLine inputErrorLine error errorPos isStyled
+    <> parseErrorTextPretty error
 
 prettyErrorLine ::
   forall s e.
@@ -82,35 +92,32 @@ prettyErrorLine ::
   [Char] ->
   ParseError s e ->
   SourcePos ->
-  IO String
-prettyErrorLine inputErrorLine error errorPos = do
-  inColor <- supportsPretty
-
-  return
-    ( padding <> "|\n" <> errorLineNum <> " | " <> inputErrorLine
-        <> "\n"
-        <> padding
-        <> "| "
-        <> rpadding
-        <> red inColor pointer
-        <> "\n"
-    )
+  Bool ->
+  String
+prettyErrorLine inputErrorLine error errorPos supportsFancyTerminal =
+  padding <> "|\n" <> errorLineNum <> " | " <> inputErrorLine
+    <> "\n"
+    <> padding
+    <> "| "
+    <> rpadding
+    <> red supportsFancyTerminal pointer
+    <> "\n"
   where
-    rpadding =
-      if pointerLen > 0
-        then replicate rpshift ' '
-        else ""
-    pointerLen =
-      if rpshift + errorLen > errorLineLen
-        then errorLineLen - rpshift + 1
-        else errorLen
     errorLen = errorLength error
     errorLineLen = length inputErrorLine
     errorLineNum = (show . unPos . sourceLine) errorPos
 
     padding = replicate (length errorLineNum + 1) ' '
     rpshift = unPos (sourceColumn errorPos) - 1
+    pointerLen =
+      if rpshift + errorLen > errorLineLen
+        then errorLineLen - rpshift + 1
+        else errorLen
     pointer = replicate pointerLen '^'
+    rpadding =
+      if pointerLen > 0
+        then replicate rpshift ' '
+        else ""
 
 bold :: Bool -> String -> String
 bold True line = style Bold line
@@ -145,7 +152,6 @@ errorItemLength pxy = \case
   Tokens ts -> tokensLength pxy ts
   _ -> 1
 
--- | Pretty-print an 'ErrorFancy'.
 showErrorFancy :: ShowErrorComponent e => ErrorFancy e -> String
 showErrorFancy = \case
   ErrorFail msg -> msg
@@ -162,7 +168,6 @@ showErrorFancy = \case
         GT -> "greater than "
   ErrorCustom a -> showErrorComponent a
 
--- | Get length of the “pointer” to display under a given 'ErrorFancy'.
 errorFancyLength :: ShowErrorComponent e => ErrorFancy e -> Int
 errorFancyLength = \case
   ErrorCustom a -> errorComponentLen a
