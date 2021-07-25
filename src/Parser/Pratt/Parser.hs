@@ -10,7 +10,6 @@ import Data.List (intercalate, map, nub)
 import qualified Data.List.NonEmpty as Ne
 import Data.Text (pack)
 import Data.Void
-import Debug.Trace
 import Lexer.Combinator.Lexer (lex')
 import qualified Lexer.Lexeme as L
 import qualified Lexer.Token as T
@@ -18,7 +17,7 @@ import Parser.Ast (isPointer, isPrimitive)
 import qualified Parser.Ast as Ast
 import Parser.AstVisualiser (visualiseAst)
 import Parser.Combinator.TokenStream (TokenStream (..))
-import Parser.Errors.Merger
+import Parser.Errors.Merger (mergeErrorsBasedOnPos)
 import Parser.Errors.PrettyPrinter (prettyPrintErrors)
 import Parser.Grammar.Firsts (startsExpr, startsStmt, startsType)
 import Parser.Grammar.Follows (followsConstruct, followsExp, followsStatement)
@@ -27,9 +26,16 @@ import Parser.Pratt.Combinators.Chains (lookchainl1)
 import Parser.Pratt.Combinators.Prim (many, many1, sepBy, sepBy1)
 import Parser.Pratt.Combinators.Recovery (withFollowsRecovery)
 import Parser.Pratt.Combinators.When ((>?))
-import Parser.Pratt.Prim (Parser, ParserError, ParserState (ParserState, errors), advance, expect, head, liftToken, lookahead, unexpected, unexpectedEof)
+import Parser.Pratt.Prim
 import System.Console.Pretty (supportsPretty)
-import Text.Megaparsec (MonadParsec (lookAhead), ParseErrorBundle (ParseErrorBundle), PosState (PosState, pstateInput, pstateLinePrefix, pstateOffset, pstateSourcePos, pstateTabWidth), initialPos, mkPos, pos1)
+import Text.Megaparsec
+  ( MonadParsec (lookAhead),
+    ParseErrorBundle (ParseErrorBundle),
+    PosState (PosState, pstateInput, pstateLinePrefix, pstateOffset, pstateSourcePos, pstateTabWidth),
+    initialPos,
+    mkPos,
+    pos1,
+  )
 import Prelude hiding (head)
 
 program :: Parser Ast.Program
@@ -162,11 +168,11 @@ for' :: Parser Ast.Statement
 for' = do
   expect (L.is L.For)
   expect (L.is L.LParen)
-  init <- optionalStatementExpr
+  init <- optionalExpr
   expect (L.is L.Semi)
-  cond <- optionalStatementExpr
+  cond <- optionalExpr
   expect (L.is L.Semi)
-  incr <- optionalStatementExpr
+  incr <- optionalExpr
   expect (L.is L.RParen)
   Ast.For init cond incr <$> statement
 
@@ -188,10 +194,10 @@ if' = do
 return' :: Parser Ast.Statement
 return' = do
   expect (L.is L.Return)
-  Ast.Return <$> optionalStatementExpr
+  Ast.Return <$> optionalExpr
 
-optionalStatementExpr :: Parser (Maybe Ast.Expr)
-optionalStatementExpr =
+optionalExpr :: Parser (Maybe Ast.Expr)
+optionalExpr =
   (>?)
     [ (startsExpr, Just <$> expr 0),
       (const True, return Nothing)
@@ -207,30 +213,6 @@ expr rbp =
     )
     followsExp
     Ast.ExprError
-
-led :: L.Lexeme -> Parser (Ast.Expr -> Ast.Expr)
-led lexeme = case lexeme of
-  L.Assign -> infixr' L.Assign Ast.Assign
-  L.Or -> infixl' L.Or (`Ast.Binop` Ast.Or)
-  L.And -> infixl' L.And (`Ast.Binop` Ast.And)
-  L.Bar -> infixl' L.Bar (`Ast.Binop` Ast.BitwiseOr)
-  L.Caret -> infixl' L.Caret (`Ast.Binop` Ast.BitwiseXor)
-  L.Ampers -> infixl' L.Ampers (`Ast.Binop` Ast.BitwiseAnd)
-  L.Equal -> infixl' L.Equal (`Ast.Binop` Ast.Equal)
-  L.Neq -> infixl' L.Neq (`Ast.Binop` Ast.Neq)
-  L.Less -> infixl' L.Less (`Ast.Binop` Ast.Less)
-  L.Leq -> infixl' L.Leq (`Ast.Binop` Ast.Leq)
-  L.Greater -> infixl' L.Greater (`Ast.Binop` Ast.Greater)
-  L.Geq -> infixl' L.Geq (`Ast.Binop` Ast.Geq)
-  L.Plus -> infixl' L.Plus (`Ast.Binop` Ast.Add)
-  L.Minus -> infixl' L.Minus (`Ast.Binop` Ast.Sub)
-  L.Asterisk -> infixl' L.Asterisk (`Ast.Binop` Ast.Mul)
-  L.Div -> infixl' L.Div (`Ast.Binop` Ast.Div)
-  L.Mod -> infixl' L.Mod (`Ast.Binop` Ast.Mod)
-  L.LBrack -> arrayAccess
-  L.Dot -> fieldAccess
-  L.Arrow -> indirect
-  _ -> expect isInfix >> return (const Ast.ExprError)
 
 ctd :: L.Lexeme -> Parser Ast.Construct
 ctd lexeme
@@ -286,6 +268,42 @@ nud lexeme rbp = case lexeme of
           (startsExpr, nested)
         ]
   _ -> expect startsExpr >> return Ast.ExprError
+
+led :: L.Lexeme -> Parser (Ast.Expr -> Ast.Expr)
+led lexeme = case lexeme of
+  L.Assign -> infixr' L.Assign Ast.Assign
+  L.Or -> infixl' L.Or (`Ast.Binop` Ast.Or)
+  L.And -> infixl' L.And (`Ast.Binop` Ast.And)
+  L.Bar -> infixl' L.Bar (`Ast.Binop` Ast.BitwiseOr)
+  L.Caret -> infixl' L.Caret (`Ast.Binop` Ast.BitwiseXor)
+  L.Ampers -> infixl' L.Ampers (`Ast.Binop` Ast.BitwiseAnd)
+  L.Equal -> infixl' L.Equal (`Ast.Binop` Ast.Equal)
+  L.Neq -> infixl' L.Neq (`Ast.Binop` Ast.Neq)
+  L.Less -> infixl' L.Less (`Ast.Binop` Ast.Less)
+  L.Leq -> infixl' L.Leq (`Ast.Binop` Ast.Leq)
+  L.Greater -> infixl' L.Greater (`Ast.Binop` Ast.Greater)
+  L.Geq -> infixl' L.Geq (`Ast.Binop` Ast.Geq)
+  L.Plus -> infixl' L.Plus (`Ast.Binop` Ast.Add)
+  L.Minus -> infixl' L.Minus (`Ast.Binop` Ast.Sub)
+  L.Asterisk -> infixl' L.Asterisk (`Ast.Binop` Ast.Mul)
+  L.Div -> infixl' L.Div (`Ast.Binop` Ast.Div)
+  L.Mod -> infixl' L.Mod (`Ast.Binop` Ast.Mod)
+  L.LBrack -> arrayAccess
+  L.Dot -> fieldAccess
+  L.Arrow -> indirect
+  _ -> expect isInfix >> return (const Ast.ExprError)
+
+infixl' :: L.Lexeme -> (Ast.Expr -> Ast.Expr -> Ast.Expr) -> Parser (Ast.Expr -> Ast.Expr)
+infixl' op lift = do
+  expect (L.is op)
+  right <- expr (precedence op)
+  return (`lift` right)
+
+infixr' :: L.Lexeme -> (Ast.Expr -> Ast.Expr -> Ast.Expr) -> Parser (Ast.Expr -> Ast.Expr)
+infixr' op lift = do
+  expect (L.is op)
+  right <- expr (precedence op - 1)
+  return (`lift` right)
 
 sizeof :: Parser Ast.Expr
 sizeof = do
@@ -355,9 +373,9 @@ primitiveType = do
 
 structType :: Parser Ast.Type
 structType = do
-  expect (L.is $ L.Struct)
+  expect (L.is L.Struct)
   id <- expect L.isIdent
-  Ast.StructType (structName (traceShowId id)) <$> stars
+  Ast.StructType (structName id) <$> stars
   where
     structName (L.Ident x) = x
 
@@ -417,18 +435,6 @@ include = do
   where
     file (L.LitString name) = name
 
-infixl' :: L.Lexeme -> (Ast.Expr -> Ast.Expr -> Ast.Expr) -> Parser (Ast.Expr -> Ast.Expr)
-infixl' op lift = do
-  expect (L.is op)
-  right <- expr (precedence op)
-  return (`lift` right)
-
-infixr' :: L.Lexeme -> (Ast.Expr -> Ast.Expr -> Ast.Expr) -> Parser (Ast.Expr -> Ast.Expr)
-infixr' op lift = do
-  expect (L.is op)
-  right <- expr (precedence op - 1)
-  return (`lift` right)
-
 parse :: String -> [T.Token] -> Either (ParseErrorBundle TokenStream Void) Ast.Program
 parse file tokens = case result of
   (Left error) -> Left (bundle $ reverse (error : errors state))
@@ -448,15 +454,16 @@ parse file tokens = case result of
           pstateOffset = 0,
           pstateSourcePos = initialPos file,
           pstateTabWidth = mkPos 8,
-          pstateLinePrefix = "" -- fix this
+          pstateLinePrefix = ""
         }
 
-parse' file input = do
-  isPretty <- supportsPretty
-  case lex' file input of
-    (Right tokens) -> case parse file tokens of
-      (Right ast) -> putStrLn $ visualiseAst ast
-      (Left bundle) -> do
-        print bundle
-        putStrLn $ prettyPrintErrors bundle (pack input) isPretty
-    (Left bundle) -> putStrLn $ prettyPrintErrors bundle (pack input) isPretty
+-- For debugging
+-- parse' file input = do
+--   isPretty <- supportsPretty
+--   case lex' file input of
+--     (Right tokens) -> case parse file tokens of
+--       (Right ast) -> putStrLn $ visualiseAst ast
+--       (Left bundle) -> do
+--         print bundle
+--         putStrLn $ prettyPrintErrors bundle (pack input) isPretty
+--     (Left bundle) -> putStrLn $ prettyPrintErrors bundle (pack input) isPretty
