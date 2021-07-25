@@ -19,6 +19,7 @@ import Parser.Combinator.CustomCombinators.Recover
 import Parser.Combinator.CustomCombinators.When
 import Parser.Combinator.Prim
 import Parser.Combinator.TokenStream
+import Parser.Grammar.Firsts (startsExpr)
 import Parser.Grammar.Follows
 import Text.Megaparsec
 import Prelude hiding (negate)
@@ -170,12 +171,6 @@ block = do
   stmts <- manyTill statement (expect L.RBrace)
   return (Ast.Block stmts)
 
-startsExpr :: Lexeme -> Bool
-startsExpr lexeme =
-  L.any [LParen, Minus, Not, Asterisk, Ampers, Sizeof, LitNull] lexeme
-    || L.isLit lexeme
-    || L.isIdent lexeme
-
 optionalExpr :: Parser (Maybe Ast.Expr)
 optionalExpr =
   (>?)
@@ -273,6 +268,7 @@ castTypeOrExp = do
   expect L.LParen
   (>?)
     [ (L.isType, castType),
+      (L.is L.Struct, castType),
       (const True, nestedExpr)
     ]
   where

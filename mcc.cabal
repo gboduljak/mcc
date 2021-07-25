@@ -44,7 +44,15 @@ library
       Parser.Combinator.TokenStream
       Parser.Errors.PrettyPrinter
       Parser.Generated.Parser
+      Parser.Grammar.Firsts
       Parser.Grammar.Follows
+      Parser.Pratt.Combinators.Chains
+      Parser.Pratt.Combinators.Prim
+      Parser.Pratt.Combinators.Recovery
+      Parser.Pratt.Combinators.When
+      Parser.Pratt.Parser
+      Parser.Pratt.Prim
+      Parser.Pratt.Specification
       Preprocessor.IncludesGraph
       Preprocessor.IncludesPreprocessor
       Preprocessor.IncludesVisualiser
