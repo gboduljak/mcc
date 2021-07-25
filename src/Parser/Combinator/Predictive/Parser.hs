@@ -12,6 +12,7 @@ import Data.Void
 import Lexer.Combinator.Lexer (lex')
 import Lexer.Lexeme as L
 import Lexer.Token as T
+import Parser.Ast (isPointer, isPrimitive)
 import qualified Parser.Ast as Ast
 import Parser.AstVisualiser (visualiseAst)
 import Parser.Combinator.CustomCombinators.Chains
@@ -40,21 +41,34 @@ constructs = many construct
 construct :: Parser Ast.Construct
 construct =
   recoverUsingFollows
-    ( (>?)
-        [ (L.is Struct, structDecl),
-          (L.isType, funcDefOrFuncDefOrVarDecl)
-        ]
+    ( do
+        typ <- type'
+        if isPrimitive typ
+          then do
+            name <- nameFrom <$> ident
+            funcDefOrFuncDeclOrVarDecl typ name
+          else do
+            if isPointer typ
+              then do
+                name <- nameFrom <$> ident
+                funcDefOrFuncDeclOrVarDecl typ name
+              else
+                (>?)
+                  [ (L.is L.LBrace, structDecl (structName typ)),
+                    (L.isIdent, ident >>= funcDefOrFuncDeclOrVarDecl typ . nameFrom)
+                  ]
     )
     followsConstruct
     (return Ast.ConstructError)
+  where
+    nameFrom (Ast.Ident x) = x
+    structName (Ast.StructType x _) = x
 
-structDecl :: Parser Ast.Construct
-structDecl = do
-  expect L.Struct
-  nameId <- ident
+structDecl :: String -> Parser Ast.Construct
+structDecl name = do
   vars <- structFields
   expect Semi
-  return (Ast.StructDecl $ Ast.Struct (structName nameId) vars)
+  return (Ast.StructDecl $ Ast.Struct name vars)
   where
     structName (Ast.Ident x) = x
 
@@ -70,14 +84,12 @@ structFields = do
       varDecl typ (name nameId)
     name (Ast.Ident x) = x
 
-funcDefOrFuncDefOrVarDecl :: Parser Ast.Construct
-funcDefOrFuncDefOrVarDecl = do
-  typ <- type'
-  nameId <- ident
+funcDefOrFuncDeclOrVarDecl :: Ast.Type -> String -> Parser Ast.Construct
+funcDefOrFuncDeclOrVarDecl typ name = do
   (>?)
-    [ (L.is LParen, func' typ (name nameId)),
-      (L.is LBrack, varDecl' typ (name nameId)),
-      (L.is Semi, varDecl' typ (name nameId))
+    [ (L.is LParen, func' typ name),
+      (L.is LBrack, varDecl' typ name),
+      (L.is Semi, varDecl' typ name)
     ]
   where
     func' typ name = do
@@ -87,7 +99,6 @@ funcDefOrFuncDefOrVarDecl = do
           (L.is LBrace, Ast.FuncDefn <$> funcDefn typ name args)
         ]
     varDecl' typ name = Ast.VarDecl <$> varDecl typ name
-    name (Ast.Ident x) = x
 
 funcDecl :: Ast.Type -> String -> [Ast.Formal] -> Parser Ast.FuncDecl
 funcDecl rettyp funcName formals = do

@@ -2,9 +2,10 @@ module Parser.Grammar.Follows where
 
 import Lexer.Lexeme (Lexeme)
 import qualified Lexer.Lexeme as L
+import Parser.Grammar.Operators (isInfix)
 
 followsExp :: Lexeme -> Bool
-followsExp = L.any [L.Semi, L.RParen, L.RBrack, L.Comma]
+followsExp lexeme = isInfix lexeme || L.any [L.Semi, L.RParen, L.RBrack, L.Comma] lexeme
 
 followsStatement :: Lexeme -> Bool
 followsStatement lexeme =

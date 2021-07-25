@@ -10,6 +10,7 @@ import Data.List (intercalate, map, nub)
 import qualified Data.List.NonEmpty as Ne
 import Data.Text (pack)
 import Data.Void
+import Debug.Trace
 import Lexer.Combinator.Lexer (lex')
 import qualified Lexer.Lexeme as L
 import qualified Lexer.Token as T
@@ -22,7 +23,7 @@ import Parser.Grammar.Firsts (startsExpr, startsStmt, startsType)
 import Parser.Grammar.Follows (followsConstruct, followsExp, followsStatement)
 import Parser.Grammar.Operators (isInfix, precedence)
 import Parser.Pratt.Combinators.Chains (lookchainl1)
-import Parser.Pratt.Combinators.Prim (many, sepBy, sepBy1)
+import Parser.Pratt.Combinators.Prim (many, many1, sepBy, sepBy1)
 import Parser.Pratt.Combinators.Recovery (withFollowsRecovery)
 import Parser.Pratt.Combinators.When ((>?))
 import Parser.Pratt.Prim (Parser, ParserError, ParserState (ParserState, errors), advance, expect, head, liftToken, lookahead, unexpected, unexpectedEof)
@@ -33,13 +34,15 @@ import Prelude hiding (head)
 program :: Parser Ast.Program
 program = do
   dirs <- directives
-  Ast.Program dirs <$> constructs
+  constrs <- constructs
+  expect (L.is L.Eof)
+  return (Ast.Program dirs constrs)
 
 directives :: Parser [Ast.Directive]
 directives = includes
 
 constructs :: Parser [Ast.Construct]
-constructs = many construct L.isType
+constructs = many construct startsType
 
 construct :: Parser Ast.Construct
 construct =
@@ -57,7 +60,7 @@ structDecl structName = do
 structFields :: Parser [Ast.VarDecl]
 structFields = do
   expect (L.is L.LBrace)
-  fields <- sepBy1 structField startsType L.Semi
+  fields <- many1 structField startsType
   expect (L.is L.RBrace)
   return fields
 
@@ -67,9 +70,11 @@ structField =
     ( do
         typ <- type'
         nameId <- expect L.isIdent
-        varDecl typ (name nameId)
+        field <- varDecl typ (name nameId)
+        expect (L.is L.Semi)
+        return field
     )
-    (L.any [L.RBrace, L.Semi])
+    (\lexeme -> L.any [L.RBrace] lexeme || startsType lexeme)
     Ast.VarDeclError
   where
     name (L.Ident x) = x
@@ -197,7 +202,7 @@ statementExpr = withFollowsRecovery (expr 0) followsExp Ast.ExprError
 expr :: Int -> Parser Ast.Expr
 expr rbp =
   lookchainl1
-    (lookahead >>= \l -> nud l rbp)
+    (lookahead >>= \lexeme -> nud lexeme rbp)
     (\op -> precedence op > rbp)
     (lookahead >>= led)
 
@@ -227,22 +232,26 @@ led lexeme = case lexeme of
 
 ctd :: L.Lexeme -> Parser Ast.Construct
 ctd lexeme
-  | L.isType lexeme = do
+  | startsType lexeme = do
     typ <- type'
-    nameId <- expect L.isIdent
-
     if isPrimitive typ
       then do
-        funcDefOrFuncDeclOrVarDecl typ (name nameId)
+        name <- nameFrom <$> expect L.isIdent
+        funcDefOrFuncDeclOrVarDecl typ name
       else do
-        if (not . isPointer) typ
+        if isPointer typ
           then do
-            structDecl (name nameId)
-          else do
-            globalVarDecl typ (name nameId)
-  | otherwise = expect L.isType >> return Ast.ConstructError
+            name <- nameFrom <$> expect L.isIdent
+            funcDefOrFuncDeclOrVarDecl typ name
+          else
+            (>?)
+              [ (L.is L.LBrace, structDecl (structName typ)),
+                (L.isIdent, expect L.isIdent >>= funcDefOrFuncDeclOrVarDecl typ . nameFrom)
+              ]
+  | otherwise = expect startsType >> return Ast.ConstructError
   where
-    name (L.Ident x) = x
+    nameFrom (L.Ident x) = x
+    structName (Ast.StructType x _) = x
 
 std :: L.Lexeme -> Parser Ast.Statement
 std lexeme
@@ -344,9 +353,9 @@ primitiveType = do
 
 structType :: Parser Ast.Type
 structType = do
-  expect (L.is L.Struct)
+  expect (L.is $ L.Struct)
   id <- expect L.isIdent
-  Ast.StructType (structName id) <$> stars
+  Ast.StructType (structName (traceShowId id)) <$> stars
   where
     structName (L.Ident x) = x
 

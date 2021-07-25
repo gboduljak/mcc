@@ -15,6 +15,7 @@ import qualified Parser.Combinator.Naive.Parser as CombinatorParser (parse)
 import qualified Parser.Combinator.Predictive.Parser as PredictiveCombinatorParser (parse)
 import Parser.Errors.PrettyPrinter (prettyPrintErrors)
 import qualified Parser.Generated.Parser as GeneratedParser (parse)
+import qualified Parser.Pratt.Parser as PrattParser (parse)
 import Preprocessor.IncludesPreprocessor (preprocess)
 import Preprocessor.IncludesVisualiser (draw)
 import Prettyprinter
@@ -70,6 +71,19 @@ compileFile file = do
           writeFile (file ++ ".ast.comb.raw.txt") (show ast)
           writeFile (file ++ ".ast.comb.txt") (prettyPrintAst ast)
           writeFile (file ++ ".ast.comb.dot") (visualiseAst ast)
+      putStrLn "Pratt Parser..."
+      putStrLn ("Parsing " ++ file ++ " using Pratt ...")
+      putStrLn ("Parsed " ++ file ++ " ...")
+      print $ PrattParser.parse file tokens
+      case PrattParser.parse file tokens of
+        (Left errors) -> do
+          let errorMessages = prettyPrintErrors errors (pack input) supportsFancyTerminal
+           in do
+                putStrLn errorMessages
+        (Right ast) -> do
+          writeFile (file ++ ".ast.pratt.raw.txt") (show ast)
+          writeFile (file ++ ".ast.pratt.txt") (prettyPrintAst ast)
+          writeFile (file ++ ".ast.pratt.dot") (visualiseAst ast)
 
 -- putStrLn "AdHoc Lexer..."
 -- let adHocResult = AdHocLex.lex' file input
