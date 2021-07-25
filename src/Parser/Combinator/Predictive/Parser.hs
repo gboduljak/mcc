@@ -20,7 +20,7 @@ import Parser.Combinator.CustomCombinators.Recover
 import Parser.Combinator.CustomCombinators.When
 import Parser.Combinator.Prim
 import Parser.Combinator.TokenStream
-import Parser.Grammar.Firsts (startsExpr)
+import Parser.Grammar.Firsts (startsExpr, startsType)
 import Parser.Grammar.Follows
 import Text.Megaparsec
 import Prelude hiding (negate)
@@ -124,7 +124,7 @@ statement =
           (L.is L.If, if'),
           (L.is L.Return, returnStmt),
           (L.is L.LBrace, blockStmt),
-          (L.isType, varDeclStmt),
+          (startsType, varDeclStmt),
           (startsExpr, exprStmt)
         ]
     )
@@ -278,9 +278,8 @@ castTypeOrExp :: Parser Ast.Expr
 castTypeOrExp = do
   expect L.LParen
   (>?)
-    [ (L.isType, castType),
-      (L.is L.Struct, castType),
-      (const True, nestedExpr)
+    [ (startsType, castType),
+      (startsExpr, nestedExpr)
     ]
   where
     castType = do
@@ -310,7 +309,7 @@ sizeof = do
   where
     sizeOfArg =
       (>?)
-        [ (L.isType, Ast.Sizeof . Left <$> type'),
+        [ (startsType, Ast.Sizeof . Left <$> type'),
           (const True, Ast.Sizeof . Right <$> expr)
         ]
 

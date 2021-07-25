@@ -153,7 +153,7 @@ while' :: Parser Ast.Statement
 while' = do
   expect (L.is L.While)
   expect (L.is L.LParen)
-  cond <- statementExpr
+  cond <- expr 0
   expect (L.is L.RParen)
   Ast.While cond <$> statement
 
@@ -173,7 +173,7 @@ if' :: Parser Ast.Statement
 if' = do
   expect (L.is L.If)
   expect (L.is L.LParen)
-  cond <- statementExpr
+  cond <- expr 0
   expect (L.is L.RParen)
   conseq <- statement
   Ast.If cond conseq <$> alt
@@ -192,19 +192,20 @@ return' = do
 optionalStatementExpr :: Parser (Maybe Ast.Expr)
 optionalStatementExpr =
   (>?)
-    [ (startsExpr, Just <$> statementExpr),
+    [ (startsExpr, Just <$> expr 0),
       (const True, return Nothing)
     ]
 
-statementExpr :: Parser Ast.Expr
-statementExpr = withFollowsRecovery (expr 0) followsExp Ast.ExprError
-
 expr :: Int -> Parser Ast.Expr
 expr rbp =
-  lookchainl1
-    (lookahead >>= \lexeme -> nud lexeme rbp)
-    (\op -> precedence op > rbp)
-    (lookahead >>= led)
+  withFollowsRecovery
+    ( lookchainl1
+        (lookahead >>= \lexeme -> nud lexeme rbp)
+        (\op -> precedence op > rbp)
+        (lookahead >>= led)
+    )
+    followsExp
+    Ast.ExprError
 
 led :: L.Lexeme -> Parser (Ast.Expr -> Ast.Expr)
 led lexeme = case lexeme of
@@ -256,7 +257,7 @@ ctd lexeme
 std :: L.Lexeme -> Parser Ast.Statement
 std lexeme
   | startsExpr lexeme = Ast.Expr <$> expr 0
-  | L.isType lexeme = localVarDecl
+  | startsType lexeme = localVarDecl
   | lexeme == L.LBrace = Ast.BlockStatement <$> block
   | lexeme == L.While = while'
   | lexeme == L.For = for'
@@ -291,7 +292,7 @@ sizeof = do
   expect (L.is L.LParen)
   expr <-
     (>?)
-      [ (L.isType, Ast.Sizeof . Left <$> type'),
+      [ (startsType, Ast.Sizeof . Left <$> type'),
         (const True, Ast.Sizeof . Right <$> expr 0)
       ]
   expect (L.is L.RParen)
