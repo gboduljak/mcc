@@ -46,6 +46,7 @@ library
       Parser.Generated.Parser
       Parser.Grammar.Firsts
       Parser.Grammar.Follows
+      Parser.Grammar.Operators
       Parser.Pratt.Combinators.Chains
       Parser.Pratt.Combinators.Prim
       Parser.Pratt.Combinators.Recovery
