@@ -218,20 +218,15 @@ ctd :: L.Lexeme -> Parser Ast.Construct
 ctd lexeme
   | startsType lexeme = do
     typ <- type'
-    if isPrimitive typ
+    if isPrimitive typ || isPointer typ
       then do
         name <- nameFrom <$> expect L.isIdent
         funcDefOrFuncDeclOrVarDecl typ name
       else do
-        if isPointer typ
-          then do
-            name <- nameFrom <$> expect L.isIdent
-            funcDefOrFuncDeclOrVarDecl typ name
-          else
-            (>?)
-              [ (L.is L.LBrace, structDecl (structName typ)),
-                (L.isIdent, expect L.isIdent >>= funcDefOrFuncDeclOrVarDecl typ . nameFrom)
-              ]
+        (>?)
+          [ (L.is L.LBrace, structDecl (structName typ)),
+            (L.isIdent, expect L.isIdent >>= funcDefOrFuncDeclOrVarDecl typ . nameFrom)
+          ]
   | otherwise = expect startsType >> return Ast.ConstructError
   where
     nameFrom (L.Ident x) = x
@@ -264,7 +259,7 @@ nud lexeme rbp = case lexeme of
   L.LParen ->
     advance
       >> (>?)
-        [ (startsType, typecast),
+        [ (startsType, typecast rbp),
           (startsExpr, nested)
         ]
   _ -> expect startsExpr >> return Ast.ExprError
@@ -418,11 +413,11 @@ nested = do
   expect (L.is L.RParen)
   return (Ast.Nested exp)
 
-typecast :: Parser Ast.Expr
-typecast = do
+typecast :: Int -> Parser Ast.Expr
+typecast rbp = do
   typ <- type'
   expect (L.is L.RParen)
-  Ast.Typecast typ <$> expr 0
+  Ast.Typecast typ <$> expr rbp
 
 includes :: Parser [Ast.Directive]
 includes = many include (L.is L.Include)

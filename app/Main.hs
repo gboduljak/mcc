@@ -74,7 +74,6 @@ compileFile file = do
       putStrLn "Pratt Parser..."
       putStrLn ("Parsing " ++ file ++ " using Pratt ...")
       putStrLn ("Parsed " ++ file ++ " ...")
-      print $ PrattParser.parse file tokens
       case PrattParser.parse file tokens of
         (Left errors) -> do
           let errorMessages = prettyPrintErrors errors (pack input) supportsFancyTerminal
