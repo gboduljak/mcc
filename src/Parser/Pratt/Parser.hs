@@ -18,6 +18,7 @@ import Parser.Ast (isPointer, isPrimitive)
 import qualified Parser.Ast as Ast
 import Parser.AstVisualiser (visualiseAst)
 import Parser.Combinator.TokenStream (TokenStream (..))
+import Parser.Errors.Merger
 import Parser.Errors.PrettyPrinter (prettyPrintErrors)
 import Parser.Grammar.Firsts (startsExpr, startsStmt, startsType)
 import Parser.Grammar.Follows (followsConstruct, followsExp, followsStatement)
@@ -436,7 +437,7 @@ parse file tokens = case result of
     errors -> Left (bundle $ reverse errors)
   where
     (result, state) = runState (runExceptT program) (ParserState tokens 0 [])
-    bundle errors = ParseErrorBundle (Ne.fromList (nub errors)) initPosState
+    bundle errors = ParseErrorBundle (Ne.fromList (nub . mergeErrorsBasedOnPos $ errors)) initPosState
     initPosState =
       PosState
         { pstateInput =

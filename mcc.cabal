@@ -42,6 +42,7 @@ library
       Parser.Combinator.Predictive.Parser
       Parser.Combinator.Prim
       Parser.Combinator.TokenStream
+      Parser.Errors.Merger
       Parser.Errors.PrettyPrinter
       Parser.Generated.Parser
       Parser.Grammar.Firsts
