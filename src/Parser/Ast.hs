@@ -84,6 +84,7 @@ data Expr
 data Type
   = PrimitiveType BuiltinType Int
   | StructType String Int
+  | RootType
   deriving (Show, Eq)
 
 data InfixOp
@@ -108,10 +109,12 @@ data InfixOp
 isPointer :: Type -> Bool
 isPointer (PrimitiveType _ ptrs) = ptrs > 0
 isPointer (StructType _ ptrs) = ptrs > 0
+isPointer _ = True
 
 isPrimitive :: Type -> Bool
 isPrimitive (PrimitiveType _ _) = True
 isPrimitive (StructType _ _) = False
+isPrimitive _ = True
 
 isStruct :: Type -> Bool
 isStruct = not . isPrimitive

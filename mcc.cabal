@@ -60,6 +60,7 @@ library
       Preprocessor.IncludesVisualiser
       Preprocessor.PreprocessError
       Preprocessor.TopologicalOrder
+      Semant.SemantAst
       Utils.CharPredicates
   other-modules:
       Paths_mcc
