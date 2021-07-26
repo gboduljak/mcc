@@ -60,6 +60,6 @@ data LValue
   = SDeref SExpr
   | SIdent String
   | SFieldAccess SExpr String
-  | SArrayAccess SExpr SExpr
+  | SArrayAccess SExpr [SExpr]
   | SIndirect SExpr String
   deriving (Show, Eq)
