@@ -60,7 +60,13 @@ library
       Preprocessor.IncludesVisualiser
       Preprocessor.PreprocessError
       Preprocessor.TopologicalOrder
+      Semant.Env
+      Semant.Scope
+      Semant.Semant
       Semant.SemantAst
+      Semant.SemantError
+      Semant.T
+      Semant.Type
       Utils.CharPredicates
   other-modules:
       Paths_mcc
@@ -108,6 +114,7 @@ test-suite mcc-test
   other-modules:
       LexerSpec
       ParserSpec
+      ScopingSpec
       TestCases
       Paths_mcc
   hs-source-dirs:
