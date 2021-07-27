@@ -392,7 +392,7 @@ arraySize = do
     sizeOf (L.LitInt x) = x
 
 formals :: Parser [Ast.Formal]
-formals = sepBy formal' L.isType L.Comma
+formals = sepBy formal' startsType L.Comma
   where
     formal' = withFollowsRecovery formal (L.any [L.Comma, L.RParen]) Ast.FormalError
 
