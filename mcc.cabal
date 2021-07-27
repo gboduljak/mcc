@@ -65,7 +65,6 @@ library
       Semant.Semant
       Semant.SemantAst
       Semant.SemantError
-      Semant.T
       Semant.Type
       Utils.CharPredicates
   other-modules:

@@ -3,10 +3,11 @@
 
 module Semant.Semant where
 
-import Control.Monad.State (State, evalState, gets, modify, runState)
+import Control.Monad.State (MonadState (get), State, evalState, gets, modify, runState)
 import Control.Monad.Writer
 import qualified Data.Map as Map
-import Semant.Env
+import Semant.Env hiding (defineFunc, defineStruct, lookupFunc, lookupStruct)
+import qualified Semant.Env (defineFunc, defineStruct, lookupFunc, lookupStruct)
 import Semant.Scope (Binding, Scope (Scope, id, parentId, symbolTable), ScopeId, rootScope, rootScopeId)
 import qualified Semant.Scope as Scope
 import Semant.SemantError
@@ -23,8 +24,8 @@ runSemant monad env = x
 getEmptyEnv :: Env
 getEmptyEnv =
   Env
-    { funcs = [],
-      structs = [],
+    { funcs = Map.empty,
+      structs = Map.empty,
       scopes = Map.fromList [(rootScopeId, rootScope)],
       currentScopeId = rootScopeId
     }
@@ -82,21 +83,33 @@ extend binding =
       )
     current
 
-lookup :: String -> Semant (Maybe Type)
-lookup name = do
+defineFunc :: FuncSignature -> Semant Env
+defineFunc func = modify (Semant.Env.defineFunc func) >> get
+
+defineStruct :: StructSignature -> Semant Env
+defineStruct struct = modify (Semant.Env.defineStruct struct) >> get
+
+lookupFunc :: String -> Semant (Maybe FuncSignature)
+lookupFunc func = gets (Semant.Env.lookupFunc func)
+
+lookupStruct :: String -> Semant (Maybe StructSignature)
+lookupStruct struct = gets (Semant.Env.lookupStruct struct)
+
+lookupVar :: String -> Semant (Maybe Type)
+lookupVar name = do
   currentScopeId <- gets currentScopeId
-  match <- lookupIn currentScopeId name
+  match <- lookupVarIn currentScopeId name
   case match of
     (Just (value, scope)) -> return (Just value)
     Nothing -> return Nothing
 
-lookupIn :: ScopeId -> String -> Semant (Maybe (Type, ScopeId))
-lookupIn scopeId name = do
+lookupVarIn :: ScopeId -> String -> Semant (Maybe (Type, ScopeId))
+lookupVarIn scopeId name = do
   scope <- getScope scopeId
   case Scope.lookup scope name of
     (Just entry) -> return (Just (entry, scopeId))
     _ -> case parentId scope of
-      (Just parentId) -> lookupIn parentId name
+      (Just parentId) -> lookupVarIn parentId name
       _ -> return Nothing
 
 enter :: Semant Scope
