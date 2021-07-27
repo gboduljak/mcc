@@ -5,8 +5,21 @@ import qualified Data.Map as Map (size)
 import Lexer.Lexeme
 import Parser.Ast
 import Semant.Env hiding (defineFunc, defineStruct, lookupFunc, lookupStruct)
-import Semant.Scope hiding (extend, lookup)
-import Semant.Semant (Semant, current, defineFunc, defineStruct, enter, exit, extend, getEmptyEnv, lookupFunc, lookupStruct, lookupVar, runSemant)
+import Semant.Scope hiding (defineVar, lookup)
+import Semant.Semant
+  ( Semant,
+    currentScope,
+    defineFunc,
+    defineStruct,
+    defineVar,
+    enterScope,
+    exitScope,
+    getEmptyEnv,
+    lookupFunc,
+    lookupStruct,
+    lookupVar,
+    runSemant,
+  )
 import Semant.Type (Type (Scalar))
 import qualified Semant.Type as SemantType
 import Test.Hspec
@@ -14,47 +27,47 @@ import Prelude hiding (id, lookup)
 
 enterFromRoot :: Semant Bool
 enterFromRoot = do
-  enter
-  scope <- current
+  enterScope
+  scope <- currentScope
   return (id scope == 1)
 
 resolveClosest :: Semant [Maybe SemantType.Type]
 resolveClosest = do
-  extend ("x", Scalar (PrimitiveType Int 0))
-  enter
-  extend ("x", Scalar (PrimitiveType Double 0))
-  enter
-  extend ("x", Scalar (PrimitiveType Char 0))
-  enter
+  defineVar ("x", Scalar (PrimitiveType Int 0))
+  enterScope
+  defineVar ("x", Scalar (PrimitiveType Double 0))
+  enterScope
+  defineVar ("x", Scalar (PrimitiveType Char 0))
+  enterScope
   resolve1 <- lookupVar "x"
-  exit
+  exitScope
   resolve2 <- lookupVar "x"
-  exit
+  exitScope
   resolve3 <- lookupVar "x"
-  exit
+  exitScope
   resolve4 <- lookupVar "x"
   return [resolve1, resolve2, resolve3, resolve4]
 
 resolveDeep :: Semant (Maybe SemantType.Type, Int)
 resolveDeep = do
-  extend ("x", Scalar (PrimitiveType Int 0))
-  enter
-  enter
-  enter
-  enter
-  enter
+  defineVar ("x", Scalar (PrimitiveType Int 0))
+  enterScope
+  enterScope
+  enterScope
+  enterScope
+  enterScope
   x <- lookupVar "x"
   y <- gets (Map.size . scopes)
   return (x, y)
 
 resolveDeep2 :: Semant (Maybe SemantType.Type, Int)
 resolveDeep2 = do
-  extend ("x", Scalar (PrimitiveType Int 0))
-  enter
-  enter
-  enter
-  enter
-  enter
+  defineVar ("x", Scalar (PrimitiveType Int 0))
+  enterScope
+  enterScope
+  enterScope
+  enterScope
+  enterScope
   x <- lookupVar "y"
   y <- gets (Map.size . scopes)
   return (x, y)
@@ -79,8 +92,8 @@ findFuncFromSomewhere = do
           formals = []
         }
     )
-  enter
-  enter
+  enterScope
+  enterScope
   lookupFunc "main"
 
 findFuncWithVarName :: Semant (Maybe Semant.Env.FuncSignature)
@@ -92,9 +105,9 @@ findFuncWithVarName = do
           formals = []
         }
     )
-  enter
-  extend ("main", Scalar (PrimitiveType Int 0))
-  enter
+  enterScope
+  defineVar ("main", Scalar (PrimitiveType Int 0))
+  enterScope
   lookupFunc "main"
 
 dontFindFunc :: Semant (Maybe Semant.Env.FuncSignature)
@@ -106,8 +119,8 @@ dontFindFunc = do
           formals = []
         }
     )
-  enter
-  enter
+  enterScope
+  enterScope
   lookupFunc "smain"
 
 findStructFromRoot :: Semant (Maybe Semant.Env.StructSignature)
@@ -118,16 +131,16 @@ findStructFromRoot = do
 findStructFromSomewhere :: Semant (Maybe Semant.Env.StructSignature)
 findStructFromSomewhere = do
   defineStruct StructSignature {structName = "a", fields = []}
-  enter
-  enter
+  enterScope
+  enterScope
   lookupStruct "a"
 
 findStructWithVarName :: Semant (Maybe Semant.Env.StructSignature)
 findStructWithVarName = do
   defineStruct StructSignature {structName = "a", fields = []}
-  enter
-  extend ("a", Scalar (PrimitiveType Int 0))
-  enter
+  enterScope
+  defineVar ("a", Scalar (PrimitiveType Int 0))
+  enterScope
   lookupStruct "a"
 
 findStructWithVarAndFuncName :: Semant (Maybe Semant.Env.StructSignature)
@@ -140,22 +153,22 @@ findStructWithVarAndFuncName = do
           formals = []
         }
     )
-  enter
-  extend ("a", Scalar (PrimitiveType Int 0))
-  enter
+  enterScope
+  defineVar ("a", Scalar (PrimitiveType Int 0))
+  enterScope
   lookupStruct "a"
 
 dontFindStruct :: Semant (Maybe Semant.Env.FuncSignature)
 dontFindStruct = do
   defineStruct StructSignature {structName = "a", fields = []}
-  enter
-  enter
+  enterScope
+  enterScope
   lookupFunc "a_struct"
 
 scopingSpec :: Spec
 scopingSpec = do
   describe "lexical scoping resolution tests..." $ do
-    it "should enter from root" $ do
+    it "should enterScope from root" $ do
       let result = runSemant enterFromRoot getEmptyEnv
       result `shouldBe` True
     it "should resolve closest" $

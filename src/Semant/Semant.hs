@@ -47,8 +47,8 @@ getScope scopeId = do
   let currentScope = snd $ Map.elemAt scopeId scopes
    in return currentScope
 
-current :: Semant Scope
-current = do
+currentScope :: Semant Scope
+currentScope = do
   currentScopeId <- gets currentScopeId
   getScope currentScopeId
 
@@ -64,12 +64,12 @@ switchToScope scopeId = do
             currentScopeId = scopeId
           }
     )
-  current
+  currentScope
 
-extend :: Binding -> Semant Scope
-extend binding =
+defineVar :: Binding -> Semant Scope
+defineVar binding =
   do
-    scope <- current
+    scope <- currentScope
     scopes <- gets scopes
     let scope' = Scope.extend scope binding
     modify
@@ -81,7 +81,7 @@ extend binding =
               scopes = Map.insert (id scope) scope' scopes
             }
       )
-    current
+    currentScope
 
 defineFunc :: FuncSignature -> Semant Env
 defineFunc func = modify (Semant.Env.defineFunc func) >> get
@@ -112,8 +112,8 @@ lookupVarIn scopeId name = do
       (Just parentId) -> lookupVarIn parentId name
       _ -> return Nothing
 
-enter :: Semant Scope
-enter = do
+enterScope :: Semant Scope
+enterScope = do
   scopeId <- gets currentScopeId
   newScope <- createScope (Just scopeId)
   modify
@@ -127,9 +127,9 @@ enter = do
     )
   return newScope
 
-exit :: Semant (Maybe Scope)
-exit = do
-  scope <- current
+exitScope :: Semant (Maybe Scope)
+exitScope = do
+  scope <- currentScope
   scopes <- gets scopes
   case parentId scope of
     (Just id) -> do
@@ -142,5 +142,5 @@ exit = do
                 scopes = scopes
               }
         )
-      Just <$> current
+      Just <$> currentScope
     _ -> return Nothing
