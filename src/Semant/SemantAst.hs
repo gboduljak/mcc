@@ -1,7 +1,8 @@
 module Semant.SemantAst where
 
 import qualified Data.Map as Map
-import Parser.Ast (InfixOp, Type)
+import Parser.Ast (InfixOp)
+import Semant.Type (Type)
 
 data SProgram = SProgram
   { structs :: [SStruct],
@@ -45,8 +46,10 @@ data SExpr'
   | SLitDouble Double
   | SLitString String
   | SLitChar Char
+  | SNull
+  | SNoExpr
   | SNested SExpr
-  | SBinop InfixOp SExpr SExpr
+  | SBinop SExpr InfixOp SExpr
   | SAddr SExpr
   | SNegate SExpr
   | SNegative SExpr

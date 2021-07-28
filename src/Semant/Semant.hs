@@ -30,6 +30,9 @@ getEmptyEnv =
       currentScopeId = rootScopeId
     }
 
+registerError :: SemantError -> Semant ()
+registerError error = tell [error]
+
 createScope :: Maybe ScopeId -> Semant Scope
 createScope parentId = do
   nextScopeId <- gets (Map.size . scopes)

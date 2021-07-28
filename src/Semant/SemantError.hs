@@ -4,17 +4,17 @@
 module Semant.SemantError where
 
 import Data.Text.Prettyprint.Doc
-import Lexer.Lexeme (Lexeme (Type))
 import Parser.Ast
   ( Construct (StructDecl),
     Expr,
     FuncDecl (Func),
+    InfixOp,
     Statement,
     StructDecl (Struct),
-    Type,
     VarDecl,
   )
 import Parser.AstPrettyPrinter
+import Semant.Type (Type)
 
 data SemantError
   = IllegalBinding
@@ -23,16 +23,27 @@ data SemantError
         bindingLoc :: BindingLoc
       }
   | UndefinedSymbol String SymbolKind Expr
+  | BinopTypeError
+      { infixOp :: InfixOp,
+        leftType :: Type,
+        rightType :: Type,
+        binopExpr :: Expr,
+        message :: String
+      }
+  | BinopArgTypeError
+      { infixOp' :: InfixOp,
+        argType :: Type,
+        argExpr :: Expr,
+        expected' :: [String]
+      }
   | TypeError
       { expected :: [Type],
         actual :: Type,
-        typeErrorStmt :: Statement,
         typeErrorExpr :: Expr
       }
   | CastError
       { to :: Type,
         from :: Type,
-        castErrorStmt :: Statement,
         castErrorExpr :: Expr
       }
   | CallArgsError
@@ -88,21 +99,45 @@ instance Pretty SemantError where
       UndefinedSymbol symbolName symbolKind referenceExpr ->
         pretty "Undefined" <+> pretty symbolKind <+> pretty symbolName
           <+> pretty "referenced in:" <> hardline <> pretty referenceExpr
+      BinopTypeError {..} ->
+        pretty "Type error in binary expression:"
+          <+> indent indentAmount (pretty binopExpr)
+          <+> dot
+          <> hardline
+          <+> pretty "Unable to apply operator "
+          <+> pretty infixOp
+          <+> pretty "to"
+          <+> pretty "the left operand of type "
+          <+> pretty leftType
+          <+> pretty "and the right operand of type "
+          <+> pretty rightType
+          <> dot
+          <> hardline
+          <+> pretty message
+      BinopArgTypeError {..} ->
+        pretty "Type error in binary expression argument:"
+          <+> indent indentAmount (pretty argExpr)
+          <+> dot
+          <> hardline
+          <+> pretty "Cannot apply operator "
+          <+> pretty infixOp'
+          <+> pretty "to"
+          <+> pretty argType
+          <> dot
+          <> hardline
+          <+> pretty "Supported types are: "
+          <+> pretty expected'
+          <+> dot
       TypeError {..} ->
         pretty "Type error: expected one of" <+> pretty expected <+> pretty "but got"
           <+> pretty actual
           <+> dot
           <> indent
             indentAmount
-            ( pretty " Error occured in statement:"
+            ( pretty " Error occured in expression:"
                 <> hardline
-                <> pretty typeErrorStmt
+                <> pretty typeErrorExpr
                 <> hardline
-                <> indent
-                  indentAmount
-                  ( pretty ", in expression: "
-                      <> pretty typeErrorExpr
-                  )
             )
       CastError {..} ->
         pretty "Cast error: can only cast between pointers, between ints and doubles, or between pointers and ints, not from"
@@ -113,8 +148,6 @@ instance Pretty SemantError where
           <> indent
             indentAmount
             ( pretty "Error occured in statement:"
-                <> hardline
-                <> pretty castErrorStmt
                 <> hardline
                 <> indent
                   indentAmount
