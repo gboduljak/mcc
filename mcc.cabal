@@ -64,6 +64,7 @@ library
       Semant.Scope
       Semant.Semant
       Semant.SemantAst
+      Semant.SemantAstVisualiser
       Semant.SemantError
       Semant.SemanticAnalyser
       Semant.Type
@@ -116,6 +117,7 @@ test-suite mcc-test
       ParserSpec
       ScopingSpec
       TestCases
+      TypecheckerSpec
       Paths_mcc
   hs-source-dirs:
       test

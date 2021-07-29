@@ -2,6 +2,7 @@ module Semant.SemantAst where
 
 import qualified Data.Map as Map
 import Parser.Ast (InfixOp)
+import qualified Parser.Ast as Ast
 import Semant.Type (Type)
 
 data SProgram = SProgram
@@ -48,12 +49,11 @@ data SExpr'
   | SLitChar Char
   | SNull
   | SNoExpr
-  | SNested SExpr
   | SBinop SExpr InfixOp SExpr
   | SAddr SExpr
   | SNegate SExpr
   | SNegative SExpr
-  | SSizeof (Either Type SExpr)
+  | SSizeof (Either Ast.Type SExpr)
   | STypecast Type SExpr
   | LVal LValue
   | SAssign LValue SExpr

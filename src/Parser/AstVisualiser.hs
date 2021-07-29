@@ -508,23 +508,24 @@ instance AstDrawable Expr where
     connect binopId rightId
     return binopId
     where
-      display = \case
-        Add -> "+"
-        Sub -> "-"
-        Mul -> "*"
-        Div -> "/"
-        Mod -> "%"
-        Equal -> "=="
-        Neq -> "!="
-        Less -> "<"
-        Leq -> "<="
-        Greater -> ">"
-        Geq -> ">="
-        And -> "&&"
-        Or -> "||"
-        BitwiseAnd -> "&"
-        BitwiseOr -> "|"
-        BitwiseXor -> "^"
+      display =
+        \case
+          Add -> "+"
+          Sub -> "-"
+          Mul -> "*"
+          Div -> "/"
+          Mod -> "%"
+          Equal -> "=="
+          Neq -> "!="
+          Less -> "\\<"
+          Leq -> "\\<="
+          Greater -> "\\>"
+          Geq -> "\\>="
+          And -> "&&"
+          Or -> "\\|\\|"
+          BitwiseAnd -> "&"
+          BitwiseOr -> "\\|"
+          BitwiseXor -> "^"
   visualise (Nested expr) = do
     nestedId <- nextId
     lparenId <- nextId

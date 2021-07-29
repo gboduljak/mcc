@@ -33,11 +33,12 @@ data SemantError
   | BinopArgTypeError
       { infixOp' :: InfixOp,
         argType :: Type,
+        parentExpr :: Expr,
         argExpr :: Expr,
         expected' :: [String]
       }
   | TypeError
-      { expected :: [Type],
+      { expected :: [String],
         actual :: Type,
         typeErrorExpr :: Expr
       }
@@ -108,24 +109,29 @@ instance Pretty SemantError where
           <+> pretty infixOp
           <+> pretty "to"
           <+> pretty "the left operand of type "
-          <+> pretty leftType
+          <> pretty leftType
           <+> pretty "and the right operand of type "
-          <+> pretty rightType
+          <> pretty rightType
           <> dot
           <> hardline
           <+> pretty message
       BinopArgTypeError {..} ->
-        pretty "Type error in binary expression argument:"
-          <+> indent indentAmount (pretty argExpr)
-          <+> dot
-          <> hardline
-          <+> pretty "Cannot apply operator "
+        pretty "Type error in binary expression:"
+          <+> indent
+            indentAmount
+            ( pretty parentExpr
+                <> hardline
+                <+> pretty "in argument expression:"
+                <+> indent indentAmount (pretty argExpr)
+            )
+          <+> hardline
+          <+> pretty "Cannot apply operator"
           <+> pretty infixOp'
           <+> pretty "to"
           <+> pretty argType
           <> dot
           <> hardline
-          <+> pretty "Supported types are: "
+          <+> pretty "Supported types are:"
           <+> pretty expected'
           <+> dot
       TypeError {..} ->

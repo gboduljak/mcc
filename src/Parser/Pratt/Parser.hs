@@ -430,6 +430,50 @@ include = do
   where
     file (L.LitString name) = name
 
+parseExprs :: String -> [T.Token] -> Either (ParseErrorBundle TokenStream Void) [Ast.Expr]
+parseExprs file tokens = case result of
+  (Left error) -> Left (bundle $ reverse (error : errors state))
+  (Right ast) -> case errors state of
+    [] -> Right ast
+    errors -> Left (bundle $ reverse errors)
+  where
+    (result, state) = runState (runExceptT (sepBy (expr 0) startsExpr L.Semi)) (ParserState tokens 0 [])
+    bundle errors = ParseErrorBundle (Ne.fromList (nub . mergeErrorsBasedOnPos $ errors)) initPosState
+    initPosState =
+      PosState
+        { pstateInput =
+            TokenStream
+              { tokenStreamInput = intercalate ", " . map (L.display . T.lexeme) $ tokens,
+                unTokenStream = tokens
+              },
+          pstateOffset = 0,
+          pstateSourcePos = initialPos file,
+          pstateTabWidth = mkPos 8,
+          pstateLinePrefix = ""
+        }
+
+parseExpr :: String -> [T.Token] -> Either (ParseErrorBundle TokenStream Void) Ast.Expr
+parseExpr file tokens = case result of
+  (Left error) -> Left (bundle $ reverse (error : errors state))
+  (Right ast) -> case errors state of
+    [] -> Right ast
+    errors -> Left (bundle $ reverse errors)
+  where
+    (result, state) = runState (runExceptT (expr 0)) (ParserState tokens 0 [])
+    bundle errors = ParseErrorBundle (Ne.fromList (nub . mergeErrorsBasedOnPos $ errors)) initPosState
+    initPosState =
+      PosState
+        { pstateInput =
+            TokenStream
+              { tokenStreamInput = intercalate ", " . map (L.display . T.lexeme) $ tokens,
+                unTokenStream = tokens
+              },
+          pstateOffset = 0,
+          pstateSourcePos = initialPos file,
+          pstateTabWidth = mkPos 8,
+          pstateLinePrefix = ""
+        }
+
 parse :: String -> [T.Token] -> Either (ParseErrorBundle TokenStream Void) Ast.Program
 parse file tokens = case result of
   (Left error) -> Left (bundle $ reverse (error : errors state))
