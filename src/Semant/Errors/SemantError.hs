@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Semant.SemantError where
+module Semant.Errors.SemantError where
 
 import Data.Text.Prettyprint.Doc
 import Parser.Ast

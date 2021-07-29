@@ -14,10 +14,10 @@ import Parser.Ast (Expr (..), InfixOp (..), Type (PrimitiveType))
 import qualified Parser.Ast as Ast
 import Parser.Errors.PrettyPrinter (prettyPrintErrors)
 import Parser.Pratt.Parser (parse, parseExpr, parseExprs)
+import Semant.Ast.SemantAst
+import Semant.Ast.SemantAstVisualiser (visualise, visualiseSemantAst)
+import Semant.Errors.SemantError hiding (Void)
 import Semant.Semant
-import Semant.SemantAst
-import Semant.SemantAstVisualiser (visualise, visualiseSemantAst)
-import Semant.SemantError hiding (Void)
 import Semant.Type
 import System.Console.Pretty
 

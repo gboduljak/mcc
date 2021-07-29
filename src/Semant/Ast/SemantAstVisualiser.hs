@@ -5,7 +5,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
-module Semant.SemantAstVisualiser where
+module Semant.Ast.SemantAstVisualiser where
 
 import Control.Monad.State (MonadState (get), State, gets, modify, runState)
 import Data.Foldable (traverse_)
@@ -13,9 +13,8 @@ import Data.List
 import qualified Lexer.Lexeme as L
 import Parser.Ast (InfixOp (..), Type (PrimitiveType, StructType))
 import qualified Parser.Ast as Ast
-import Semant.SemantAst
+import Semant.Ast.SemantAst
 import Semant.Type
-import qualified Semant.Type as SemantAst
 import Prelude hiding (id)
 
 class SemantAstDrawable a where
@@ -591,7 +590,7 @@ instance SemantAstDrawable Char where
 instance SemantAstDrawable String where
   visualise _ = gets id
 
-display :: SemantAst.Type -> String
+display :: Semant.Type.Type -> String
 display (Scalar typ) = displayType typ
 display (Array typ sizes) = displayType typ ++ show sizes
 display Any = "Any"

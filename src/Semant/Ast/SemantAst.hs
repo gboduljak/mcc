@@ -1,4 +1,4 @@
-module Semant.SemantAst where
+module Semant.Ast.SemantAst where
 
 import qualified Data.Map as Map
 import Parser.Ast (InfixOp)

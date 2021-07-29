@@ -60,12 +60,12 @@ library
       Preprocessor.IncludesVisualiser
       Preprocessor.PreprocessError
       Preprocessor.TopologicalOrder
+      Semant.Ast.SemantAst
+      Semant.Ast.SemantAstVisualiser
       Semant.Env
+      Semant.Errors.SemantError
       Semant.Scope
       Semant.Semant
-      Semant.SemantAst
-      Semant.SemantAstVisualiser
-      Semant.SemantError
       Semant.SemanticAnalyser
       Semant.Type
       Utils.CharPredicates

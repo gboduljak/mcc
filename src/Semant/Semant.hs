@@ -8,9 +8,9 @@ import Control.Monad.Writer
 import qualified Data.Map as Map
 import Semant.Env hiding (defineFunc, defineStruct, lookupFunc, lookupStruct)
 import qualified Semant.Env (defineFunc, defineStruct, lookupFunc, lookupStruct)
+import Semant.Errors.SemantError (SemantError)
 import Semant.Scope (Binding, Scope (Scope, id, parentId, symbolTable), ScopeId, rootScope, rootScopeId)
 import qualified Semant.Scope as Scope
-import Semant.SemantError
 import Semant.Type (Type)
 import Prelude hiding (id)
 
