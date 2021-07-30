@@ -59,347 +59,390 @@ visualiseSemantAst ast = intercalate "\n" (output state)
       emit "}"
       reverseOutput
 
--- instance SemantAstDrawable SProgram where
---   visualise (SProgram includes constructs) = do
---     programId <- nextId
---     includesId <- nextId
---     emit
---       ( "    node"
---           ++ show programId
---           ++ "[label=<<B>Program</B>>"
---           ++ ", shape=record]"
---       )
---     emit
---       ( "    node"
---           ++ show includesId
---           ++ "[label=\"<f0> Includes"
---           ++ "\", shape=record]"
---       )
---     connect programId includesId
---     traverse_
---       ( \include -> do
---           includeId <- visualise include
---           connect includesId includeId
---       )
---       includes
---     traverse_
---       ( \constr -> do
---           constrId <- visualise constr
---           connect programId constrId
---       )
---       constructs
---     return programId
+instance SemantAstDrawable SProgram where
+  visualise (SProgram structs funcs globals) = do
+    programId <- nextId
+    structsId <- nextId
+    funcsId <- nextId
+    globalsId <- nextId
+    emit
+      ( "    node"
+          ++ show programId
+          ++ "[label=<<B>Program</B>>"
+          ++ ", shape=record]"
+      )
+    emit
+      ( "    node"
+          ++ show structsId
+          ++ "[label=\"<f0> Structs"
+          ++ "\", shape=record]"
+      )
+    connect programId structsId
+    emit
+      ( "    node"
+          ++ show funcsId
+          ++ "[label=\"<f0> Functions"
+          ++ "\", shape=record]"
+      )
+    connect programId funcsId
+    emit
+      ( "    node"
+          ++ show globalsId
+          ++ "[label=\"<f0> Globals"
+          ++ "\", shape=record]"
+      )
+    connect programId globalsId
 
--- instance SemantAstDrawable Construct where
---   visualise (FuncDecl decl) = visualise decl
---   visualise (FuncDefn defn) = visualise defn
---   visualise (StructDecl decl) = visualise decl
---   visualise (VarDecl decl) = visualise decl
+    traverse_
+      ( \struct -> do
+          structId <- visualise struct
+          connect structsId structId
+      )
+      structs
+    traverse_
+      ( \func -> do
+          funcId <- visualise func
+          connect funcsId funcId
+      )
+      funcs
+    traverse_
+      ( \global -> do
+          globalId <- visualise global
+          connect globalsId globalId
+      )
+      globals
+    return programId
 
--- instance SemantAstDrawable Directive where
---   visualise (Include file) = do
---     includeId <- nextId
---     emit
---       ( "    node"
---           ++ show includeId
---           ++ "[label=\"<f0>"
---           ++ "#include"
---           ++ " | <f1> "
---           ++ escape file
---           ++ "\", shape=record]"
---       )
---     return includeId
+instance SemantAstDrawable SStruct where
+  visualise struct@(SStruct name fields _) = do
+    declNodeId <- nextId
+    emit
+      ( "    node"
+          ++ show declNodeId
+          ++ "[label=\"<f0> StructDecl | <f1>"
+          ++ escape name
+          ++ " | <f2> "
+          ++ "fields"
+          ++ "\", shape=record]"
+      )
+    traverse_
+      ( \varDecl@(SVar _ name) -> do
+          fieldId <- nextId
+          case getFieldOffset name struct of
+            (Just offset) -> do
+              emit
+                ( "    node"
+                    ++ show fieldId
+                    ++ "[label=\"<f0> Field | <f1>"
+                    ++ escape name
+                    ++ "@"
+                    ++ show offset
+                    ++ "\", shape=record]"
+                )
+              varDeclId <- visualise varDecl
+              emit ("    node" ++ show declNodeId ++ ":f2 -> node" ++ show varDeclId ++ ";")
+            Nothing -> return ()
+      )
+      fields
 
--- instance SemantAstDrawable VarDecl where
---   visualise decl@(Var typ name arraySizes) = do
---     declNodeId <- nextId
---     nameId <- nextId
---     if isArray decl
---       then do
---         let sizes = concat ["[" ++ show size ++ "]" | size <- arraySizes]
---         emit
---           ( "    node"
---               ++ show declNodeId
---               ++ "[label=\"<f0> VarDecl | <f1>"
---               ++ display typ
---               ++ " | <f2> "
---               ++ escape name
---               ++ " | <f3> "
---               ++ sizes
---               ++ "\", shape=record]"
---           )
---         return declNodeId
---       else do
---         emit
---           ( "    node"
---               ++ show declNodeId
---               ++ "[label=\"<f0> VarDecl | <f1>"
---               ++ display typ
---               ++ " | <f2> "
---               ++ escape name
---               ++ "\", shape=record]"
---           )
---         return declNodeId
+    return declNodeId
 
--- instance SemantAstDrawable StructDecl where
---   visualise decl@(Struct name vardecls) = do
---     declNodeId <- nextId
---     emit
---       ( "    node"
---           ++ show declNodeId
---           ++ "[label=\"<f0> StructDecl | <f1>"
---           ++ escape name
---           ++ " | <f2> "
---           ++ "fields"
---           ++ "\", shape=record]"
---       )
---     traverse_
---       ( \varDecl -> do
---           varDeclId <- visualise varDecl
---           emit ("    node" ++ show declNodeId ++ ":f2 -> node" ++ show varDeclId ++ ";")
---       )
---       vardecls
+instance SemantAstDrawable SFormal where
+  visualise (SFormal typ name) = do
+    formalId <- nextId
+    emit
+      ( "    node"
+          ++ show formalId
+          ++ "[label=\"<f0>"
+          ++ display typ
+          ++ " | <f1> "
+          ++ escape name
+          ++ "\", shape=record]"
+      )
+    return formalId
 
---     return declNodeId
+instance SemantAstDrawable SFunction where
+  visualise decl@(SFunction rettyp name formals body) = do
+    declNodeId <- nextId
+    emit
+      ( "    node"
+          ++ show declNodeId
+          ++ "[label=\"<f0>Function"
+          ++ " | <f1>"
+          ++ display rettyp
+          ++ " | <f2> "
+          ++ escape name
+          ++ " | <f3> "
+          ++ "formals"
+          ++ " | <f4> "
+          ++ "body"
+          ++ "\", shape=record]"
+      )
+    traverse_
+      ( \formal -> do
+          formalId <- visualise formal
+          emit ("    node" ++ show declNodeId ++ ":f3 -> node" ++ show formalId)
+      )
+      formals
 
--- instance SemantAstDrawable Formal where
---   visualise (Formal typ name) = do
---     formalId <- nextId
---     emit
---       ( "    node"
---           ++ show formalId
---           ++ "[label=\"<f0>"
---           ++ display typ
---           ++ " | <f1> "
---           ++ escape name
---           ++ "\", shape=record]"
---       )
---     return formalId
+    bodyId <- visualise body
+    emit ("    node" ++ show declNodeId ++ ":f4 -> node" ++ show bodyId)
 
--- instance SemantAstDrawable FuncDef where
---   visualise decl@(FuncDef rettyp name formals body) = do
---     declNodeId <- nextId
---     emit
---       ( "    node"
---           ++ show declNodeId
---           ++ "[label=\"<f0>FuncDef"
---           ++ " | <f1>"
---           ++ display rettyp
---           ++ " | <f2> "
---           ++ escape name
---           ++ " | <f3> "
---           ++ "formals"
---           ++ " | <f4> "
---           ++ "body"
---           ++ "\", shape=record]"
---       )
---     traverse_
---       ( \formal -> do
---           formalId <- visualise formal
---           emit ("    node" ++ show declNodeId ++ ":f3 -> node" ++ show formalId)
---       )
---       formals
+    return declNodeId
 
---     bodyId <- visualise body
---     emit ("    node" ++ show declNodeId ++ ":f4 -> node" ++ show bodyId)
-
---     return declNodeId
-
--- instance SemantAstDrawable FuncDecl where
---   visualise decl@(Func rettyp name formals) = do
---     declNodeId <- nextId
---     emit
---       ( "    node"
---           ++ show declNodeId
---           ++ "[label=\"<f0>FuncDecl"
---           ++ " | <f1>"
---           ++ display rettyp
---           ++ " | <f2> "
---           ++ escape name
---           ++ " | <f3> "
---           ++ "formals"
---           ++ "\", shape=record]"
---       )
---     traverse_
---       ( \formal -> do
---           formalId <- visualise formal
---           emit ("    node" ++ show declNodeId ++ ":f3 -> node" ++ show formalId)
---       )
---       formals
-
---     return declNodeId
-
--- instance SemantAstDrawable Block where
---   visualise (Block stmts) = do
---     blockId <- nextId
---     lbraceId <- nextId
---     rbraceId <- nextId
---     emit
---       ( "    node"
---           ++ show blockId
---           ++ "[label=\"<f0>"
---           ++ "Block"
---           ++ "\", shape=record]"
---       )
---     emitNode lbraceId "{"
---     connect blockId lbraceId
---     traverse_
---       ( \stmt -> do
---           stmtId <- visualise stmt
---           connect blockId stmtId
---       )
---       stmts
---     emitNode rbraceId "}"
---     connect blockId rbraceId
---     return blockId
-
-instance SemantAstDrawable (Maybe SExpr) where
-  visualise (Just expr) = visualise expr
+instance SemantAstDrawable (Maybe SBlock) where
+  visualise (Just block) = visualise block
   visualise Nothing = do
-    emptyId <- nextId
-    emitNode emptyId "{}"
-    return emptyId
+    emptyExprId <- nextId
+    emit
+      ( "    node"
+          ++ show emptyExprId
+          ++ "[label=\"<f0>"
+          ++ escape "nonexistent block"
+          ++ "\", shape=record]"
+      )
+    return emptyExprId
 
--- instance SemantAstDrawable Statement where
---   visualise (Expr expr) = visualise expr
---   visualise (BlockStatement stmt) = visualise stmt
---   visualise (VarDeclStatement stmt) = visualise stmt
---   visualise (While cond body) = do
---     whileId <- nextId
---     emit
---       ( "    node"
---           ++ show whileId
---           ++ "[label=\"<f0>While"
---           ++ " | <f1>"
---           ++ "cond"
---           ++ " | <f2> "
---           ++ "body"
---           ++ "\", shape=record]"
---       )
---     condId <- visualise cond
---     emit ("    node" ++ show whileId ++ ":f1 -> node" ++ show condId)
---     bodyId <- visualise body
---     emit ("    node" ++ show whileId ++ ":f2 -> node" ++ show bodyId)
---     return whileId
---   visualise (For init cond incr body) = do
---     forId <- nextId
---     emit
---       ( "    node"
---           ++ show forId
---           ++ "[label=\"<f0>For"
---           ++ " | <f1>"
---           ++ "init"
---           ++ " | <f2> "
---           ++ "cond"
---           ++ " | <f3> "
---           ++ "incr"
---           ++ " | <f4> "
---           ++ "body"
---           ++ "\", shape=record]"
---       )
---     initId <- visualise init
---     emit ("    node" ++ show forId ++ ":f1 -> node" ++ show initId)
---     condId <- visualise cond
---     emit ("    node" ++ show forId ++ ":f2 -> node" ++ show condId)
---     incrId <- visualise incr
---     emit ("    node" ++ show forId ++ ":f3 -> node" ++ show incrId)
---     bodyId <- visualise body
---     emit ("    node" ++ show forId ++ ":f4 -> node" ++ show bodyId)
---     return forId
---   visualise (If cond body (Just alt)) = do
---     ifId <- nextId
---     emit
---       ( "    node"
---           ++ show ifId
---           ++ "[label=\"<f0>If"
---           ++ " | <f1>"
---           ++ "cond"
---           ++ " | <f2> "
---           ++ "body"
---           ++ " | <f3> "
---           ++ "alt"
---           ++ "\", shape=record]"
---       )
---     condId <- visualise cond
---     emit ("    node" ++ show ifId ++ ":f1 -> node" ++ show condId)
---     bodyId <- visualise body
---     emit ("    node" ++ show ifId ++ ":f2 -> node" ++ show bodyId)
---     altId <- visualise alt
---     emit ("    node" ++ show ifId ++ ":f3 -> node" ++ show altId)
---     return ifId
---   visualise (If cond body Nothing) = do
---     ifId <- nextId
---     emit
---       ( "    node"
---           ++ show ifId
---           ++ "[label=\"<f0>If"
---           ++ " | <f1>"
---           ++ "cond"
---           ++ " | <f2> "
---           ++ "body"
---           ++ "\", shape=record]"
---       )
---     condId <- visualise cond
---     emit ("    node" ++ show ifId ++ ":f1 -> node" ++ show condId)
---     bodyId <- visualise body
---     emit ("    node" ++ show ifId ++ ":f2 -> node" ++ show bodyId)
---     return ifId
---   visualise (Return (Just retVal)) = do
---     returnId <- nextId
---     emit
---       ( "    node"
---           ++ show returnId
---           ++ "[label=\"<f0> Return"
---           ++ " | <f1>"
---           ++ "value"
---           ++ "\", shape=record]"
---       )
---     retValId <- visualise retVal
---     emit ("    node" ++ show returnId ++ ":f1 -> node" ++ show retValId)
---     return returnId
---   visualise (Return Nothing) = do
---     returnId <- nextId
---     emit
---       ( "    node"
---           ++ show returnId
---           ++ "[label=\"<f0> Return"
---           ++ " | <f1>"
---           ++ ";"
---           ++ "\", shape=record]"
---       )
---     return returnId
+instance SemantAstDrawable SBlock where
+  visualise (SBlock stmts) = do
+    blockId <- nextId
+    lbraceId <- nextId
+    rbraceId <- nextId
+    emit
+      ( "    node"
+          ++ show blockId
+          ++ "[label=\"<f0>"
+          ++ "Block"
+          ++ "\", shape=record]"
+      )
+    emitNode lbraceId "{"
+    connect blockId lbraceId
+    traverse_
+      ( \stmt -> do
+          stmtId <- visualise stmt
+          connect blockId stmtId
+      )
+      stmts
+    emitNode rbraceId "}"
+    connect blockId rbraceId
+    return blockId
+
+instance SemantAstDrawable SVarDecl where
+  visualise decl@(SVar Any name) = do
+    declNodeId <- nextId
+    nameId <- nextId
+    emit
+      ( "    node"
+          ++ show declNodeId
+          ++ "[label=\"<f0> VarDecl | <f1>"
+          ++ display Any
+          ++ " | <f2> "
+          ++ escape name
+          ++ "\", shape=record]"
+      )
+    return declNodeId
+  visualise decl@(SVar typ name) = do
+    declNodeId <- nextId
+    nameId <- nextId
+    do
+      emit
+        ( "    node"
+            ++ show declNodeId
+            ++ "[label=\"<f0> VarDecl | <f1>"
+            ++ display typ
+            ++ " | <f2> "
+            ++ escape name
+            ++ "\", shape=record]"
+        )
+      return declNodeId
+
+instance SemantAstDrawable SStatement where
+  visualise (SExpr expr) = visualise expr
+  visualise (SBlockStatement stmt) = visualise stmt
+  visualise (SVarDeclStatement stmt) = visualise stmt
+  visualise (SDoWhile cond body) = do
+    whileId <- nextId
+    emit
+      ( "    node"
+          ++ show whileId
+          ++ "[label=\"<f0>DoWhile"
+          ++ " | <f1>"
+          ++ "cond"
+          ++ " | <f2> "
+          ++ "body"
+          ++ "\", shape=record]"
+      )
+    condId <- visualise cond
+    emit ("    node" ++ show whileId ++ ":f1 -> node" ++ show condId)
+    bodyId <- visualise body
+    emit ("    node" ++ show whileId ++ ":f2 -> node" ++ show bodyId)
+    return whileId
+  visualise (SIf cond body (Just alt)) = do
+    ifId <- nextId
+    emit
+      ( "    node"
+          ++ show ifId
+          ++ "[label=\"<f0>If"
+          ++ " | <f1>"
+          ++ "cond"
+          ++ " | <f2> "
+          ++ "body"
+          ++ " | <f3> "
+          ++ "alt"
+          ++ "\", shape=record]"
+      )
+    condId <- visualise cond
+    emit ("    node" ++ show ifId ++ ":f1 -> node" ++ show condId)
+    bodyId <- visualise body
+    emit ("    node" ++ show ifId ++ ":f2 -> node" ++ show bodyId)
+    altId <- visualise alt
+    emit ("    node" ++ show ifId ++ ":f3 -> node" ++ show altId)
+    return ifId
+  visualise (SIf cond body Nothing) = do
+    ifId <- nextId
+    emit
+      ( "    node"
+          ++ show ifId
+          ++ "[label=\"<f0>If"
+          ++ " | <f1>"
+          ++ "cond"
+          ++ " | <f2> "
+          ++ "body"
+          ++ "\", shape=record]"
+      )
+    condId <- visualise cond
+    emit ("    node" ++ show ifId ++ ":f1 -> node" ++ show condId)
+    bodyId <- visualise body
+    emit ("    node" ++ show ifId ++ ":f2 -> node" ++ show bodyId)
+    return ifId
+  visualise (SReturn expr) = do
+    returnId <- nextId
+    emit
+      ( "    node"
+          ++ show returnId
+          ++ "[label=\"<f0> Return"
+          ++ " | <f1>"
+          ++ "value"
+          ++ "\", shape=record]"
+      )
+    retValId <- visualise expr
+    emit ("    node" ++ show returnId ++ ":f1 -> node" ++ show retValId)
+    return returnId
+
+instance SemantAstDrawable LValue where
+  visualise (SDeref expr) = do
+    derefId <- nextId
+    emit
+      ( "    node"
+          ++ show derefId
+          ++ "[label=\"<f0> Deref\", shape=record]"
+      )
+    exprId <- visualise expr
+    connect derefId exprId
+    return derefId
+  visualise (SIdent name) = do
+    identId <- nextId
+    emit
+      ( "    node"
+          ++ show identId
+          ++ "[label=\"<f0>"
+          ++ "Ident"
+          ++ " | <f1>"
+          ++ escape name
+          ++ "\", shape=record]"
+      )
+    return identId
+  visualise (SFieldAccess expr fieldName) = do
+    accessId <- nextId
+    fieldId <- nextId
+    dotId <- nextId
+    emitNode accessId "FieldAccess"
+    innerId <- visualise expr
+    emitNode dotId "."
+    emitNode fieldId (escape fieldName)
+    connect accessId innerId
+    connect accessId dotId
+    connect accessId fieldId
+    return accessId
+  visualise (SArrayAccess target indices) = do
+    accessId <- nextId
+    emitNode accessId "ArrayAccess"
+    targetId <- visualise target
+    traverse_
+      ( \indexExpr -> do
+          lbrackId <- nextId
+          rbrackId <- nextId
+          emitNode lbrackId "["
+          indexId <- visualise indexExpr
+          emitNode rbrackId "]"
+          connect accessId lbrackId
+          connect accessId indexId
+          connect accessId rbrackId
+      )
+      indices
+    connect accessId targetId
+    return accessId
 
 instance SemantAstDrawable SExpr where
-  visualise (typ, SNegative expr) = do
-    negativeId <- nextId
+  visualise (typ, SAssign lValue expr) = do
+    assignId <- nextId
+    equalId <- nextId
     emit
       ( "    node"
-          ++ show negativeId
+          ++ show assignId
           ++ "[label=\"<f0>"
           ++ "Type: "
           ++ display typ
-          ++ " | <f1>"
-          ++ "-"
+          ++ " | <f1> "
+          ++ "Assign"
           ++ "\", shape=record]"
       )
-    innerId <- visualise expr
-    connect negativeId innerId
-    return negativeId
-  visualise (typ, SNegate expr) = do
-    negateId <- nextId
+    targetId <- visualise lValue
+    emitNode equalId "="
+    valueId <- visualise expr
+    connect assignId targetId
+    connect assignId equalId
+    connect assignId valueId
+    return assignId
+  visualise (typ, LVal expr) = do
+    typedLValId <- nextId
     emit
       ( "    node"
-          ++ show negateId
+          ++ show typedLValId
           ++ "[label=\"<f0>"
           ++ "Type: "
           ++ display typ
-          ++ " | <f1>"
-          ++ "!"
+          ++ " | <f1> "
+          ++ "LValue"
           ++ "\", shape=record]"
       )
-    innerId <- visualise expr
-    connect negateId innerId
-    return negateId
+    lValId <- visualise expr
+    connect typedLValId lValId
+    return typedLValId
+  visualise (typ, STypecast targetType expr) = do
+    typecastId <- nextId
+    lparenId <- nextId
+    typeId <- nextId
+    rparenId <- nextId
+    emit
+      ( "    node"
+          ++ show typecastId
+          ++ "[label=\"<f0>"
+          ++ "Type: "
+          ++ display typ
+          ++ " | <f1> "
+          ++ "Typecast"
+          ++ "\", shape=record]"
+      )
+    emitNode lparenId "("
+    emitNode typeId (displayType targetType)
+    emitNode rparenId ")"
+    exprId <- visualise expr
+    connect typecastId lparenId
+    connect typecastId typeId
+    connect typecastId rparenId
+    connect typecastId exprId
+    return typecastId
   visualise (typ, SSizeof (Right expr)) = do
     sizeofId <- nextId
     lparenId <- nextId
@@ -443,6 +486,51 @@ instance SemantAstDrawable SExpr where
     connect sizeofId typeId
     connect sizeofId rparenId
     return sizeofId
+  visualise (typ, SNegative expr) = do
+    negativeId <- nextId
+    emit
+      ( "    node"
+          ++ show negativeId
+          ++ "[label=\"<f0>"
+          ++ "Type: "
+          ++ display typ
+          ++ " | <f1>"
+          ++ "-"
+          ++ "\", shape=record]"
+      )
+    innerId <- visualise expr
+    connect negativeId innerId
+    return negativeId
+  visualise (typ, SNegate expr) = do
+    negateId <- nextId
+    emit
+      ( "    node"
+          ++ show negateId
+          ++ "[label=\"<f0>"
+          ++ "Type: "
+          ++ display typ
+          ++ " | <f1>"
+          ++ "!"
+          ++ "\", shape=record]"
+      )
+    innerId <- visualise expr
+    connect negateId innerId
+    return negateId
+  visualise (typ, SAddressOf expr) = do
+    addressOfId <- nextId
+    emit
+      ( "    node"
+          ++ show addressOfId
+          ++ "[label=\"<f0>"
+          ++ "Type: "
+          ++ display typ
+          ++ " | <f1>"
+          ++ "AddressOf"
+          ++ "\", shape=record]"
+      )
+    innerId <- visualise expr
+    connect addressOfId innerId
+    return addressOfId
   visualise (typ, SBinop left op right) = do
     binopId <- nextId
     emit
@@ -479,21 +567,19 @@ instance SemantAstDrawable SExpr where
           BitwiseAnd -> "&"
           BitwiseOr -> "\\|"
           BitwiseXor -> "^"
-  visualise (typ, LVal name) = do
-    litId <- nextId
+  visualise (typ, SEmptyExpr) = do
+    emptyExprId <- nextId
     emit
       ( "    node"
-          ++ show litId
+          ++ show emptyExprId
           ++ "[label=\"<f0>"
           ++ "Type: "
           ++ display typ
           ++ " | <f1> "
-          ++ "Ident"
-          ++ " | <f2> "
-          ++ show name
+          ++ escape "empty expr"
           ++ "\", shape=record]"
       )
-    return litId
+    return emptyExprId
   visualise (typ, SNull) = do
     nullId <- nextId
     emit

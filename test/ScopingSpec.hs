@@ -1,9 +1,10 @@
 module ScopingSpec (scopingSpec) where
 
 import Control.Monad.State (Monad (return), MonadTrans (lift), StateT (runStateT), gets, runState)
-import qualified Data.Map as Map (size)
+import qualified Data.Map as Map (empty, size)
 import Lexer.Lexeme
 import Parser.Ast
+import Semant.Ast.SemantAst (SFunction (..), SStruct (..))
 import Semant.Env hiding (defineFunc, defineStruct, lookupFunc, lookupStruct)
 import Semant.Scope hiding (defineVar, lookup)
 import Semant.Semant
@@ -72,37 +73,40 @@ resolveDeep2 = do
   y <- gets (Map.size . scopes)
   return (x, y)
 
-findFuncFromRoot :: Semant (Maybe Semant.Env.FuncSignature)
+findFuncFromRoot :: Semant (Maybe SFunction)
 findFuncFromRoot = do
   defineFunc
-    ( FuncSignature
+    ( SFunction
         { returnType = Scalar (PrimitiveType Char 0),
           funcName = "main",
-          formals = []
+          formals = [],
+          body = Nothing
         }
     )
   lookupFunc "main"
 
-findFuncFromSomewhere :: Semant (Maybe Semant.Env.FuncSignature)
+findFuncFromSomewhere :: Semant (Maybe SFunction)
 findFuncFromSomewhere = do
   defineFunc
-    ( FuncSignature
+    ( SFunction
         { returnType = Scalar (PrimitiveType Char 0),
           funcName = "main",
-          formals = []
+          formals = [],
+          body = Nothing
         }
     )
   enterScope
   enterScope
   lookupFunc "main"
 
-findFuncWithVarName :: Semant (Maybe Semant.Env.FuncSignature)
+findFuncWithVarName :: Semant (Maybe SFunction)
 findFuncWithVarName = do
   defineFunc
-    ( FuncSignature
+    ( SFunction
         { returnType = Scalar (PrimitiveType Char 0),
           funcName = "main",
-          formals = []
+          formals = [],
+          body = Nothing
         }
     )
   enterScope
@@ -110,47 +114,64 @@ findFuncWithVarName = do
   enterScope
   lookupFunc "main"
 
-dontFindFunc :: Semant (Maybe Semant.Env.FuncSignature)
+dontFindFunc :: Semant (Maybe SFunction)
 dontFindFunc = do
   defineFunc
-    ( FuncSignature
+    ( SFunction
         { returnType = Scalar (PrimitiveType Char 0),
           funcName = "main",
-          formals = []
+          formals = [],
+          body = Nothing
         }
     )
   enterScope
   enterScope
   lookupFunc "smain"
 
-findStructFromRoot :: Semant (Maybe Semant.Env.StructSignature)
+findStructFromRoot :: Semant (Maybe SStruct)
 findStructFromRoot = do
-  defineStruct StructSignature {structName = "a", fields = []}
+  defineStruct
+    SStruct
+      { structName = "a",
+        fields = [],
+        fieldOffsets = Map.empty
+      }
   lookupStruct "a"
 
-findStructFromSomewhere :: Semant (Maybe Semant.Env.StructSignature)
+findStructFromSomewhere :: Semant (Maybe SStruct)
 findStructFromSomewhere = do
-  defineStruct StructSignature {structName = "a", fields = []}
+  defineStruct
+    SStruct
+      { structName = "a",
+        fields = [],
+        fieldOffsets = Map.empty
+      }
   enterScope
   enterScope
   lookupStruct "a"
 
-findStructWithVarName :: Semant (Maybe Semant.Env.StructSignature)
+findStructWithVarName :: Semant (Maybe SStruct)
 findStructWithVarName = do
-  defineStruct StructSignature {structName = "a", fields = []}
+  defineStruct
+    SStruct
+      { structName = "a",
+        fields = [],
+        fieldOffsets = Map.empty
+      }
   enterScope
   defineVar ("a", Scalar (PrimitiveType Int 0))
   enterScope
   lookupStruct "a"
 
-findStructWithVarAndFuncName :: Semant (Maybe Semant.Env.StructSignature)
+findStructWithVarAndFuncName :: Semant (Maybe SStruct)
 findStructWithVarAndFuncName = do
-  defineStruct StructSignature {structName = "a", fields = []}
+  defineStruct SStruct {structName = "a", fields = [], fieldOffsets = Map.empty}
   defineFunc
-    ( FuncSignature
+    ( SFunction
         { returnType = Scalar (PrimitiveType Char 0),
           funcName = "a",
-          formals = []
+          formals = [],
+          body = Nothing
         }
     )
   enterScope
@@ -158,9 +179,14 @@ findStructWithVarAndFuncName = do
   enterScope
   lookupStruct "a"
 
-dontFindStruct :: Semant (Maybe Semant.Env.FuncSignature)
+dontFindStruct :: Semant (Maybe SFunction)
 dontFindStruct = do
-  defineStruct StructSignature {structName = "a", fields = []}
+  defineStruct
+    SStruct
+      { structName = "a",
+        fields = [],
+        fieldOffsets = Map.empty
+      }
   enterScope
   enterScope
   lookupFunc "a_struct"
@@ -192,30 +218,33 @@ scopingSpec = do
       let result = runSemant findFuncFromRoot getEmptyEnv
       result
         `shouldBe` Just
-          ( FuncSignature
+          ( SFunction
               { returnType = Scalar (PrimitiveType Char 0),
                 funcName = "main",
-                formals = []
+                formals = [],
+                body = Nothing
               }
           )
     it "should find func from not-root" $ do
       let result = runSemant findFuncFromSomewhere getEmptyEnv
       result
         `shouldBe` Just
-          ( FuncSignature
+          ( SFunction
               { returnType = Scalar (PrimitiveType Char 0),
                 funcName = "main",
-                formals = []
+                formals = [],
+                body = Nothing
               }
           )
     it "should find func instead of var" $ do
       let result = runSemant findFuncWithVarName getEmptyEnv
       result
         `shouldBe` Just
-          ( FuncSignature
+          ( SFunction
               { returnType = Scalar (PrimitiveType Char 0),
                 funcName = "main",
-                formals = []
+                formals = [],
+                body = Nothing
               }
           )
     it "should not find func" $ do
@@ -224,19 +253,19 @@ scopingSpec = do
     it "should find struct from root" $ do
       let result = runSemant findStructFromRoot getEmptyEnv
       result
-        `shouldBe` Just (StructSignature {structName = "a", fields = []})
+        `shouldBe` Just (SStruct {structName = "a", fields = [], fieldOffsets = Map.empty})
     it "should find struct from not-root" $ do
       let result = runSemant findStructFromSomewhere getEmptyEnv
       result
-        `shouldBe` Just (StructSignature {structName = "a", fields = []})
+        `shouldBe` Just (SStruct {structName = "a", fields = [], fieldOffsets = Map.empty})
     it "should find struct instead of var" $ do
       let result = runSemant findStructWithVarName getEmptyEnv
       result
-        `shouldBe` Just (StructSignature {structName = "a", fields = []})
+        `shouldBe` Just (SStruct {structName = "a", fields = [], fieldOffsets = Map.empty})
     it "should find struct instead of var and func" $ do
       let result = runSemant findStructWithVarAndFuncName getEmptyEnv
       result
-        `shouldBe` Just (StructSignature {structName = "a", fields = []})
+        `shouldBe` Just (SStruct {structName = "a", fields = [], fieldOffsets = Map.empty})
 
     it "should not find struct" $ do
       let result = runSemant dontFindFunc getEmptyEnv

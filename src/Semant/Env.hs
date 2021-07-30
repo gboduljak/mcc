@@ -12,41 +12,27 @@ import Control.Monad.State (MonadState (get, put), State, StateT (StateT), gets,
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Parser.Ast (StructDecl (Struct), VarDecl)
+import Semant.Ast.SemantAst
 import Semant.Scope (Binding, Scope (..), ScopeId, parentId, rootScope)
 import qualified Semant.Scope as Scope (extend, lookup)
 import Semant.Type (Type)
 import Prelude hiding (id, lookup)
 
-data FuncSignature = FuncSignature
-  { returnType :: Type,
-    funcName :: String,
-    formals :: [Formal]
-  }
-  deriving (Show, Eq)
-
-data Formal = Formal Type String deriving (Show, Eq)
-
-data StructSignature = StructSignature
-  { structName :: String,
-    fields :: [Binding]
-  }
-  deriving (Show, Eq)
-
 data Env = Env
-  { funcs :: Map String FuncSignature,
-    structs :: Map String StructSignature,
+  { funcs :: Map String SFunction,
+    structs :: Map String SStruct,
     scopes :: Map ScopeId Scope,
     currentScopeId :: ScopeId
   }
-  deriving (Show)
+  deriving (Show, Eq)
 
-lookupFunc :: String -> Env -> Maybe FuncSignature
+lookupFunc :: String -> Env -> Maybe SFunction
 lookupFunc func Env {funcs} = Map.lookup func funcs
 
-lookupStruct :: String -> Env -> Maybe StructSignature
+lookupStruct :: String -> Env -> Maybe SStruct
 lookupStruct struct Env {structs} = Map.lookup struct structs
 
-defineFunc :: FuncSignature -> Env -> Env
+defineFunc :: SFunction -> Env -> Env
 defineFunc func Env {..} =
   Env
     { funcs = Map.insert (funcName func) func funcs,
@@ -55,7 +41,7 @@ defineFunc func Env {..} =
       currentScopeId
     }
 
-defineStruct :: StructSignature -> Env -> Env
+defineStruct :: SStruct -> Env -> Env
 defineStruct struct Env {..} =
   Env
     { funcs,

@@ -27,7 +27,7 @@ data Scope = Scope
     parentId :: Maybe ScopeId,
     symbolTable :: Map String Binding
   }
-  deriving (Show)
+  deriving (Show, Eq)
 
 extend :: Scope -> Binding -> Scope
 extend scope binding@(name, _) =

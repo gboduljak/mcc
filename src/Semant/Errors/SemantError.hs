@@ -55,6 +55,7 @@ data SemantError
   | Redeclaration String RedeclarationKind
   | NoMain
   | AddressError Expr
+  | DerefError Expr
   | AssignmentError
       { lhs :: Expr,
         rhs :: Expr
@@ -84,7 +85,7 @@ data RedeclarationKind = RedeclFunc | RedeclStruct | RedeclGlobalVar deriving (S
 
 data BindingErrorKind = Duplicate | Void deriving (Show)
 
-data SymbolKind = Variable | Function deriving (Show)
+data SymbolKind = Variable | Function | Structure deriving (Show)
 
 instance Pretty SemantError where
   pretty =
@@ -189,7 +190,16 @@ instance Pretty SemantError where
       NoMain -> pretty "Error: main function not defined."
       AssignmentError lhs rhs ->
         pretty "Cannot assign" <+> pretty rhs <+> pretty "to" <+> pretty lhs
-      AddressError expr -> pretty "Cannot take address of" <> indent indentAmount (pretty expr)
+      AddressError expr ->
+        pretty "Cannot take address of" <> indent indentAmount (pretty expr)
+          <+> hardline
+          <+> pretty "Supported addressable types are : primitive types, pointers to primitive types, struct types, pointers to struct types"
+          <+> dot
+      DerefError expr ->
+        pretty "Cannot dereference" <> indent indentAmount (pretty expr)
+          <+> hardline
+          <+> pretty "Supported addressable types are : primitive types, pointers to primitive types, struct types, pointers to struct types"
+          <+> dot
       FieldAccessError {..} ->
         pretty "Cannot access"
           <+> pretty targetStruct
@@ -213,6 +223,7 @@ instance Pretty SymbolKind where
   pretty = \case
     Variable -> pretty "variable"
     Function -> pretty "function"
+    Structure -> pretty "struct"
 
 instance Pretty BindingErrorKind where
   pretty = \case

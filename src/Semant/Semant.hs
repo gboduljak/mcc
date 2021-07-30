@@ -6,6 +6,7 @@ module Semant.Semant where
 import Control.Monad.State (MonadState (get), State, evalState, gets, modify, runState)
 import Control.Monad.Writer
 import qualified Data.Map as Map
+import Semant.Ast.SemantAst
 import Semant.Env hiding (defineFunc, defineStruct, lookupFunc, lookupStruct)
 import qualified Semant.Env (defineFunc, defineStruct, lookupFunc, lookupStruct)
 import Semant.Errors.SemantError (SemantError)
@@ -86,16 +87,16 @@ defineVar binding =
       )
     currentScope
 
-defineFunc :: FuncSignature -> Semant Env
+defineFunc :: SFunction -> Semant Env
 defineFunc func = modify (Semant.Env.defineFunc func) >> get
 
-defineStruct :: StructSignature -> Semant Env
+defineStruct :: SStruct -> Semant Env
 defineStruct struct = modify (Semant.Env.defineStruct struct) >> get
 
-lookupFunc :: String -> Semant (Maybe FuncSignature)
+lookupFunc :: String -> Semant (Maybe SFunction)
 lookupFunc func = gets (Semant.Env.lookupFunc func)
 
-lookupStruct :: String -> Semant (Maybe StructSignature)
+lookupStruct :: String -> Semant (Maybe SStruct)
 lookupStruct struct = gets (Semant.Env.lookupStruct struct)
 
 lookupVar :: String -> Semant (Maybe Type)
