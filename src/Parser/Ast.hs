@@ -113,6 +113,14 @@ isPrimitive :: Type -> Bool
 isPrimitive (PrimitiveType _ _) = True
 isPrimitive (StructType _ _) = False
 
+pointerLevel :: Type -> Int
+pointerLevel (PrimitiveType _ ptrs) = ptrs
+pointerLevel (StructType _ ptrs) = ptrs
+
+decreasePointerLevel :: Type -> Int -> Type
+decreasePointerLevel (PrimitiveType typ ptrs) n = PrimitiveType typ (ptrs - n)
+decreasePointerLevel (StructType name ptrs) n = StructType name (ptrs - n)
+
 isStruct :: Type -> Bool
 isStruct = not . isPrimitive
 

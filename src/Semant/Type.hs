@@ -7,9 +7,6 @@ import Parser.AstPrettyPrinter
 
 data Type = Scalar Ast.Type | Array Ast.Type [Int] | Any deriving (Show, Eq)
 
-fromAstType :: Ast.Type -> Type
-fromAstType = Scalar
-
 numericTypes :: [Type]
 numericTypes =
   [ Scalar (Ast.PrimitiveType Int 0),
@@ -25,6 +22,10 @@ instance Pretty Type where
 isInt :: Type -> Bool
 isInt (Scalar (Ast.PrimitiveType Int 0)) = True
 isInt _ = False
+
+isDouble :: Type -> Bool
+isDouble (Scalar (Ast.PrimitiveType Double 0)) = True
+isDouble _ = False
 
 isChar :: Type -> Bool
 isChar (Scalar (Ast.PrimitiveType Char 0)) = True
@@ -42,9 +43,7 @@ isArray (Array _ _) = True
 isArray _ = False
 
 isNonVoidPointer :: Type -> Bool
-isNonVoidPointer (Scalar (Ast.PrimitiveType Void _)) = False
 isNonVoidPointer (Scalar (Ast.PrimitiveType _ ptrs)) = ptrs > 0
-isNonVoidPointer (Array (Ast.PrimitiveType _ ptrs) _) = ptrs > 0
 isNonVoidPointer (Scalar (Ast.StructType _ ptrs)) = ptrs > 0
-isNonVoidPointer (Array (Ast.StructType _ ptrs) _) = ptrs > 0
 isNonVoidPointer Any = True
+isNonVoidPointer _ = False

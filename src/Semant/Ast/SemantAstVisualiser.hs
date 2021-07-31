@@ -384,6 +384,34 @@ instance SemantAstDrawable LValue where
     return accessId
 
 instance SemantAstDrawable SExpr where
+  visualise (typ, SCall func actuals) = do
+    callId <- nextId
+    nameId <- nextId
+    lparenId <- nextId
+    rparenId <- nextId
+    emit
+      ( "    node"
+          ++ show callId
+          ++ "[label=\"<f0>"
+          ++ "Type: "
+          ++ display typ
+          ++ " | <f1> "
+          ++ "Call"
+          ++ "\", shape=record]"
+      )
+    emitNode nameId (escape func)
+    emitNode lparenId "("
+    connect callId nameId
+    connect callId lparenId
+    traverse_
+      ( \act -> do
+          actId <- visualise act
+          connect callId actId
+      )
+      actuals
+    emitNode rparenId ")"
+    connect callId rparenId
+    return callId
   visualise (typ, SAssign lValue expr) = do
     assignId <- nextId
     equalId <- nextId

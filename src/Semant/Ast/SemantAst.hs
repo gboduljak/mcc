@@ -65,8 +65,9 @@ data SExpr'
   | SNegative SExpr
   | SSizeof (Either Ast.Type SExpr)
   | STypecast Ast.Type SExpr
+  | SCall String [SExpr]
   | LVal LValue
-  | SAssign LValue SExpr
+  | SAssign SExpr SExpr
   deriving (Show, Eq)
 
 data LValue
@@ -75,3 +76,7 @@ data LValue
   | SFieldAccess SExpr String
   | SArrayAccess SExpr [SExpr]
   deriving (Show, Eq)
+
+isLValue :: SExpr' -> Bool
+isLValue (LVal _) = True
+isLValue _ = False

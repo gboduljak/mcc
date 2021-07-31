@@ -64,6 +64,8 @@ library
       Semant.Ast.SemantAstVisualiser
       Semant.Env
       Semant.Errors.SemantError
+      Semant.Operators.AndM
+      Semant.Operators.Cond
       Semant.Scope
       Semant.Semant
       Semant.SemanticAnalyser

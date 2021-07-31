@@ -47,10 +47,16 @@ data SemantError
         from :: Type,
         castErrorExpr :: Expr
       }
-  | CallArgsError
+  | CallArgsNumberError
       { expectedArgsNumber :: Int,
         actualArgsNumber :: Int,
         callExpr :: Expr
+      }
+  | CallArgsTypeError
+      { formalType :: Type,
+        formalName :: String,
+        actualType :: Type,
+        callExpr' :: Expr
       }
   | Redeclaration String RedeclarationKind
   | NoMain
@@ -104,7 +110,7 @@ instance Pretty SemantError where
       BinopTypeError {..} ->
         pretty "Type error in binary expression:"
           <+> indent indentAmount (pretty binopExpr)
-          <+> dot
+          <> dot
           <> hardline
           <+> pretty "Unable to apply operator "
           <+> pretty infixOp
@@ -134,11 +140,11 @@ instance Pretty SemantError where
           <> hardline
           <+> pretty "Supported types are:"
           <+> pretty expected'
-          <+> dot
+          <> dot
       TypeError {..} ->
         pretty "Type error: expected one of" <+> pretty expected <+> pretty "but got"
           <+> pretty actual
-          <+> dot
+          <> dot
           <> indent
             indentAmount
             ( pretty " Error occured in expression:"
@@ -147,46 +153,55 @@ instance Pretty SemantError where
                 <> hardline
             )
       CastError {..} ->
-        pretty "Cast error: can only cast between pointers, between ints and doubles, or between pointers and ints, not from"
+        pretty "Cast error: can only cast between pointers, int to double, char to int, or between pointers and ints, not from"
           <+> pretty from
           <+> pretty "to"
           <+> pretty to
-          <+> dot
+          <> dot
+          <> hardline
           <> indent
             indentAmount
-            ( pretty "Error occured in statement:"
-                <> hardline
-                <> indent
-                  indentAmount
-                  ( pretty ", in expression: "
-                      <> pretty castErrorExpr
-                  )
+            ( pretty "Error occured in expression:" <+> pretty castErrorExpr
             )
-      CallArgsError {..} ->
+      CallArgsNumberError {..} ->
         pretty "Argument error: function expected"
           <+> pretty expectedArgsNumber
           <+> pretty "arguments, but was called with"
           <+> pretty actualArgsNumber
           <+> pretty "arguments"
-          <+> dot
+          <> dot
+          <> hardline
           <> indent
             indentAmount
             ( pretty "Error occured in call:"
-                <> hardline
                 <> pretty callExpr
+            )
+      CallArgsTypeError {..} ->
+        pretty "Argument error: function expected an argument"
+          <+> pretty formalName
+          <+> pretty "of type"
+          <+> pretty formalType
+          <+> pretty "but was called with"
+          <+> pretty actualType
+          <> dot
+          <> hardline
+          <> indent
+            indentAmount
+            ( pretty "Error occured in call:"
+                <> pretty callExpr'
             )
       Redeclaration funcName RedeclFunc ->
         pretty "Error: redeclaration of function"
           <+> pretty funcName
-          <+> dot
+          <> dot
       Redeclaration structName RedeclStruct ->
         pretty "Error: redeclaration of struct"
           <+> pretty structName
-          <+> dot
+          <> dot
       Redeclaration globalVarName RedeclGlobalVar ->
         pretty "Error: redeclaration of global variable"
           <+> pretty globalVarName
-          <+> dot
+          <> dot
       NoMain -> pretty "Error: main function not defined."
       AssignmentError lhs rhs ->
         pretty "Cannot assign" <+> pretty rhs <+> pretty "to" <+> pretty lhs
@@ -194,12 +209,12 @@ instance Pretty SemantError where
         pretty "Cannot take address of" <> indent indentAmount (pretty expr)
           <+> hardline
           <+> pretty "Supported addressable types are : primitive types, pointers to primitive types, struct types, pointers to struct types"
-          <+> dot
+          <> dot
       DerefError expr ->
         pretty "Cannot dereference" <> indent indentAmount (pretty expr)
           <+> hardline
           <+> pretty "Supported addressable types are : primitive types, pointers to primitive types, struct types, pointers to struct types"
-          <+> dot
+          <> dot
       FieldAccessError {..} ->
         pretty "Cannot access"
           <+> pretty targetStruct

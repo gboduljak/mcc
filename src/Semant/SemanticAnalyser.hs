@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
 module Semant.SemanticAnalyser where
@@ -11,15 +12,16 @@ import Data.Text.Prettyprint.Doc
 import Data.Text.Prettyprint.Doc.Render.String
 import Debug.Trace
 import Lexer.Combinator.Lexer (lex')
-import Lexer.Lexeme (BuiltinType (..), Lexeme)
-import Parser.Ast (Expr (..), InfixOp (..), Type (PrimitiveType, StructType))
+import Lexer.Lexeme (BuiltinType (..), Lexeme (Not))
+import Parser.Ast (Expr (..), InfixOp (..), Type (PrimitiveType, StructType), decreasePointerLevel, pointerLevel)
 import qualified Parser.Ast as Ast
 import Parser.AstVisualiser
 import Parser.Errors.PrettyPrinter (prettyPrintErrors)
-import Parser.Pratt.Parser (expr, parse, parseExpr, parseExprs)
+import Parser.Pratt.Parser (arraySizes, expr, parse, parseExpr, parseExprs)
 import Semant.Ast.SemantAst
 import Semant.Ast.SemantAstVisualiser (visualise, visualiseSemantAst)
 import Semant.Errors.SemantError hiding (Void)
+import Semant.Operators.Cond ((<||>), (|>), (||>))
 import Semant.Semant
 import Semant.Type
 import System.Console.Pretty
@@ -71,10 +73,10 @@ analyseExpr (Sizeof (Right expr)) = do
 analyseExpr Null = return (Scalar (PrimitiveType Void 1), SNull)
 analyseExpr (Nested expr) = analyseExpr expr
 analyseExpr expr@(Binop left op right) = do
-  (left', leftSound) <- typecheckBinopArg expr left
-  (right', rightSound) <- typecheckBinopArg expr right
+  (left', leftSound) <- analyseBinopArg expr left
+  (right', rightSound) <- analyseBinopArg expr right
   if leftSound && rightSound
-    then typecheckBinop expr left' right'
+    then analyseBinop expr left' right'
     else return (Any, SBinop left' op right')
 analyseExpr (Negate expr) = do
   sexpr'@(typ, sexpr) <- analyseExpr expr
@@ -175,46 +177,116 @@ analyseExpr expr@(Ast.Indirect targetExpr field) = do
               LVal (SFieldAccess accessExpr field)
             )
         )
-analyseExpr expr@(Ast.ArrayAccess inner index) = do
-  defineVar ("a", Scalar (PrimitiveType Int 2))
+analyseExpr expr@(Ast.ArrayAccess _ _) = do
+  -- defineVar ("a", Array (PrimitiveType Int 2) [3, 4])
   baseExpr'@(baseTyp, _) <- analyseExpr baseExpr
   indices' <- mapM analyseIndexExpr indexExprs
   case baseTyp of
-    Array scalarTyp arraySizes ->
-      if length indices' < length arraySizes
-        then do
-          registerError (ArrayAccessError expr (length arraySizes) (length indices'))
-            >> return (Any, LVal (SArrayAccess baseExpr' indices'))
-        else do
-          undefined
-    Scalar scalarTyp -> do
-      analyseArrayAccess expr baseExpr' indices'
     Any -> return (Any, LVal (SArrayAccess baseExpr' indices'))
+    _ -> analyseArrayAccess expr baseExpr' indices'
   where
     (baseExpr, indexExprs) = flattenArrayAccess expr
+analyseExpr expr@(Assign left right) = do
+  -- defineVar ("b", Scalar (PrimitiveType Int 0))
+  -- defineVar ("c", Scalar (PrimitiveType Int 0))
+  left'@(leftTyp, leftExpr) <- analyseExpr left
+  right'@(rightTyp, _) <- analyseExpr right
+
+  if (not . isLValue) leftExpr
+    then
+      registerError (AssignmentError left right)
+        >> return (Any, SAssign left' right')
+    else case (leftTyp, rightTyp) of
+      (Any, _) -> return (Any, SAssign left' right')
+      (_, Any) -> return (Any, SAssign left' right')
+      (_, _) -> do
+        if leftTyp == rightTyp
+          then return (leftTyp, SAssign left' right')
+          else
+            registerError (AssignmentError left right)
+              >> return (Any, SAssign left' right')
+analyseExpr expr@(Typecast targetTyp right) = do
+  expr'@(exprTyp, _) <- analyseExpr right
+  let targetTyp' = Scalar targetTyp
+      typecast = (targetTyp', STypecast targetTyp expr')
+  (|>)
+    ( (exprTyp == Any, return (Any, STypecast targetTyp expr'))
+        <||> (targetTyp' == exprTyp, return expr')
+        <||> (isPointer targetTyp' && isPointer exprTyp, return typecast)
+        <||> (isPointer targetTyp' && isInt exprTyp, return typecast)
+        <||> (isInt targetTyp' && isPointer exprTyp, return typecast)
+        <||> (isDouble targetTyp' && isInt exprTyp, return typecast)
+        <||> (isInt targetTyp' && isChar exprTyp, return typecast)
+        ||> ( registerError (CastError targetTyp' exprTyp expr)
+                >> return (Any, STypecast targetTyp expr')
+            )
+    )
+analyseExpr expr@(Call func args) = do
+  defineFunc
+    ( SFunction
+        (Scalar (PrimitiveType Int 0))
+        "f"
+        [ SFormal (Scalar (PrimitiveType Int 0)) "x",
+          SFormal (Scalar (PrimitiveType Char 0)) "y"
+        ]
+        Nothing
+    )
+  func' <- lookupFunc func
+  args' <- mapM analyseExpr args
+  case func' of
+    Nothing -> do
+      registerError (UndefinedSymbol func Function expr)
+      return (Any, SCall func args')
+    Just SFunction {..} -> do
+      if length args' == length formals
+        then do
+          !validArgs <- zipWithM checkArg formals args'
+          if and validArgs
+            then do return (returnType, SCall func args')
+            else do return (Any, SCall func args')
+        else do
+          registerError (CallArgsNumberError (length formals) (length args) expr)
+          return (Any, SCall func args')
+  where
+    checkArg :: SFormal -> SExpr -> Semant Bool
+    checkArg _ act@(Any, _) = return False
+    checkArg (SFormal formTyp formName) act@(actTyp, _)
+      | formTyp == actTyp = return True
+      | otherwise = do
+        registerError (CallArgsTypeError formTyp formName actTyp expr)
+        return False
 
 analyseArrayAccess :: Expr -> SExpr -> [SExpr] -> Semant SExpr
-analyseArrayAccess astExpr baseExpr@(Scalar (PrimitiveType baseTyp basePtrLevel), _) indices
+analyseArrayAccess astExpr baseExpr@(Any, _) indices = return (Any, LVal (SArrayAccess baseExpr indices))
+analyseArrayAccess astExpr baseExpr@(Array baseTyp arraySizes, _) indices
+  | length indices < length arraySizes =
+    registerError (ArrayAccessError astExpr (length arraySizes) (length indices))
+      >> return (Any, LVal (SArrayAccess baseExpr indices))
+  | null remainingIndices =
+    return (Scalar baseTyp, LVal (SArrayAccess baseExpr indices))
+  | otherwise = do
+    let innerAccess = (Scalar baseTyp, LVal (SArrayAccess baseExpr accessIndices))
+    analyseArrayAccess astExpr innerAccess remainingIndices
+  where
+    (accessIndices, remainingIndices) = splitAt (length arraySizes) indices
+analyseArrayAccess astExpr baseExpr@(Scalar baseTyp, _) indices
   | length indices > basePtrLevel =
     registerError (ArrayAccessError astExpr basePtrLevel (length indices))
       >> return (Any, LVal (SArrayAccess baseExpr indices))
-  | otherwise = return (rewriteAsDeref indices)
+  | otherwise = return (rewriteAsDeref (reverse indices))
   where
     rewriteAsDeref :: [SExpr] -> SExpr
     rewriteAsDeref [] = baseExpr
     rewriteAsDeref (index : indices) =
-      ( derefBaseTyp (length indices + 1),
+      ( Scalar (decreasePointerLevel baseTyp (length indices + 1)),
         LVal
           ( SDeref
-              ( derefBaseTyp (length indices),
+              ( Scalar (decreasePointerLevel baseTyp (length indices)),
                 SBinop (rewriteAsDeref indices) Add index
               )
           )
       )
-    derefBaseTyp n = Scalar (PrimitiveType baseTyp (basePtrLevel - n))
-analyseArrayAccess astExpr baseExpr@(Scalar (StructType structName ptrs), _) indices = undefined
-analyseArrayAccess astExpr baseExpr@(Array baseTyp arraySizes, _) indices = undefined
-analyseArrayAccess astExpr baseExpr@(Any, _) indices = return (Any, LVal (SArrayAccess baseExpr indices))
+    basePtrLevel = pointerLevel baseTyp
 
 analyseIndexExpr :: Expr -> Semant SExpr
 analyseIndexExpr expr = do
@@ -232,10 +304,10 @@ flattenArrayAccess (Ast.ArrayAccess !inner !index) = (base, indices ++ [index])
     (base, indices) = flattenArrayAccess inner
 flattenArrayAccess expr = (expr, [])
 
-typecheckBinop :: Expr -> SExpr -> SExpr -> Semant SExpr
-typecheckBinop expr@(Binop _ op _) left@(Any, _) right@(_, _) = return (Any, SBinop left op right)
-typecheckBinop expr@(Binop _ op _) left@(_, _) right@(Any, _) = return (Any, SBinop left op right)
-typecheckBinop expr@(Binop _ Add _) left@(leftTyp, _) right@(rightTyp, _)
+analyseBinop :: Expr -> SExpr -> SExpr -> Semant SExpr
+analyseBinop expr@(Binop _ op _) left@(Any, _) right@(_, _) = return (Any, SBinop left op right)
+analyseBinop expr@(Binop _ op _) left@(_, _) right@(Any, _) = return (Any, SBinop left op right)
+analyseBinop expr@(Binop _ Add _) left@(leftTyp, _) right@(rightTyp, _)
   | isPointer leftTyp && isPointer rightTyp =
     registerError (BinopTypeError Add leftTyp rightTyp expr "Addition of pointers is not supported")
       >> return (Any, SBinop left Add right)
@@ -245,7 +317,7 @@ typecheckBinop expr@(Binop _ Add _) left@(leftTyp, _) right@(rightTyp, _)
   | otherwise =
     registerError (BinopTypeError Add leftTyp rightTyp expr "")
       >> return (Any, SBinop left Add right)
-typecheckBinop expr@(Binop _ Sub _) left@(leftTyp, _) right@(rightTyp, _)
+analyseBinop expr@(Binop _ Sub _) left@(leftTyp, _) right@(rightTyp, _)
   | isPointer leftTyp && isPointer rightTyp = return (Scalar (PrimitiveType Int 0), SBinop left Sub right)
   | leftTyp == rightTyp = return (leftTyp, SBinop left Sub right)
   | isPointer leftTyp && isInt rightTyp = return (leftTyp, SBinop left Sub right)
@@ -253,26 +325,26 @@ typecheckBinop expr@(Binop _ Sub _) left@(leftTyp, _) right@(rightTyp, _)
   | otherwise =
     registerError (BinopTypeError Sub leftTyp rightTyp expr "")
       >> return (Any, SBinop left Sub right)
-typecheckBinop expr@(Binop leftOp Equal rightOp) left right =
-  typecheckRelational expr leftOp Equal rightOp left right
-typecheckBinop expr@(Binop leftOp Neq rightOp) left right =
-  typecheckRelational expr leftOp Neq rightOp left right
-typecheckBinop expr@(Binop leftOp Less rightOp) left right =
-  typecheckRelational expr leftOp Less rightOp left right
-typecheckBinop expr@(Binop leftOp Leq rightOp) left right =
-  typecheckRelational expr leftOp Leq rightOp left right
-typecheckBinop expr@(Binop leftOp Greater rightOp) left right =
-  typecheckRelational expr leftOp Greater rightOp left right
-typecheckBinop expr@(Binop leftOp Geq rightOp) left right =
-  typecheckRelational expr leftOp Geq rightOp left right
-typecheckBinop expr@(Binop _ op _) left@(leftTyp, leftExp) right@(rightTyp, rightExp)
+analyseBinop expr@(Binop leftOp Equal rightOp) left right =
+  analyseRelop expr leftOp Equal rightOp left right
+analyseBinop expr@(Binop leftOp Neq rightOp) left right =
+  analyseRelop expr leftOp Neq rightOp left right
+analyseBinop expr@(Binop leftOp Less rightOp) left right =
+  analyseRelop expr leftOp Less rightOp left right
+analyseBinop expr@(Binop leftOp Leq rightOp) left right =
+  analyseRelop expr leftOp Leq rightOp left right
+analyseBinop expr@(Binop leftOp Greater rightOp) left right =
+  analyseRelop expr leftOp Greater rightOp left right
+analyseBinop expr@(Binop leftOp Geq rightOp) left right =
+  analyseRelop expr leftOp Geq rightOp left right
+analyseBinop expr@(Binop _ op _) left@(leftTyp, leftExp) right@(rightTyp, rightExp)
   | leftTyp == rightTyp = return (leftTyp, SBinop left op right)
   | otherwise =
     registerError (BinopTypeError op leftTyp rightTyp expr "Types of left and right operand need to match.")
       >> return (Any, SBinop left op right)
 
-typecheckRelational :: Expr -> Expr -> InfixOp -> Expr -> SExpr -> SExpr -> Semant SExpr
-typecheckRelational originalBinop leftOp relOp rightOp left@(leftTyp, leftExp) right@(rightTyp, rightExp) =
+analyseRelop :: Expr -> Expr -> InfixOp -> Expr -> SExpr -> SExpr -> Semant SExpr
+analyseRelop originalBinop leftOp relOp rightOp left@(leftTyp, leftExp) right@(rightTyp, rightExp) =
   case (leftExp, rightExp) of
     (SNull, _) ->
       if (not . isPointer) rightTyp
@@ -297,8 +369,8 @@ typecheckRelational originalBinop leftOp relOp rightOp left@(leftTyp, leftExp) r
     toAstType (Scalar typ) = typ
     toAstType _ = error "unsupported type mapping (this should not happen)"
 
-typecheckBinopArg :: Expr -> Expr -> Semant (SExpr, Bool)
-typecheckBinopArg expr@(Binop _ op _) argExpr = do
+analyseBinopArg :: Expr -> Expr -> Semant (SExpr, Bool)
+analyseBinopArg expr@(Binop _ op _) argExpr = do
   argExpr'@(typ, _) <- analyseExpr argExpr
   if typ == Any
     then return (argExpr', True)
@@ -309,7 +381,7 @@ typecheckBinopArg expr@(Binop _ op _) argExpr = do
         else do
           registerError (BinopArgTypeError op typ expr argExpr expected)
           return (argExpr', False)
-typecheckBinopArg _ _ = undefined
+analyseBinopArg _ _ = undefined
 
 binopArgRules :: InfixOp -> ([Semant.Type.Type -> Bool], [String])
 binopArgRules Add = ([isNumeric, isNonVoidPointer], ["numeric type", "non void pointer"])
