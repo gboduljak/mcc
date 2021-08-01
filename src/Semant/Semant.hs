@@ -5,11 +5,12 @@ module Semant.Semant where
 
 import Control.Monad.State (MonadState (get), State, evalState, gets, modify, runState)
 import Control.Monad.Writer
+import Data.Map (Map)
 import qualified Data.Map as Map
 import Semant.Ast.SemantAst
 import Semant.Env hiding (defineFunc, defineStruct, lookupFunc, lookupStruct)
 import qualified Semant.Env (defineFunc, defineStruct, lookupFunc, lookupStruct)
-import Semant.Errors.SemantError (SemantError)
+import Semant.Errors.SemantError (BindingLoc (Toplevel), SemantError)
 import Semant.Scope (Binding, Scope (Scope, id, parentId, symbolTable), ScopeId, rootScope, rootScopeId)
 import qualified Semant.Scope as Scope
 import Semant.Type (Type)
@@ -28,8 +29,25 @@ getEmptyEnv =
     { funcs = Map.empty,
       structs = Map.empty,
       scopes = Map.fromList [(rootScopeId, rootScope)],
-      currentScopeId = rootScopeId
+      currentScopeId = rootScopeId,
+      bindingLoc = Toplevel
     }
+
+setBindingLoc :: BindingLoc -> Semant ()
+setBindingLoc loc =
+  modify
+    ( \Env {..} ->
+        Env
+          { funcs,
+            structs,
+            scopes,
+            currentScopeId,
+            bindingLoc = loc
+          }
+    )
+
+bindingLoc :: Semant BindingLoc
+bindingLoc = gets Semant.Env.bindingLoc
 
 registerError :: SemantError -> Semant ()
 registerError error = tell [error]
@@ -65,7 +83,8 @@ switchToScope scopeId = do
           { funcs,
             structs,
             scopes,
-            currentScopeId = scopeId
+            currentScopeId = scopeId,
+            bindingLoc
           }
     )
   currentScope
@@ -82,10 +101,23 @@ defineVar binding =
             { funcs,
               structs,
               currentScopeId = id scope,
-              scopes = Map.insert (id scope) scope' scopes
+              scopes = Map.insert (id scope) scope' scopes,
+              bindingLoc
             }
       )
     currentScope
+
+funcs :: Semant (Map String SFunction)
+funcs = gets Semant.Env.funcs
+
+structs :: Semant (Map String SStruct)
+structs = gets Semant.Env.structs
+
+globals :: Semant (Map String SVarDecl)
+globals = do
+  Map.map (\(varName, varTyp) -> SVar varTyp varName)
+    . symbolTable
+    <$> currentScope
 
 defineFunc :: SFunction -> Semant Env
 defineFunc func = modify (Semant.Env.defineFunc func) >> get
@@ -126,7 +158,8 @@ enterScope = do
           { funcs,
             structs,
             currentScopeId = id newScope,
-            scopes = Map.insert (id newScope) newScope scopes
+            scopes = Map.insert (id newScope) newScope scopes,
+            bindingLoc
           }
     )
   return newScope
@@ -143,7 +176,8 @@ exitScope = do
               { funcs,
                 structs,
                 currentScopeId = id,
-                scopes = scopes
+                scopes = scopes,
+                bindingLoc
               }
         )
       Just <$> currentScope

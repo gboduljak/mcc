@@ -21,7 +21,7 @@ import Parser.Errors.Merger (mergeErrorsBasedOnPos)
 import Parser.Errors.PrettyPrinter (prettyPrintErrors)
 import Parser.Grammar.Firsts (startsExpr, startsStmt, startsType)
 import Parser.Grammar.Follows (followsConstruct, followsExp, followsStatement)
-import Parser.Grammar.Operators (isInfix, precedence)
+import Parser.Grammar.Operators (isInfix, precedence, typecastPrecedence)
 import Parser.Pratt.Combinators.Chains (lookchainl1)
 import Parser.Pratt.Combinators.Prim (many, many1, sepBy, sepBy1)
 import Parser.Pratt.Combinators.Recovery (withFollowsRecovery)
@@ -417,7 +417,7 @@ typecast :: Int -> Parser Ast.Expr
 typecast rbp = do
   typ <- type'
   expect (L.is L.RParen)
-  Ast.Typecast typ <$> expr rbp
+  Ast.Typecast typ <$> expr typecastPrecedence
 
 includes :: Parser [Ast.Directive]
 includes = many include (L.is L.Include)

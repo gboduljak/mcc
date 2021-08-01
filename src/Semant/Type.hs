@@ -19,6 +19,17 @@ instance Pretty Type where
   pretty (Array typ sizes) = pretty typ <+> pretty sizes
   pretty Any = pretty "any"
 
+isCond :: Type -> Bool
+isCond condTyp =
+  condTyp == Any
+    || isInt condTyp
+    || isDouble condTyp
+    || isChar condTyp
+    || isPointer condTyp
+
+voidTyp :: Type
+voidTyp = Scalar (Ast.PrimitiveType Void 0)
+
 isInt :: Type -> Bool
 isInt (Scalar (Ast.PrimitiveType Int 0)) = True
 isInt _ = False

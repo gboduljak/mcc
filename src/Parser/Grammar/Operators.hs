@@ -45,7 +45,10 @@ precedence L.Minus = 100
 precedence L.Asterisk = 110
 precedence L.Div = 110
 precedence L.Mod = 110
-precedence L.Dot = 120
-precedence L.LBrack = 120
-precedence L.Arrow = 120
+precedence L.Dot = 130
+precedence L.LBrack = 130
+precedence L.Arrow = 130
 precedence _ = 0
+
+typecastPrecedence :: Int
+typecastPrecedence = 120

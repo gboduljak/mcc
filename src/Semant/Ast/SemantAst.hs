@@ -21,12 +21,6 @@ data SStruct = SStruct
   }
   deriving (Show, Eq)
 
-getFields :: String -> SStruct -> [SVarDecl]
-getFields name SStruct {..} = [field | field@(SVar fieldType fieldName) <- fields, fieldName == name]
-
-getFieldOffset :: String -> SStruct -> Maybe Int
-getFieldOffset fieldName SStruct {..} = Map.lookup fieldName fieldOffsets
-
 data SFunction = SFunction
   { returnType :: Type,
     funcName :: String,
@@ -76,6 +70,15 @@ data LValue
   | SFieldAccess SExpr String
   | SArrayAccess SExpr [SExpr]
   deriving (Show, Eq)
+
+getFields :: String -> SStruct -> [SVarDecl]
+getFields name SStruct {..} = [field | field@(SVar fieldType fieldName) <- fields, fieldName == name]
+
+getFieldOffset :: String -> SStruct -> Maybe Int
+getFieldOffset fieldName SStruct {..} = Map.lookup fieldName fieldOffsets
+
+varName :: SVarDecl -> String
+varName (SVar _ name) = name
 
 isLValue :: SExpr' -> Bool
 isLValue (LVal _) = True

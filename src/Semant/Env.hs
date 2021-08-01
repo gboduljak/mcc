@@ -13,6 +13,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Parser.Ast (StructDecl (Struct), VarDecl)
 import Semant.Ast.SemantAst
+import Semant.Errors.SemantError
 import Semant.Scope (Binding, Scope (..), ScopeId, parentId, rootScope)
 import qualified Semant.Scope as Scope (extend, lookup)
 import Semant.Type (Type)
@@ -22,7 +23,8 @@ data Env = Env
   { funcs :: Map String SFunction,
     structs :: Map String SStruct,
     scopes :: Map ScopeId Scope,
-    currentScopeId :: ScopeId
+    currentScopeId :: ScopeId,
+    bindingLoc :: BindingLoc
   }
   deriving (Show, Eq)
 
@@ -38,7 +40,8 @@ defineFunc func Env {..} =
     { funcs = Map.insert (funcName func) func funcs,
       structs,
       scopes,
-      currentScopeId
+      currentScopeId,
+      bindingLoc
     }
 
 defineStruct :: SStruct -> Env -> Env
@@ -47,5 +50,6 @@ defineStruct struct Env {..} =
     { funcs,
       structs = Map.insert (structName struct) struct structs,
       scopes,
-      currentScopeId
+      currentScopeId,
+      bindingLoc
     }

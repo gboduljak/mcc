@@ -7,6 +7,7 @@ import Data.Text.Prettyprint.Doc
 import Parser.Ast
   ( Construct (StructDecl),
     Expr,
+    Formal (..),
     FuncDecl (Func),
     InfixOp,
     Statement,
@@ -14,15 +15,18 @@ import Parser.Ast
     VarDecl,
   )
 import Parser.AstPrettyPrinter
+import Semant.Ast.SemantAst
 import Semant.Type (Type)
 
 data SemantError
   = IllegalBinding
       { bindingName :: String,
         bindingErrorKind :: BindingErrorKind,
-        bindingLoc :: BindingLoc
+        bindingLoc :: BindingLoc,
+        bindingDecl :: VarDecl
       }
   | UndefinedSymbol String SymbolKind Expr
+  | VoidFormal String String
   | BinopTypeError
       { infixOp :: InfixOp,
         leftType :: Type,
@@ -40,7 +44,7 @@ data SemantError
   | TypeError
       { expected :: [String],
         actual :: Type,
-        typeErrorExpr :: Expr
+        typeErrorExpr :: Maybe Expr
       }
   | CastError
       { to :: Type,
@@ -61,6 +65,11 @@ data SemantError
   | Redeclaration String RedeclarationKind
   | NoMain
   | AddressError Expr
+  | ReturnTypeMismatchError
+      { actualRetTyp :: Type,
+        inFunc' :: SFunction,
+        returnExpr :: Maybe Expr
+      }
   | DerefError Expr
   | AssignmentError
       { lhs :: Expr,
@@ -76,14 +85,14 @@ data SemantError
         expectedIndicesNumber :: Int,
         actualIndicesNumber :: Int
       }
-  | DeadCode Statement
+  | DeadCode Statement [Statement]
   deriving (Show)
 
 data BindingLoc
-  = StructBinding {inStruct :: StructDecl, bindingDecl :: VarDecl}
-  | FunctionBinding {inFunc :: FuncDecl, bindingDecl :: VarDecl}
+  = StructBinding {inStruct :: SStruct}
+  | FunctionBinding {inFunc :: SFunction}
   | Toplevel
-  deriving (Show)
+  deriving (Show, Eq)
 
 data AccessErrorKind = Field | Indirect deriving (Show)
 
@@ -101,12 +110,19 @@ instance Pretty SemantError where
           <+> pretty "binding,"
           <+> pretty bindingName
           <+> case bindingLoc of
-            FunctionBinding {inFunc = Func _ name _} -> pretty "in function" <+> pretty name
-            StructBinding {inStruct = Struct name _} -> pretty "in struct" <+> pretty name
+            FunctionBinding {inFunc = SFunction _ name _ _} -> pretty "in function" <+> pretty name
+            StructBinding {inStruct = SStruct name _ _} -> pretty "in struct" <+> pretty name
             Toplevel -> pretty "at top level"
       UndefinedSymbol symbolName symbolKind referenceExpr ->
         pretty "Undefined" <+> pretty symbolKind <+> pretty symbolName
           <+> pretty "referenced in:" <> hardline <> pretty referenceExpr
+      VoidFormal formName funcName ->
+        pretty "In definition of function"
+          <+> pretty funcName
+          <> comma
+          <+> pretty "the formal"
+          <+> pretty formName
+          <+> pretty "is void which is unsupported."
       BinopTypeError {..} ->
         pretty "Type error in binary expression:"
           <+> indent indentAmount (pretty binopExpr)
@@ -145,13 +161,16 @@ instance Pretty SemantError where
         pretty "Type error: expected one of" <+> pretty expected <+> pretty "but got"
           <+> pretty actual
           <> dot
-          <> indent
-            indentAmount
-            ( pretty " Error occured in expression:"
-                <> hardline
-                <> pretty typeErrorExpr
-                <> hardline
-            )
+          <+> ( case typeErrorExpr of
+                  (Just expr) ->
+                    indent
+                      indentAmount
+                      ( pretty "Error occured in expression:"
+                          <> hardline
+                          <> pretty expr
+                      )
+                  Nothing -> emptyDoc
+              )
       CastError {..} ->
         pretty "Cast error: can only cast between pointers, int to double, char to int, or between pointers and ints, not from"
           <+> pretty from
@@ -220,6 +239,18 @@ instance Pretty SemantError where
           <+> pretty targetStruct
           <+> pretty "with"
           <+> pretty field
+      ReturnTypeMismatchError {..} ->
+        pretty "Invalid return type"
+          <+> pretty actualRetTyp
+          <+> pretty "in expression:"
+          <> hardline
+          <+> indent indentAmount (pretty returnExpr)
+          <> dot
+          <+> pretty "Expected return type of function"
+          <+> pretty (funcName inFunc')
+          <+> pretty "is"
+          <+> pretty (returnType inFunc')
+          <> dot
       ArrayAccessError {..} ->
         pretty "Cannot access array"
           <+> pretty targetArray
@@ -229,10 +260,14 @@ instance Pretty SemantError where
           <+> pretty "Expected "
           <+> pretty expectedIndicesNumber
           <+> pretty "index expressions."
-      DeadCode stmt ->
+      DeadCode return deadStmts ->
         pretty "Error: nothing may follow a return. Error occured in statement:"
           <> hardline
-          <> pretty stmt
+          <> indent indentAmount (pretty return)
+          <> dot
+          <> hardline
+          <> pretty "Dead code is:"
+          <> vcat [indent indentAmount (pretty stmt) | stmt <- deadStmts]
 
 instance Pretty SymbolKind where
   pretty = \case

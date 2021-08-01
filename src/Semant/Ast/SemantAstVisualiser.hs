@@ -126,7 +126,7 @@ instance SemantAstDrawable SStruct where
           ++ "\", shape=record]"
       )
     traverse_
-      ( \varDecl@(SVar _ name) -> do
+      ( \varDecl@(SVar typ name) -> do
           fieldId <- nextId
           case getFieldOffset name struct of
             (Just offset) -> do
@@ -134,13 +134,15 @@ instance SemantAstDrawable SStruct where
                 ( "    node"
                     ++ show fieldId
                     ++ "[label=\"<f0> Field | <f1>"
+                    ++ "Type: "
+                    ++ display typ
+                    ++ " | <f2> "
                     ++ escape name
-                    ++ "@"
+                    ++ " | <f3> Offset: "
                     ++ show offset
                     ++ "\", shape=record]"
                 )
-              varDeclId <- visualise varDecl
-              emit ("    node" ++ show declNodeId ++ ":f2 -> node" ++ show varDeclId ++ ";")
+              emit ("    node" ++ show declNodeId ++ ":f2 -> node" ++ show fieldId ++ ";")
             Nothing -> return ()
       )
       fields
