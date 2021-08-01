@@ -58,3 +58,9 @@ isNonVoidPointer (Scalar (Ast.PrimitiveType _ ptrs)) = ptrs > 0
 isNonVoidPointer (Scalar (Ast.StructType _ ptrs)) = ptrs > 0
 isNonVoidPointer Any = True
 isNonVoidPointer _ = False
+
+decreasePointerLevel :: Type -> Int -> Type
+decreasePointerLevel (Scalar typ@(Ast.PrimitiveType _ _)) n = Scalar (Ast.decreasePointerLevel typ n)
+decreasePointerLevel (Scalar typ@(Ast.StructType _ _)) n = Scalar (Ast.decreasePointerLevel typ n)
+decreasePointerLevel Any _ = Any
+decreasePointerLevel _ _ = error "pointer to array disallowed"

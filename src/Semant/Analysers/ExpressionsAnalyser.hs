@@ -136,13 +136,9 @@ analyseExpr expr@(Ast.Indirect targetExpr field) = do
       registerError (TypeError ["struct"] typ (Just targetExpr))
         >> return (Any, rewriteAsDeref typ sexpr' field)
   where
-    rewriteAsDeref typ accessExpr field =
+    rewriteAsDeref typ accessExpr@(accessTyp, _) field =
       LVal
-        ( SDeref
-            ( typ,
-              LVal (SFieldAccess accessExpr field)
-            )
-        )
+        (SFieldAccess (Semant.Type.decreasePointerLevel accessTyp 1, LVal (SDeref accessExpr)) field)
 analyseExpr expr@(Ast.ArrayAccess _ _) = do
   baseExpr'@(baseTyp, _) <- analyseExpr baseExpr
   indices' <- mapM analyseIndexExpr indexExprs
@@ -233,10 +229,10 @@ analyseArrayAccess astExpr baseExpr@(Scalar baseTyp, _) indices
     rewriteAsDeref :: [SExpr] -> SExpr
     rewriteAsDeref [] = baseExpr
     rewriteAsDeref (index : indices) =
-      ( Scalar (decreasePointerLevel baseTyp (length indices + 1)),
+      ( Scalar (Parser.Ast.decreasePointerLevel baseTyp (length indices + 1)),
         LVal
           ( SDeref
-              ( Scalar (decreasePointerLevel baseTyp (length indices)),
+              ( Scalar (Parser.Ast.decreasePointerLevel baseTyp (length indices)),
                 SBinop (rewriteAsDeref indices) Add index
               )
           )
