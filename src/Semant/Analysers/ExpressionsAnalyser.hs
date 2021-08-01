@@ -16,6 +16,8 @@ import qualified Parser.Ast as Ast
 import Parser.AstVisualiser
 import Parser.Errors.PrettyPrinter (prettyPrintErrors)
 import Parser.Pratt.Parser (arraySizes, expr, parse, parseExpr, parseExprs)
+import Semant.Analysers.BuiltinsAnalyser (analysePrintf)
+import Semant.Analysers.CallArgAnalyser (analyseArgBind)
 import Semant.Ast.SemantAst
 import Semant.Ast.SemantAstVisualiser (visualise, visualiseSemantAst)
 import Semant.Errors.SemantError hiding (Void)
@@ -138,7 +140,10 @@ analyseExpr expr@(Ast.Indirect targetExpr field) = do
   where
     rewriteAsDeref typ accessExpr@(accessTyp, _) field =
       LVal
-        (SFieldAccess (Semant.Type.decreasePointerLevel accessTyp 1, LVal (SDeref accessExpr)) field)
+        ( SFieldAccess
+            (Semant.Type.decreasePointerLevel accessTyp 1, LVal (SDeref accessExpr))
+            field
+        )
 analyseExpr expr@(Ast.ArrayAccess _ _) = do
   baseExpr'@(baseTyp, _) <- analyseExpr baseExpr
   indices' <- mapM analyseIndexExpr indexExprs
@@ -180,6 +185,11 @@ analyseExpr expr@(Typecast targetTyp right) = do
                 >> return (Any, STypecast targetTyp expr')
             )
     )
+analyseExpr expr@(Call "printf" args) = do
+  args' <- mapM analyseExpr args
+  case args of
+    ((Ast.LitString formatString) : formatArgs) -> analysePrintf formatString (tail args') expr
+    _ -> return (Any, SCall "printf" args')
 analyseExpr expr@(Call func args) = do
   func' <- lookupFunc func
   args' <- mapM analyseExpr args
@@ -190,21 +200,13 @@ analyseExpr expr@(Call func args) = do
     Just SFunction {..} -> do
       if length args' == length formals
         then do
-          !validArgs <- zipWithM checkArg formals args'
+          !validArgs <- zipWithM (analyseArgBind func expr) formals args'
           if and validArgs
             then do return (returnType, SCall func args')
             else do return (Any, SCall func args')
         else do
-          registerError (CallArgsNumberError (length formals) (length args) expr)
+          registerError (CallArgsNumberError func (length formals) (length args) expr)
           return (Any, SCall func args')
-  where
-    checkArg :: SFormal -> SExpr -> Semant Bool
-    checkArg _ act@(Any, _) = return False
-    checkArg (SFormal formTyp formName) act@(actTyp, _)
-      | formTyp == actTyp = return True
-      | otherwise = do
-        registerError (CallArgsTypeError formTyp formName actTyp expr)
-        return False
 analyseExpr _ = error "fatal error with pattern matching expressions"
 
 analyseArrayAccess :: Expr -> SExpr -> [SExpr] -> Semant SExpr

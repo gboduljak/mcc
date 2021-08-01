@@ -60,12 +60,15 @@ library
       Preprocessor.IncludesVisualiser
       Preprocessor.PreprocessError
       Preprocessor.TopologicalOrder
+      Semant.Analysers.BuiltinsAnalyser
+      Semant.Analysers.CallArgAnalyser
       Semant.Analysers.ExpressionsAnalyser
       Semant.Analysers.FuncsAnalyser
       Semant.Analysers.StatementsAnalyser
       Semant.Analysers.StructsAnalyser
       Semant.Ast.SemantAst
       Semant.Ast.SemantAstVisualiser
+      Semant.Builtins
       Semant.Env
       Semant.Errors.SemantError
       Semant.Operators.Cond

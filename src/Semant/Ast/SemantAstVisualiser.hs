@@ -14,6 +14,7 @@ import qualified Lexer.Lexeme as L
 import Parser.Ast (InfixOp (..), Type (PrimitiveType, StructType))
 import qualified Parser.Ast as Ast
 import Semant.Ast.SemantAst
+import Semant.Builtins (builtins)
 import Semant.Type
 import Prelude hiding (id)
 
@@ -164,33 +165,35 @@ instance SemantAstDrawable SFormal where
     return formalId
 
 instance SemantAstDrawable SFunction where
-  visualise decl@(SFunction rettyp name formals body) = do
-    declNodeId <- nextId
-    emit
-      ( "    node"
-          ++ show declNodeId
-          ++ "[label=\"<f0>Function"
-          ++ " | <f1>"
-          ++ display rettyp
-          ++ " | <f2> "
-          ++ escape name
-          ++ " | <f3> "
-          ++ "formals"
-          ++ " | <f4> "
-          ++ "body"
-          ++ "\", shape=record]"
-      )
-    traverse_
-      ( \formal -> do
-          formalId <- visualise formal
-          emit ("    node" ++ show declNodeId ++ ":f3 -> node" ++ show formalId)
-      )
-      formals
+  visualise decl@(SFunction rettyp name formals body)
+    | name `elem` map funcName builtins = do nextId
+    | otherwise = do
+      declNodeId <- nextId
+      emit
+        ( "    node"
+            ++ show declNodeId
+            ++ "[label=\"<f0>Function"
+            ++ " | <f1>"
+            ++ display rettyp
+            ++ " | <f2> "
+            ++ escape name
+            ++ " | <f3> "
+            ++ "formals"
+            ++ " | <f4> "
+            ++ "body"
+            ++ "\", shape=record]"
+        )
+      traverse_
+        ( \formal -> do
+            formalId <- visualise formal
+            emit ("    node" ++ show declNodeId ++ ":f3 -> node" ++ show formalId)
+        )
+        formals
 
-    bodyId <- visualise body
-    emit ("    node" ++ show declNodeId ++ ":f4 -> node" ++ show bodyId)
+      bodyId <- visualise body
+      emit ("    node" ++ show declNodeId ++ ":f4 -> node" ++ show bodyId)
 
-    return declNodeId
+      return declNodeId
 
 instance SemantAstDrawable (Maybe SBlock) where
   visualise (Just block) = visualise block

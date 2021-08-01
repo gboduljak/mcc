@@ -52,12 +52,14 @@ data SemantError
         castErrorExpr :: Expr
       }
   | CallArgsNumberError
-      { expectedArgsNumber :: Int,
+      { calleeFuncName :: String,
+        expectedArgsNumber :: Int,
         actualArgsNumber :: Int,
         callExpr :: Expr
       }
   | CallArgsTypeError
-      { formalType :: Type,
+      { calleeFuncName' :: String,
+        formalType :: Type,
         formalName :: String,
         actualType :: Type,
         callExpr' :: Expr
@@ -183,7 +185,9 @@ instance Pretty SemantError where
             ( pretty "Error occured in expression:" <+> pretty castErrorExpr
             )
       CallArgsNumberError {..} ->
-        pretty "Argument error: function expected"
+        pretty "Argument error: function"
+          <+> pretty calleeFuncName
+          <+> pretty "expected"
           <+> pretty expectedArgsNumber
           <+> pretty "arguments, but was called with"
           <+> pretty actualArgsNumber
@@ -193,10 +197,12 @@ instance Pretty SemantError where
           <> indent
             indentAmount
             ( pretty "Error occured in call:"
-                <> pretty callExpr
+                <+> pretty callExpr
             )
       CallArgsTypeError {..} ->
-        pretty "Argument error: function expected an argument"
+        pretty "Argument error: function"
+          <+> pretty calleeFuncName'
+          <+> pretty "expected an argument"
           <+> pretty formalName
           <+> pretty "of type"
           <+> pretty formalType
@@ -207,7 +213,7 @@ instance Pretty SemantError where
           <> indent
             indentAmount
             ( pretty "Error occured in call:"
-                <> pretty callExpr'
+                <+> pretty callExpr'
             )
       Redeclaration funcName RedeclFunc ->
         pretty "Error: redeclaration of function"

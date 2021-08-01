@@ -8,8 +8,10 @@ import Control.Monad.Writer
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Semant.Ast.SemantAst
+import Semant.Builtins (builtins)
 import Semant.Env hiding (defineFunc, defineStruct, lookupFunc, lookupStruct)
 import qualified Semant.Env (defineFunc, defineStruct, lookupFunc, lookupStruct)
+import qualified Semant.Env as Env
 import Semant.Errors.SemantError (BindingLoc (Toplevel), SemantError)
 import Semant.Scope (Binding, Scope (Scope, id, parentId, symbolTable), ScopeId, rootScope, rootScopeId)
 import qualified Semant.Scope as Scope
@@ -32,6 +34,9 @@ getEmptyEnv =
       currentScopeId = rootScopeId,
       bindingLoc = Toplevel
     }
+
+getBaseEnv :: Env
+getBaseEnv = foldr Env.defineFunc getEmptyEnv builtins
 
 setBindingLoc :: BindingLoc -> Semant ()
 setBindingLoc loc =

@@ -40,7 +40,7 @@ analyseExpr' expr = case result of
   (expr, []) -> Right expr
   (_, errors) -> Left errors
   where
-    result = evalState (runWriterT (analyseExpr expr)) getEmptyEnv
+    result = evalState (runWriterT (analyseExpr expr)) getBaseEnv
 
 analyseExprStateful' :: Ast.Expr -> Semant.Env.Env -> Either [SemantError] SExpr
 analyseExprStateful' expr env = case result of
@@ -54,7 +54,7 @@ analyseProg' prog = case result of
   (prog, []) -> Right prog
   (_, errors) -> Left errors
   where
-    result = evalState (runWriterT (analyse prog)) getEmptyEnv
+    result = evalState (runWriterT (analyse prog)) getBaseEnv
 
 runAnalyse' :: String -> String -> IO ()
 runAnalyse' file input = do
@@ -76,7 +76,7 @@ runAnalyse' file input = do
         putStrLn $ prettyPrintErrors bundle (pack input) isPretty
     (Left bundle) -> putStrLn $ prettyPrintErrors bundle (pack input) isPretty
   where
-    analyseProg'' prog = evalState (runWriterT (analyse prog)) getEmptyEnv
+    analyseProg'' prog = evalState (runWriterT (analyse prog)) getBaseEnv
 
 prettyPrintSemantError :: SemantError -> String
 prettyPrintSemantError = renderString . layoutSmart defaultLayoutOptions . pretty
