@@ -63,24 +63,25 @@ defineAndInstallFunc retTyp name formals body = do
           return (SFormal (Scalar formTyp) formName)
       )
       formals
-  setBindingLoc (FunctionBinding $ tempFuncDefn formals')
+  setBindingLoc (FunctionBinding $ defnWithoutBody formals')
   case body of
     Nothing -> do
-      let funcDefn = constructFuncDefn retTyp name formals' Nothing
-      defineFunc funcDefn
+      let defn = defnWithoutBody formals'
+      defineFunc defn
       setBindingLoc Toplevel
-      return funcDefn
+      return defn
     (Just body) -> do
+      defineFunc (defnWithoutBody formals')
       enterScope
       traverse_ (\(SFormal formTyp formName) -> defineVar (formName, formTyp)) formals'
       body' <- Just <$> analyseBlock body
       exitScope
-      let funcDefn = constructFuncDefn retTyp name formals' body'
-      defineFunc funcDefn
+      let finalFuncDefn = constructFuncDefn retTyp name formals' body'
+      defineFunc finalFuncDefn
       setBindingLoc Toplevel
-      return funcDefn
+      return finalFuncDefn
   where
-    tempFuncDefn formals' = constructFuncDefn retTyp name formals' Nothing
+    defnWithoutBody formals' = constructFuncDefn retTyp name formals' Nothing
 
 constructFuncDefn :: Parser.Ast.Type -> String -> [SFormal] -> Maybe SBlock -> SFunction
 constructFuncDefn retTyp name formals Nothing =

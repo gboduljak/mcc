@@ -16,7 +16,7 @@ import qualified Parser.Ast as Ast
 import Parser.AstVisualiser
 import Parser.Errors.PrettyPrinter (prettyPrintErrors)
 import Parser.Pratt.Parser (arraySizes, expr, parse, parseExpr, parseExprs)
-import Semant.Analysers.BuiltinsAnalyser (analysePrintf)
+import Semant.Analysers.BuiltinsAnalyser (analysePrintf, analyseScanf)
 import Semant.Analysers.CallArgAnalyser (analyseArgBind)
 import Semant.Ast.SemantAst
 import Semant.Ast.SemantAstVisualiser (visualise, visualiseSemantAst)
@@ -190,6 +190,11 @@ analyseExpr expr@(Call "printf" args) = do
   case args of
     ((Ast.LitString formatString) : formatArgs) -> analysePrintf formatString (tail args') expr
     _ -> return (Any, SCall "printf" args')
+analyseExpr expr@(Call "scanf" args) = do
+  args' <- mapM analyseExpr args
+  case args of
+    ((Ast.LitString formatString) : formatArgs) -> analyseScanf formatString (tail args') expr
+    _ -> return (Any, SCall "scanf" args')
 analyseExpr expr@(Call func args) = do
   func' <- lookupFunc func
   args' <- mapM analyseExpr args

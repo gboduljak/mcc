@@ -1,6 +1,7 @@
 module Main where
 
 import Data.Foldable
+import Data.Maybe (fromJust, isJust)
 import Data.Text (pack)
 import Data.Text.Prettyprint.Doc
 import qualified Lexer.AdHoc.Lexer as AdHocLex (lex')
@@ -9,6 +10,7 @@ import qualified Lexer.Generator.Lexer as GeneratedLex (lex')
 import Lexer.Lexeme
 import Lexer.Token
 import Parser.Ast
+import qualified Parser.Ast as Ast
 import Parser.AstPrettyPrinter
 import Parser.AstVisualiser
 import qualified Parser.Combinator.Naive.Parser as CombinatorParser (parse)
@@ -20,6 +22,11 @@ import Preprocessor.IncludesPreprocessor (preprocess)
 import Preprocessor.IncludesVisualiser (draw)
 import Prettyprinter
 import Prettyprinter.Render.String
+import Semant.Ast.SemantAst (SProgram)
+import Semant.Ast.SemantAstVisualiser (visualiseSemantAst)
+import Semant.Env (Env)
+import Semant.Semant (getBaseEnv)
+import Semant.SemanticAnalyser (analyseProgs, prettyPrintSemantError)
 import System.Console.Pretty
 import System.Environment (getArgs)
 import Text.Megaparsec (ParseErrorBundle (ParseErrorBundle))
@@ -42,10 +49,29 @@ main = do
       putStrLn "Compilation order resolved ... 💪"
       putStrLn ("Compilation order is : " ++ show order)
       putStrLn ""
-      traverse_ compileFile order
+      maybeProgs <- mapM parseFile order
+      print maybeProgs
+      if and [isJust prog | prog <- maybeProgs]
+        then do
+          let progs = [fromJust prog | prog <- maybeProgs]
+          case analyseProgs progs getBaseEnv of
+            (Left errors) -> do
+              let displayedErrors = map prettyPrintSemantError errors
+              traverse_ putStrLn displayedErrors
+            (Right trees) -> do
+              traverse_
+                ( \(file, tree) -> do
+                    writeFile (file ++ ".sast.dot") (visualiseSemantAst tree)
+                )
+                (zip order trees)
+        else do
+          return ()
+      -- case analyseProgs maybeProgs of
 
-compileFile :: String -> IO ()
-compileFile file = do
+      return ()
+
+parseFile :: String -> IO (Maybe Program)
+parseFile file = do
   supportsFancyTerminal <- supportsPretty
 
   putStrLn ("Processing " ++ file ++ "...")
@@ -57,6 +83,7 @@ compileFile file = do
       let errorMessages = prettyPrintErrors errors (pack input) supportsFancyTerminal
        in do
             putStrLn errorMessages
+            return Nothing
     (Right tokens) -> do
       displayTokens tokens
       putStrLn "Combinator Parser..."
@@ -79,10 +106,12 @@ compileFile file = do
           let errorMessages = prettyPrintErrors errors (pack input) supportsFancyTerminal
            in do
                 putStrLn errorMessages
+                return Nothing
         (Right ast) -> do
           writeFile (file ++ ".ast.pratt.raw.txt") (show ast)
           writeFile (file ++ ".ast.pratt.txt") (prettyPrintAst ast)
           writeFile (file ++ ".ast.pratt.dot") (visualiseAst ast)
+          return (Just ast)
 
 -- putStrLn "AdHoc Lexer..."
 -- let adHocResult = AdHocLex.lex' file input

@@ -7,7 +7,7 @@ int *coin_used;
 
 int infinity;
 
-int min(int a, int b) { 
+int min(int a, int b) {
   if (a < b) {
     return a;
   }
@@ -21,14 +21,14 @@ void optimally_exchange(int amount) {
   exch_amt = 0;
   i = 1;
 
-  for (exch_amt = 1; exch_amt <= amount; exch_amt=exch_amt+1) {
+  for (exch_amt = 1; exch_amt <= amount; exch_amt = exch_amt + 1) {
     dp[exch_amt] = infinity;
   }
 
   dp[0] = 0;
 
-  for (exch_amt = 1; exch_amt <= amount; exch_amt=exch_amt+1) {
-    for (i = 0; i < coins_n; i=i+1) {
+  for (exch_amt = 1; exch_amt <= amount; exch_amt = exch_amt + 1) {
+    for (i = 0; i < coins_n; i = i + 1) {
       if (coins[i] <= exch_amt) {
         if (1 + dp[exch_amt - coins[i]] < dp[exch_amt]) {
           dp[exch_amt] = 1 + dp[exch_amt - coins[i]];
@@ -50,9 +50,9 @@ void print_exchange(int n) {
 int main() {
   coins_n = 0;
   amount = 0;
-  coins = NULL;
-  dp = NULL;
-  coin_used= NULL;
+  coins = (int *)NULL;
+  dp = (int *)NULL;
+  coin_used = (int *)NULL;
   infinity = 10000000;
 
   int i;
@@ -63,10 +63,10 @@ int main() {
   dp = (int *)malloc(sizeof(int) * (amount + 1));
   coin_used = (int *)malloc(sizeof(int) * (amount + 1));
 
-  for (i = 0; i < coins_n; i=i+1) { 
-    scanf("%d", &coins[i]); 
+  for (i = 0; i < coins_n; i = i + 1) {
+    scanf("%d", &coins[i]);
   }
-  for (i = 0; i < coins_n; i=i+1) {
+  for (i = 0; i < coins_n; i = i + 1) {
     printf("%d\n", coins[i]);
   }
 
@@ -76,8 +76,8 @@ int main() {
   printf("optimal change is %d = ", amount);
   print_exchange(amount);
 
-  free(coins);
-  free(dp);
-  free(coin_used);
+  free((void *)coins);
+  free((void *)dp);
+  free((void *)coin_used);
   return 0;
 }

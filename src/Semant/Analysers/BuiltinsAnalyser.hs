@@ -12,29 +12,50 @@ import Semant.Errors.SemantError hiding (Void)
 import Semant.Semant
 import Semant.Type
 
+-- analyseScanf :: String -> [SExpr] -> Expr -> Semant SExpr
+-- analyseScanf formatStr = analyseStringIo "scanf"
+data StringIoFunc = Printf | Scanf
+
 analysePrintf :: String -> [SExpr] -> Expr -> Semant SExpr
-analysePrintf formatStr formatArgs expr =
+analysePrintf = analyseStringIo Printf
+
+analyseScanf :: String -> [SExpr] -> Expr -> Semant SExpr
+analyseScanf = analyseStringIo Scanf
+
+analyseStringIo :: StringIoFunc -> String -> [SExpr] -> Expr -> Semant SExpr
+analyseStringIo func formatStr formatArgs expr = do
   if length actuals == length expectedFormals
     then do
-      !validArgs <- zipWithM (analyseArgBind "printf" expr) expectedFormals actuals
+      !validArgs <- zipWithM (analyseArgBind funcName expr) expectedFormals actuals
       if and validArgs
-        then do return (voidTyp, SCall "printf" actuals)
-        else do return (Any, SCall "printf" actuals)
+        then do return (voidTyp, SCall funcName actuals)
+        else do return (Any, SCall funcName actuals)
     else do
-      registerError (CallArgsNumberError "printf" (length expectedFormals) (length actuals) expr)
-      return (Any, SCall "printf" actuals)
+      registerError (CallArgsNumberError funcName (length expectedFormals) (length actuals) expr)
+      return (Any, SCall funcName actuals)
   where
-    formatArgTypes = parseFormatString formatStr
+    actuals = (Scalar (PrimitiveType Char 1), SLitString formatStr) : formatArgs
+    funcName = case func of
+      Printf -> "printf"
+      Scanf -> "scanf"
+    formatArgTypes = parseFormatString formatStr func
     formatStringArg = SFormal (Scalar (Ast.PrimitiveType Char 1)) "formatString"
     expectedFormals = formatStringArg : zipWith (\i typ -> SFormal typ ("arg" ++ show i)) [0 ..] formatArgTypes
-    actuals = (Scalar (PrimitiveType Char 1), SLitString formatStr) : formatArgs
 
-parseFormatString :: String -> [Type]
-parseFormatString "" = []
-parseFormatString ('%' : x : xs)
-  | x == 's' = Scalar (Ast.PrimitiveType Char 1) : parseFormatString xs
-  | x == 'c' = Scalar (Ast.PrimitiveType Char 0) : parseFormatString xs
-  | x == 'd' = Scalar (Ast.PrimitiveType Int 0) : parseFormatString xs
-  | x == 'f' = Scalar (Ast.PrimitiveType Double 0) : parseFormatString xs
-  | otherwise = parseFormatString (x : xs)
-parseFormatString (x : xs) = parseFormatString xs
+parseFormatString :: String -> StringIoFunc -> [Type]
+parseFormatString "" Printf = []
+parseFormatString ('%' : x : xs) Printf
+  | x == 's' = Scalar (Ast.PrimitiveType Char 1) : parseFormatString xs Printf
+  | x == 'c' = Scalar (Ast.PrimitiveType Char 0) : parseFormatString xs Printf
+  | x == 'd' = Scalar (Ast.PrimitiveType Int 0) : parseFormatString xs Printf
+  | x == 'f' = Scalar (Ast.PrimitiveType Double 0) : parseFormatString xs Printf
+  | otherwise = parseFormatString (x : xs) Printf
+parseFormatString (x : xs) Printf = parseFormatString xs Printf
+parseFormatString "" Scanf = []
+parseFormatString ('%' : x : xs) Scanf
+  | x == 's' = Scalar (Ast.PrimitiveType Char 1) : parseFormatString xs Scanf
+  | x == 'c' = Scalar (Ast.PrimitiveType Char 1) : parseFormatString xs Scanf
+  | x == 'd' = Scalar (Ast.PrimitiveType Int 1) : parseFormatString xs Scanf
+  | x == 'f' = Scalar (Ast.PrimitiveType Double 1) : parseFormatString xs Scanf
+  | otherwise = parseFormatString (x : xs) Scanf
+parseFormatString (x : xs) Scanf = parseFormatString xs Scanf

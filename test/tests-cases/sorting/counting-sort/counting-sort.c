@@ -7,7 +7,6 @@ void CountingSort(int *A, int length) {
 
   B = (int *)malloc(sizeof(int) * length);
   C = (int *)malloc(sizeof(int) * length);
-  memset(C, 0, length);
   j = 0;
 
   for (j = 0; j < length; j = j + 1) {
@@ -27,6 +26,6 @@ void CountingSort(int *A, int length) {
     A[j] = B[j];
   }
 
-  free(C);
-  free(B);
+  free((void *)C);
+  free((void *)B);
 }

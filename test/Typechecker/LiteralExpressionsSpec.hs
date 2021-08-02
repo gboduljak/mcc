@@ -1,4 +1,4 @@
-module TypecheckerSpec where
+module Typechecker.LiteralExpressionsSpec where
 
 import Data.Either
 import Data.Foldable (traverse_)
@@ -15,8 +15,7 @@ import Parser.AstPrettyPrinter
 import Parser.Errors.PrettyPrinter (prettyPrintErrors)
 import qualified Parser.Pratt.Parser as PrattParser (parseExprs)
 import Semant.Ast.SemantAst as SAst hiding (funcs, structs)
-import Semant.Env
-import Semant.Env (Env (bindingLoc))
+import Semant.Env (Env (..))
 import Semant.Errors.SemantError (BindingLoc (..))
 import Semant.Scope (Scope (..), rootScopeId, symbolTable)
 import Semant.SemanticAnalyser (analyseExpr', analyseExprStateful')

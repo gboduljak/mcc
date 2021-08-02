@@ -1,8 +1,9 @@
 import qualified LexerSpec (dynamicProgrammingSpec, miniProgramsSpec, sortingSpec, ticTacToeSpec)
 import qualified ParserSpec (dynamicProgrammingSpec, miniProgramsSpec, sortingSpec, ticTacToeSpec)
 import qualified ScopingSpec (scopingSpec)
+import qualified SemanticAnalyserSpec (dynamicProgrammingSpec, miniProgramsSpec, sortingSpec, ticTacToeSpec)
 import Test.Hspec (hspec)
-import qualified TypecheckerSpec (typechecksFailingLiteralExpressionsSpec, typechecksLiteralExpressionsSpec, typechecksStatefulExpressionsSpec)
+import qualified Typechecker.LiteralExpressionsSpec (typechecksFailingLiteralExpressionsSpec, typechecksLiteralExpressionsSpec, typechecksStatefulExpressionsSpec)
 
 main :: IO ()
 main = do
@@ -15,6 +16,10 @@ main = do
   hspec ParserSpec.dynamicProgrammingSpec
   hspec ParserSpec.ticTacToeSpec
   hspec ScopingSpec.scopingSpec
-  hspec TypecheckerSpec.typechecksLiteralExpressionsSpec
-  hspec TypecheckerSpec.typechecksFailingLiteralExpressionsSpec
-  hspec TypecheckerSpec.typechecksStatefulExpressionsSpec
+  hspec Typechecker.LiteralExpressionsSpec.typechecksLiteralExpressionsSpec
+  hspec Typechecker.LiteralExpressionsSpec.typechecksFailingLiteralExpressionsSpec
+  hspec Typechecker.LiteralExpressionsSpec.typechecksStatefulExpressionsSpec
+  hspec SemanticAnalyserSpec.miniProgramsSpec
+  hspec SemanticAnalyserSpec.sortingSpec
+  hspec SemanticAnalyserSpec.dynamicProgrammingSpec
+  hspec SemanticAnalyserSpec.ticTacToeSpec

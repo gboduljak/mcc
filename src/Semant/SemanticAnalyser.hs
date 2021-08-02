@@ -6,13 +6,14 @@
 
 module Semant.SemanticAnalyser where
 
-import Control.Monad.State (evalState, get)
+import Control.Monad.State (evalState, get, runState)
 import Control.Monad.Writer hiding (Any)
 import Data.Foldable (traverse_)
 import qualified Data.Map as Map
 import Data.Text (pack)
 import Data.Text.Prettyprint.Doc
 import Data.Text.Prettyprint.Doc.Render.String
+import Debug.Trace (traceShowId)
 import Lexer.Combinator.Lexer (lex')
 import Lexer.Lexeme (BuiltinType (..), Lexeme (Not))
 import Parser.Ast (Construct (ConstructError, FuncDecl, FuncDefn, StructDecl, VarDecl), Expr (..), InfixOp (..), Program (Program), Type (PrimitiveType, StructType), decreasePointerLevel, pointerLevel)
@@ -26,6 +27,7 @@ import Semant.Analysers.StatementsAnalyser
 import Semant.Analysers.StructsAnalyser
 import Semant.Ast.SemantAst hiding (funcs, globals, structs)
 import Semant.Ast.SemantAstVisualiser (visualise, visualiseSemantAst)
+import Semant.Env
 import qualified Semant.Env hiding (funcs, globals, structs)
 import Semant.Errors.SemantError hiding (Void)
 import Semant.Operators.Cond ((<||>), (|>), (||>))
@@ -33,7 +35,6 @@ import Semant.Semant (structs)
 import Semant.Semant hiding (structs)
 import Semant.Type
 import System.Console.Pretty
-import System.Directory.Internal.Prelude (traverse_)
 
 analyseExpr' :: Ast.Expr -> Either [SemantError] SExpr
 analyseExpr' expr = case result of
@@ -50,18 +51,41 @@ analyseExprStateful' expr env = case result of
     result = evalState (runWriterT (analyseExpr expr)) env
 
 analyseProg' :: Ast.Program -> Either [SemantError] SProgram
-analyseProg' prog = case result of
+analyseProg' prog = case fst $result of
   (prog, []) -> Right prog
   (_, errors) -> Left errors
   where
-    result = evalState (runWriterT (analyse prog)) getBaseEnv
+    result = runState (runWriterT (analyse prog)) getBaseEnv
+
+analyseProg :: Ast.Program -> Env -> Either [SemantError] (SProgram, Env)
+analyseProg prog env = case result of
+  (prog, []) -> Right (fst result, env')
+  (_, errors) -> Left errors
+  where
+    (result, env') = runState (runWriterT (analyse prog)) env
+
+analyseProgs :: [Ast.Program] -> Env -> Either [SemantError] [SProgram]
+analyseProgs [] _ = Left [EmptyProgram]
+analyseProgs [program] env = case analyseProg program env of
+  (Left errors) -> Left errors
+  (Right success) -> Right [analysedProg success]
+  where
+    analysedProg = fst
+analyseProgs (program : programs) env = case analyseProg program env of
+  (Left errors) -> Left errors
+  (Right analysisResult) -> case analyseProgs programs (nextEnv analysisResult) of
+    (Left errors) -> Left errors
+    (Right analysedProgs) -> Right (analysedProg analysisResult : analysedProgs)
+  where
+    analysedProg = fst
+    nextEnv = snd
 
 runAnalyse' :: String -> String -> IO ()
 runAnalyse' file input = do
   isPretty <- supportsPretty
   case lex' file input of
     (Right tokens) -> case parse file tokens of
-      (Right prog) -> case analyseProg'' prog of
+      (Right prog) -> case fst $ analyseProg'' prog of
         (sast, []) -> do
           putStrLn $ visualiseAst prog
           putStrLn $ visualiseSemantAst sast
@@ -76,7 +100,7 @@ runAnalyse' file input = do
         putStrLn $ prettyPrintErrors bundle (pack input) isPretty
     (Left bundle) -> putStrLn $ prettyPrintErrors bundle (pack input) isPretty
   where
-    analyseProg'' prog = evalState (runWriterT (analyse prog)) getBaseEnv
+    analyseProg'' prog = runState (runWriterT (analyse prog)) getBaseEnv
 
 prettyPrintSemantError :: SemantError -> String
 prettyPrintSemantError = renderString . layoutSmart defaultLayoutOptions . pretty
@@ -92,8 +116,8 @@ analyse (Program _ constrs) = do
         ConstructError -> return ()
     )
     constrs
-  structDefns <- structs
-  funcDefns <- funcs
+  structDefns <- Semant.Semant.structs
+  funcDefns <- Semant.Semant.funcs
   globalVarDecls <- globals
   return
     ( SProgram

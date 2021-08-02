@@ -14,6 +14,12 @@ builtins =
         body = Just (SBlock [])
       },
     SFunction
+      { returnType = voidTyp,
+        funcName = "scanf",
+        formals = [],
+        body = Just (SBlock [])
+      },
+    SFunction
       { returnType = Scalar (Ast.PrimitiveType Void 1),
         funcName = "malloc",
         formals = [SFormal (Scalar (Ast.PrimitiveType Int 0)) "size"],

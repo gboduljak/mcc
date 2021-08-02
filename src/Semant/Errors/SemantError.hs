@@ -65,6 +65,7 @@ data SemantError
         callExpr' :: Expr
       }
   | Redeclaration String RedeclarationKind
+  | EmptyProgram
   | NoMain
   | AddressError Expr
   | ReturnTypeMismatchError
@@ -107,6 +108,7 @@ data SymbolKind = Variable | Function | Structure deriving (Show)
 instance Pretty SemantError where
   pretty =
     \case
+      EmptyProgram -> pretty "There is nothing to compile. :)"
       IllegalBinding {..} ->
         pretty "Binding Error: Illegal" <+> pretty bindingErrorKind
           <+> pretty "binding,"

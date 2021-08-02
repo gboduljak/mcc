@@ -3,6 +3,7 @@
 // #include <math.h>
 // #include <stdlib.h>
 // #include <string.h>
+int pow(int x, int y);
 
 int Digit(int num, int d) {
   int power;
@@ -45,6 +46,6 @@ void CountingSortOnDigit(int *A, int d, int length) {
     A[i] = B[i];
   }
 
-  free(C);
-  free(B);
+  free((void *)C);
+  free((void *)B);
 }

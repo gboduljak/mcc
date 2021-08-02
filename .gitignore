@@ -23,4 +23,6 @@ cabal.project.local~
 .ghc.environment.*
 *.DS_STORE
 *.ast.*
+*.sast.*
+
 node_modules

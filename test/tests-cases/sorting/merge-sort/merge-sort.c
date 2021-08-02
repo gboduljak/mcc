@@ -8,10 +8,10 @@ void Merge(int *A, int p, int q, int r) {
   n2 = r - q;
 
   int *L;
-  L = malloc(sizeof(int) * (n1 + 1));
+  L = (int *)malloc(sizeof(int) * (n1 + 1));
 
   int *R;
-  R = malloc(sizeof(int) * (n2 + 1));
+  R = (int *)malloc(sizeof(int) * (n2 + 1));
 
   int i;
   i = 0;
@@ -45,8 +45,8 @@ void Merge(int *A, int p, int q, int r) {
     }
   }
 
-  free(L);
-  free(R);
+  free((void *)L);
+  free((void *)R);
 }
 
 void MergeSort(int *A, int lo, int hi) {
@@ -72,7 +72,7 @@ int main() {
 
   scanf("%d", &length);
   int *A;
-  A = malloc(sizeof(int) * length);
+  A = (int *)malloc(sizeof(int) * length);
 
   for (i = 0; i < length; i = i + 1) {
     scanf("%d", &A[i]);
@@ -81,5 +81,5 @@ int main() {
   for (i = 0; i < length; i = i + 1) {
     printf("%d ", A[i]);
   }
-  free(A);
+  free((void *)A);
 }

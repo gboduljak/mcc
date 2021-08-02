@@ -143,7 +143,19 @@ int set(char row, int col, char mark) {
   }
   return r;
 }
-
+void print_s(char *msg) { printf(msg); }
+void print_c(char c) { printf("%c", c); }
+void print_i(int i) { printf("%d", i); }
+char read_c() {
+  char c;
+  scanf("%c", &c);
+  return c;
+}
+int read_i() {
+  int i;
+  scanf("%d", &i);
+  return i;
+}
 // Prints the game board to stdout
 void printGame() {
   print_s((char *)"\n");
