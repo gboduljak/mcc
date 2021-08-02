@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Preprocessor.IncludesPreprocessor (preprocess) where
 
@@ -18,7 +19,7 @@ import Preprocessor.TopologicalOrder
   ( TopologicalOrder,
   )
 import System.Directory (doesFileExist)
-import System.FilePath (takeExtension)
+import System.FilePath (normalise, splitFileName, takeExtension, (</>))
 
 data PreprocessorState = PreprocessorState
   { includesGraph :: IncludesGraph,
@@ -35,12 +36,7 @@ logError :: PreprocessError -> Preprocessor ()
 logError error =
   modify
     ( \PreprocessorState
-         { includesGraph,
-           processingFiles,
-           processedFiles,
-           errors,
-           includesPath,
-           includesTopologicalOrder
+         { ..
          } ->
           PreprocessorState
             { includesGraph,
@@ -56,12 +52,7 @@ addToWorklist :: String -> Preprocessor ()
 addToWorklist file =
   modify
     ( \PreprocessorState
-         { includesGraph,
-           processingFiles,
-           processedFiles,
-           errors,
-           includesPath,
-           includesTopologicalOrder
+         { ..
          } ->
           PreprocessorState
             { includesGraph = includesGraph <> Map.fromList [(file, [])],
@@ -77,12 +68,7 @@ addDependency :: String -> String -> Preprocessor ()
 addDependency file include =
   modify
     ( \PreprocessorState
-         { includesGraph,
-           processingFiles,
-           processedFiles,
-           errors,
-           includesPath,
-           includesTopologicalOrder
+         { ..
          } ->
           PreprocessorState
             { includesGraph = Map.insert file (include : fromJust (Map.lookup file includesGraph)) includesGraph,
@@ -98,12 +84,7 @@ markProcessing :: String -> Preprocessor ()
 markProcessing file =
   modify
     ( \PreprocessorState
-         { includesGraph,
-           processingFiles,
-           processedFiles,
-           errors,
-           includesPath,
-           includesTopologicalOrder
+         { ..
          } ->
           PreprocessorState
             { includesGraph,
@@ -119,12 +100,7 @@ markProcessed :: String -> Preprocessor ()
 markProcessed file =
   modify
     ( \PreprocessorState
-         { includesGraph,
-           processingFiles,
-           processedFiles,
-           errors,
-           includesPath,
-           includesTopologicalOrder
+         { ..
          } ->
           PreprocessorState
             { includesGraph,
@@ -143,12 +119,7 @@ resetIncludesPath :: Preprocessor ()
 resetIncludesPath =
   modify
     ( \PreprocessorState
-         { includesGraph,
-           processingFiles,
-           processedFiles,
-           errors,
-           includesPath,
-           includesTopologicalOrder
+         { ..
          } ->
           PreprocessorState
             { includesGraph,
@@ -160,37 +131,44 @@ resetIncludesPath =
             }
     )
 
-registerSourceFile :: String -> Preprocessor ()
-registerSourceFile file
+registerSourceFile :: String -> String -> Preprocessor ()
+registerSourceFile file dir
   | takeExtension file `notElem` [".c", ".h"] = logError (InvalidExtension file)
   | otherwise = do
-    exists <- liftIO $ doesFileExist file
+    exists <- liftIO $ doesFileExist (normalise $ dir </> file)
     graph <- gets includesGraph
-    alreadyRegistered <- gets (isJust . Map.lookup file . includesGraph)
+    alreadyRegistered <- gets (isJust . Map.lookup (normalise $ dir </> file) . includesGraph)
     if not exists
-      then logError (NonexistentFile file)
+      then logError (NonexistentFile (normalise $ dir </> file))
       else do
         if alreadyRegistered
           then return ()
           else do
-            addToWorklist file
-            input <- liftIO $ readFile file
+            addToWorklist (normalise $ dir </> file)
+            input <- liftIO $ readFile (normalise $ dir </> file)
             let includes = lexIncludes file (pack input)
             case includes of
               (Left errors) -> logError (LexError errors)
               (Right includes) ->
                 traverse_
-                  ( \includeFile -> do
-                      addDependency file includeFile
-                      case Map.lookup includeFile graph of
-                        Nothing -> do registerSourceFile includeFile
+                  ( \includeFilePath -> do
+                      let (includePrefix, includeFile) = splitFileName includeFilePath
+                          newDir = normalise $ dir </> includePrefix
+                      addDependency (normalise $ dir </> file) (normalise $ dir </> includeFilePath)
+                      case Map.lookup (newDir </> includeFile) graph of
+                        Nothing -> do registerSourceFile includeFile newDir
                         _ -> return ()
                   )
                   includes
 
 buildDependencyGraph :: [String] -> Preprocessor (Either [PreprocessError] IncludesGraph)
 buildDependencyGraph files = do
-  traverse_ registerSourceFile files
+  traverse_
+    ( \filePath -> do
+        let (fileDir, file) = splitFileName filePath
+        registerSourceFile file fileDir
+    )
+    files
   errors <- gets errors
   includeGraph <- gets includesGraph
   if null errors
