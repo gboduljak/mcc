@@ -51,9 +51,9 @@ instance Pretty Expr where
   pretty (FieldAccess expr field _) = pretty expr <> pretty "." <> pretty field
   pretty (ArrayAccess expr index _) = pretty expr <> pretty "[" <> pretty index <> pretty "]"
   pretty (Indirect expr field _) = pretty expr <> pretty "->" <> pretty field
-  pretty (Sizeof (Left typ) _) = pretty "sizeof" <> parens (pretty typ) <> pretty ")"
-  pretty (Sizeof (Right expr) _) = pretty "sizeof" <> pretty expr <> pretty ")"
-  pretty (Typecast typ expr _) = pretty "(" <> pretty typ <> pretty ")" <> pretty expr
+  pretty (Sizeof (Left typ) _) = pretty "sizeof" <> parens (pretty typ) 
+  pretty (Sizeof (Right expr) _) = pretty "sizeof" <> parens (pretty expr)
+  pretty (Typecast typ expr _) = parens (pretty typ) <> pretty expr
   pretty (Call function actuals _) = pretty function <> (tupled . map pretty) actuals
   pretty (Assign left value _) = pretty left <+> pretty "=" <+> pretty value
   pretty (ExprError _) = pretty "expr error"

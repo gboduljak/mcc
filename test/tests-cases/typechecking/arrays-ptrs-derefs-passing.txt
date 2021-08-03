@@ -18,3 +18,4 @@ x == ptr2[1][2];
 x == sizeof(ptr);
 x == sizeof(arr);
 x == sizeof(bag);
+ptr - &x;
