@@ -4,6 +4,7 @@ import qualified ScopingSpec (scopingSpec)
 import qualified SemanticAnalyserSpec (dynamicProgrammingSpec, miniProgramsSpec, sortingSpec, ticTacToeSpec)
 import Test.Hspec (hspec)
 import qualified Typechecker.LiteralExpressionsSpec (typechecksFailingLiteralExpressionsSpec, typechecksLiteralExpressionsSpec, typechecksStatefulExpressionsSpec)
+import qualified Typechecker.ArraysPtrsDerefsSpec (typechecksArraysPtrsDerefsSpec)
 
 main :: IO ()
 main = do
@@ -23,3 +24,4 @@ main = do
   hspec SemanticAnalyserSpec.sortingSpec
   hspec SemanticAnalyserSpec.dynamicProgrammingSpec
   hspec SemanticAnalyserSpec.ticTacToeSpec
+  hspec Typechecker.ArraysPtrsDerefsSpec.typechecksArraysPtrsDerefsSpec

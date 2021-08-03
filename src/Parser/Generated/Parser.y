@@ -145,7 +145,7 @@ expr:
   | expr '%' expr          { P.Binop $1 P.Mod $3 0 }
   | '(' expr ')'           { P.Nested $2 0  }
   | '!' expr               { P.Negate $2 0 }
-  | '-' expr %prec NEG     { P.Negative $2 0   }
+  | '-' expr %prec NEG     { P.Negative $2 0  }
   | '&' expr %prec NEG     { P.AddressOf $2 0 }
   | '*' expr %prec NEG     { P.Deref $2 0 }
   | expr '.' ident         { P.FieldAccess $1 $3 0 }

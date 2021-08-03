@@ -55,6 +55,13 @@ analyseExprStateful' expr env = case result of
   where
     result = evalState (runWriterT (analyseExpr expr)) env
 
+analyseStmtStateful' :: Ast.Statement -> Semant.Env.Env -> Either [SemantError] SStatement
+analyseStmtStateful' stmt env = case result of
+  (stmt, []) -> Right stmt
+  (_, errors) -> Left errors
+  where
+    result = evalState (runWriterT (analyseStatement stmt)) env
+
 analyseProg' :: Ast.Program -> Either [SemantError] SProgram
 analyseProg' prog = case result of
   (prog, []) -> Right prog

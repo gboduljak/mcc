@@ -14,7 +14,6 @@ import System.Console.Pretty
 import Test.Hspec
 import Prelude hiding (lex)
 
-
 getExprSpec :: String -> String -> FilePath -> (Ast.Expr -> IO a) -> SpecWith ()
 getExprSpec specDesc testDesc path test =
   describe specDesc $ do

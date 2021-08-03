@@ -21,7 +21,7 @@ import Parser.Errors.Merger (mergeErrorsBasedOnPos)
 import Parser.Errors.PrettyPrinter (prettyPrintErrors)
 import Parser.Grammar.Firsts (startsExpr, startsStmt, startsType)
 import Parser.Grammar.Follows (followsConstruct, followsExp, followsStatement)
-import Parser.Grammar.Operators (isInfix, precedence, typecastPrecedence)
+import Parser.Grammar.Operators (isInfix, precedence, typecastPrecedence, unopPrecedence)
 import Parser.Pratt.Combinators.Chains (lookchainl1)
 import Parser.Pratt.Combinators.Prim (many, many1, sepBy, sepBy1)
 import Parser.Pratt.Combinators.Recovery (withFollowsRecovery)
@@ -274,10 +274,10 @@ nud lexeme rbp = do
     (L.LitString x) -> advance >> return (Ast.LitString x off)
     (L.Ident x) -> identOrFuncCall
     L.LitNull -> advance >> return (Ast.Null off)
-    L.Ampers -> advance >> do expr <- expr rbp; return (Ast.AddressOf expr off)
-    L.Asterisk -> advance >> do expr <- expr rbp; return (Ast.Deref expr off)
-    L.Minus -> advance >> do expr <- expr rbp; return (Ast.Negative expr off)
-    L.Not -> advance >> do expr <- expr rbp; return (Ast.Negate expr off)
+    L.Ampers -> advance >> do expr <- expr unopPrecedence; return (Ast.AddressOf expr off)
+    L.Asterisk -> advance >> do expr <- expr unopPrecedence; return (Ast.Deref expr off)
+    L.Minus -> advance >> do expr <- expr unopPrecedence; return (Ast.Negative expr off)
+    L.Not -> advance >> do expr <- expr unopPrecedence; return (Ast.Negate expr off)
     L.Sizeof -> sizeof
     L.LParen ->
       advance
