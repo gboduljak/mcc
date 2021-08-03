@@ -58,6 +58,7 @@ ticTacToeSpec =
 
 analyseProgram :: String -> SpecWith ()
 analyseProgram folder = it ("semantically analyses program " ++ folder ++ "...") $ do
+  supportsFancyErrors <- supportsPretty
   files <- getDirectoryContents folder
   let headers = [file | file <- files, takeExtension file == ".h"]
       sources = [file | file <- files, takeExtension file == ".c"]
@@ -66,13 +67,13 @@ analyseProgram folder = it ("semantically analyses program " ++ folder ++ "...")
     mapM
       ( \file -> do
           input <- readFile (folder ++ file)
-          return (parse . lexCombinator "" $ input)
+          let tokens = lexCombinator "" $ input
+          let ast = parse tokens
+          return (file, input, tokens, ast)
       )
       order
   case analyseProgs ast getBaseEnv of
-    (Left errors) -> do
-      let displayedErrors = map prettyPrintSemantError errors
-      traverse_ putStrLn displayedErrors
+    (Left (errors, input)) -> do
       expectationFailure ("expected successfull semantic analysis of " ++ show folder)
     (Right e) -> True `shouldBe` True
 

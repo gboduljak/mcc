@@ -34,6 +34,7 @@ import Prelude hiding (lex)
 
 main :: IO ()
 main = do
+  fancyTerm <- supportsPretty
   args <- getArgs
   ((result, graph), _) <- preprocess args
 
@@ -48,16 +49,14 @@ main = do
     (Right order) -> do
       putStrLn "Compilation order resolved ... 💪"
       putStrLn ("Compilation order is : " ++ show order)
-      putStrLn ""
       maybeProgs <- mapM parseFile order
-      print maybeProgs
-      if and [isJust prog | prog <- maybeProgs]
+      if and [isJust prog | (prog, _) <- maybeProgs]
         then do
-          let progs = [fromJust prog | prog <- maybeProgs]
+          let progs = [(file, input, tokens, fromJust prog) | (prog, (file, input, tokens)) <- maybeProgs]
           case analyseProgs progs getBaseEnv of
-            (Left errors) -> do
-              let displayedErrors = map prettyPrintSemantError errors
-              traverse_ putStrLn displayedErrors
+            (Left (errors, input)) -> do
+              let errorMessages = prettyPrintErrors errors (pack input) fancyTerm
+              putStrLn errorMessages
             (Right trees) -> do
               traverse_
                 ( \(file, tree) -> do
@@ -70,7 +69,7 @@ main = do
 
       return ()
 
-parseFile :: String -> IO (Maybe Program)
+parseFile :: String -> IO (Maybe Program, (String, String, [Token]))
 parseFile file = do
   supportsFancyTerminal <- supportsPretty
 
@@ -83,7 +82,7 @@ parseFile file = do
       let errorMessages = prettyPrintErrors errors (pack input) supportsFancyTerminal
        in do
             putStrLn errorMessages
-            return Nothing
+            return (Nothing, (file, input, []))
     (Right tokens) -> do
       displayTokens tokens
       putStrLn "Combinator Parser..."
@@ -106,12 +105,12 @@ parseFile file = do
           let errorMessages = prettyPrintErrors errors (pack input) supportsFancyTerminal
            in do
                 putStrLn errorMessages
-                return Nothing
+                return (Nothing, (file, input, []))
         (Right ast) -> do
           writeFile (file ++ ".ast.pratt.raw.txt") (show ast)
           writeFile (file ++ ".ast.pratt.txt") (prettyPrintAst ast)
           writeFile (file ++ ".ast.pratt.dot") (visualiseAst ast)
-          return (Just ast)
+          return (Just ast, (file, input, tokens))
 
 -- putStrLn "AdHoc Lexer..."
 -- let adHocResult = AdHocLex.lex' file input

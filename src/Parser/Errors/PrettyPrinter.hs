@@ -48,7 +48,8 @@ prettyPrintErrors ::
   forall s e.
   ( VisualStream s,
     TraversableStream s,
-    ShowErrorComponent e
+    ShowErrorComponent e,
+    Show s
   ) =>
   ParseErrorBundle s e ->
   T.Text ->

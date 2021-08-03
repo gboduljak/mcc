@@ -13,12 +13,15 @@ import qualified Data.Map as Map
 import Data.Text (pack)
 import Data.Text.Prettyprint.Doc
 import Data.Text.Prettyprint.Doc.Render.String
+import Data.Void
 import Debug.Trace (traceShowId)
 import Lexer.Combinator.Lexer (lex')
 import Lexer.Lexeme (BuiltinType (..), Lexeme (Not))
+import Lexer.Token
 import Parser.Ast (Construct (ConstructError, FuncDecl, FuncDefn, StructDecl, VarDecl), Expr (..), InfixOp (..), Program (Program), Type (PrimitiveType, StructType), decreasePointerLevel, pointerLevel)
 import qualified Parser.Ast as Ast
 import Parser.AstVisualiser
+import Parser.Combinator.TokenStream
 import Parser.Errors.PrettyPrinter (prettyPrintErrors)
 import Parser.Pratt.Parser (arraySizes, expr, parse, parseExpr, parseExprs)
 import Semant.Analysers.ExpressionsAnalyser
@@ -30,11 +33,13 @@ import Semant.Ast.SemantAstVisualiser (visualise, visualiseSemantAst)
 import Semant.Env
 import qualified Semant.Env hiding (funcs, globals, structs)
 import Semant.Errors.SemantError hiding (Void)
+import Semant.Errors.SemantErrorBundle (bundleSemantErrors)
 import Semant.Operators.Cond ((<||>), (|>), (||>))
 import Semant.Semant (structs)
 import Semant.Semant hiding (structs)
 import Semant.Type
 import System.Console.Pretty
+import Text.Megaparsec (ParseErrorBundle, Stream)
 
 analyseExpr' :: Ast.Expr -> Either [SemantError] SExpr
 analyseExpr' expr = case result of
@@ -51,27 +56,26 @@ analyseExprStateful' expr env = case result of
     result = evalState (runWriterT (analyseExpr expr)) env
 
 analyseProg' :: Ast.Program -> Either [SemantError] SProgram
-analyseProg' prog = case fst $result of
+analyseProg' prog = case result of
   (prog, []) -> Right prog
   (_, errors) -> Left errors
   where
-    result = runState (runWriterT (analyse prog)) getBaseEnv
+    result = evalState (runWriterT (analyse prog)) getBaseEnv
 
-analyseProg :: Ast.Program -> Env -> Either [SemantError] (SProgram, Env)
-analyseProg prog env = case result of
+analyseProg :: String -> String -> [Token] -> Ast.Program -> Env -> Either (ParseErrorBundle TokenStream Void, String) (SProgram, Env)
+analyseProg file input tokens prog env = case result of
   (prog, []) -> Right (fst result, env')
-  (_, errors) -> Left errors
+  (_, errors) -> Left (bundleSemantErrors file tokens errors, input)
   where
     (result, env') = runState (runWriterT (analyse prog)) env
 
-analyseProgs :: [Ast.Program] -> Env -> Either [SemantError] [SProgram]
-analyseProgs [] _ = Left [EmptyProgram]
-analyseProgs [program] env = case analyseProg program env of
+analyseProgs :: [(String, String, [Token], Ast.Program)] -> Env -> Either (ParseErrorBundle TokenStream Void, String) [SProgram]
+analyseProgs [(file, input, tokens, program)] env = case analyseProg file input tokens program env of
   (Left errors) -> Left errors
   (Right success) -> Right [analysedProg success]
   where
     analysedProg = fst
-analyseProgs (program : programs) env = case analyseProg program env of
+analyseProgs ((file, input, tokens, program) : programs) env = case analyseProg file input tokens program env of
   (Left errors) -> Left errors
   (Right analysisResult) -> case analyseProgs programs (nextEnv analysisResult) of
     (Left errors) -> Left errors

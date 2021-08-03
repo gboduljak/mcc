@@ -57,7 +57,7 @@ analyseExpr (Negate expr _) = do
               "pointer"
             ]
             typ
-            (Just expr)
+            expr
         )
       return (Any, SNegate sexpr')
 analyseExpr (Negative expr _) = do
@@ -69,7 +69,7 @@ analyseExpr (Negative expr _) = do
         ( TypeError
             ["int", "double"]
             typ
-            (Just expr)
+            expr
         )
       return (Any, SNegative sexpr')
 analyseExpr (AddressOf expr _) = do
@@ -96,14 +96,14 @@ analyseExpr (Deref expr _) = do
           registerError (DerefError expr) >> return (Any, LVal (SDeref sexpr'))
     else do
       registerError (DerefError expr) >> return (Any, LVal (SDeref sexpr'))
-analyseExpr expr@(Ident name _) = do
+analyseExpr expr@(Ident name off) = do
   result <- lookupVar name
   case result of
     (Just typ) -> return (typ, LVal (SIdent name))
     Nothing -> do
-      registerError (UndefinedSymbol name Variable expr)
+      registerError (UndefinedSymbol name Variable (Just expr) off)
       return (Any, LVal (SIdent name))
-analyseExpr expr@(FieldAccess targetExpr field _) = do
+analyseExpr expr@(FieldAccess targetExpr field off) = do
   sexpr'@(typ, sexpr) <- analyseExpr targetExpr
   case typ of
     (Scalar (StructType name 0)) -> do
@@ -115,12 +115,12 @@ analyseExpr expr@(FieldAccess targetExpr field _) = do
             registerError (FieldAccessError (structName struct) expr Field)
               >> return (Any, LVal (SFieldAccess sexpr' field))
         Nothing ->
-          registerError (UndefinedSymbol name Structure expr)
+          registerError (UndefinedSymbol name Structure (Just expr) off)
             >> return (Any, LVal (SFieldAccess sexpr' field))
     _ ->
-      registerError (TypeError ["struct"] typ (Just targetExpr))
+      registerError (TypeError ["struct"] typ targetExpr)
         >> return (Any, LVal (SFieldAccess sexpr' field))
-analyseExpr expr@(Ast.Indirect targetExpr field _) = do
+analyseExpr expr@(Ast.Indirect targetExpr field off) = do
   sexpr'@(typ, sexpr) <- analyseExpr targetExpr
   case typ of
     (Scalar (StructType name 1)) -> do
@@ -132,10 +132,10 @@ analyseExpr expr@(Ast.Indirect targetExpr field _) = do
             registerError (FieldAccessError (structName struct) expr Field)
               >> return (Any, rewriteAsDeref typ sexpr' field)
         Nothing ->
-          registerError (UndefinedSymbol name Structure expr)
+          registerError (UndefinedSymbol name Structure (Just expr) off)
             >> return (Any, rewriteAsDeref typ sexpr' field)
     _ ->
-      registerError (TypeError ["struct"] typ (Just targetExpr))
+      registerError (TypeError ["struct"] typ targetExpr)
         >> return (Any, rewriteAsDeref typ sexpr' field)
   where
     rewriteAsDeref typ accessExpr@(accessTyp, _) field =
@@ -195,12 +195,12 @@ analyseExpr expr@(Call "scanf" args _) = do
   case args of
     ((Ast.LitString formatString _) : formatArgs) -> analyseScanf formatString (tail args') expr
     _ -> return (Any, SCall "scanf" args')
-analyseExpr expr@(Call func args _) = do
+analyseExpr expr@(Call func args off) = do
   func' <- lookupFunc func
   args' <- mapM analyseExpr args
   case func' of
     Nothing -> do
-      registerError (UndefinedSymbol func Function expr)
+      registerError (UndefinedSymbol func Function (Just expr) off)
       return (Any, SCall func args')
     Just SFunction {..} -> do
       if length args' == length formals
@@ -253,7 +253,7 @@ analyseIndexExpr expr = do
     Any -> return (Any, indexExpr')
     Scalar (PrimitiveType Int 0) -> return (Scalar (PrimitiveType Int 0), indexExpr')
     _ ->
-      registerError (TypeError ["int"] indexTyp (Just expr))
+      registerError (TypeError ["int"] indexTyp expr)
         >> return (Any, indexExpr')
 
 flattenArrayAccess :: Expr -> (Expr, [Expr])

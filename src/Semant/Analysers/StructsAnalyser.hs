@@ -28,26 +28,39 @@ import Semant.Semant
 import Semant.Type
 
 analyseStructDecl :: StructDecl -> Semant SStruct
-analyseStructDecl (Struct structName fieldDecls _) = do
-  setBindingLoc tempStructBinding
-  enterScope
-  fields <- mapM processVarDecl fieldDecls
-  exitScope
-  setBindingLoc Toplevel
-  let struct =
-        SStruct
-          { structName,
-            fields,
-            fieldOffsets = Map.fromList . zip (map varName fields) $ [0 ..]
-          }
-  defineStruct struct
-  return struct
-  where
-    tempStructBinding =
-      StructBinding
+analyseStructDecl (Struct structName fieldDecls pos) = do
+  existing <- lookupStruct structName
+  case existing of
+    (Just _) -> do
+      registerError (Redeclaration structName RedeclStruct pos)
+      return
         ( SStruct
             { structName,
               fields = [],
               fieldOffsets = Map.empty
             }
         )
+    Nothing -> do
+      defineStruct initialStructDefn
+      setBindingLoc initialStructBinding
+      enterScope
+      fields <- mapM processVarDecl fieldDecls
+      exitScope
+      setBindingLoc Toplevel
+      let struct =
+            SStruct
+              { structName,
+                fields,
+                fieldOffsets = Map.fromList . zip (map varName fields) $ [0 ..]
+              }
+      defineStruct struct
+      return struct
+  where
+    initialStructDefn =
+      ( SStruct
+          { structName,
+            fields = [],
+            fieldOffsets = Map.empty
+          }
+      )
+    initialStructBinding = StructBinding initialStructDefn

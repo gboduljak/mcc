@@ -9,7 +9,7 @@ import Lexer.Lexeme as L (BuiltinType (..), Lexeme (Not))
 import Parser.Ast
   ( Block (..),
     Statement (BlockStatement, Expr, For, If, Return, VarDeclStatement, While),
-    Type (PrimitiveType),
+    Type (PrimitiveType, StructType),
     VarDecl (Var),
   )
 import Semant.Analysers.ExpressionsAnalyser (analyseExpr, analyseMaybeExpr)
@@ -29,9 +29,11 @@ analyseBlock (Block stmts _) = do
   let flattenedStmts = flattenStmts stmts
   case followsReturn flattenedStmts of
     Just (retStmt, deadCode) -> do
-      registerError (DeadCode retStmt deadCode)
+      registerError (DeadCode retStmt deadCode (returnOff retStmt))
       return block
     Nothing -> return block
+  where
+    returnOff (Return _ off) = off
 
 followsReturn :: [Statement] -> Maybe (Statement, [Statement])
 followsReturn [] = Nothing
@@ -60,9 +62,9 @@ analyseStatement (If cond conseq alt _) = do
     then do
       return (SIf cond' conseq' alt')
     else do
-      registerError (TypeError ["int", "double", "char", "pointer"] condTyp (Just cond))
+      registerError (TypeError ["int", "double", "char", "pointer"] condTyp cond)
       return (SIf cond' conseq' alt')
-analyseStatement (Return expr _) = do
+analyseStatement (Return expr off) = do
   loc <- bindingLoc
   expr'@(exprTyp, _) <- analyseMaybeExpr expr
   case loc of
@@ -70,14 +72,14 @@ analyseStatement (Return expr _) = do
       if exprTyp == retTyp || exprTyp == Any
         then return (SReturn expr')
         else do
-          registerError (ReturnTypeMismatchError exprTyp func expr)
+          registerError (ReturnTypeMismatchError exprTyp func expr off)
           return (SReturn expr')
     _ -> error "fatal error when processing return"
 analyseStatement (While cond body _) = do
   cond'@(condTyp, _) <- analyseExpr cond
   body' <- analyseStatement body
   unless (isCond condTyp) $
-    registerError (TypeError ["int", "double", "char", "pointer"] condTyp (Just cond))
+    registerError (TypeError ["int", "double", "char", "pointer"] condTyp cond)
   return (rewriteAsDoWhile doNothing cond' body' doNothing)
   where
     doNothing = (Scalar (PrimitiveType L.Void 0), SEmptyExpr)
@@ -87,7 +89,7 @@ analyseStatement stmt@(For init (Just cond) incr body _) = do
   incr' <- analyseMaybeExpr incr
   body' <- analyseStatement body
   unless (isCond condTyp) $
-    registerError (TypeError ["int", "double", "char", "pointer"] condTyp (Just cond))
+    registerError (TypeError ["int", "double", "char", "pointer"] condTyp cond)
   return (rewriteAsDoWhile init' cond' body' incr')
 analyseStatement stmt@(For init Nothing incr body _) = do
   init' <- analyseMaybeExpr init
@@ -126,7 +128,7 @@ blockify stmts = SBlock [stmt | stmt <- stmts, stmt /= emptyStmt]
     emptyStmt = SExpr (voidTyp, SEmptyExpr)
 
 processVarDecl :: VarDecl -> Semant SVarDecl
-processVarDecl decl@(Var typ name arraySizes _) = do
+processVarDecl decl@(Var typ name arraySizes off) = do
   scope <- currentScope
   loc <- bindingLoc
   case lookup scope name of
@@ -137,6 +139,15 @@ processVarDecl decl@(Var typ name arraySizes _) = do
       (PrimitiveType L.Void 0) -> do
         registerError (IllegalBinding name E.Void loc decl)
         return varDecl
+      (StructType structName _) -> do
+        maybeStruct <- lookupStruct structName
+        case maybeStruct of
+          (Just _) -> do
+            defineVar (name, varDeclTyp)
+            return varDecl
+          _ -> do
+            registerError (UndefinedSymbol structName Structure Nothing (off + 1))
+            return varDecl
       _ -> do
         defineVar (name, varDeclTyp)
         return varDecl

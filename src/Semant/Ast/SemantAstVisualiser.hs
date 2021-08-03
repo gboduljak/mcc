@@ -166,7 +166,19 @@ instance SemantAstDrawable SFormal where
 
 instance SemantAstDrawable SFunction where
   visualise decl@(SFunction rettyp name formals body)
-    | name `elem` map funcName builtins = do nextId
+    | name `elem` map funcName builtins = do
+      declNodeId <- nextId
+      emit
+        ( "    node"
+            ++ show declNodeId
+            ++ "[label=\"<f0>Builtin Function"
+            ++ " | <f1>"
+            ++ display rettyp
+            ++ " | <f2> "
+            ++ name
+            ++ "\", shape=record]"
+        )
+      return declNodeId
     | otherwise = do
       declNodeId <- nextId
       emit

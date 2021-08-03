@@ -25,8 +25,8 @@ data SemantError
         bindingLoc :: BindingLoc,
         bindingDecl :: VarDecl
       }
-  | UndefinedSymbol String SymbolKind Expr
-  | VoidFormal String String
+  | UndefinedSymbol String SymbolKind (Maybe Expr) Int
+  | VoidFormal String String Int
   | BinopTypeError
       { infixOp :: InfixOp,
         leftType :: Type,
@@ -44,7 +44,7 @@ data SemantError
   | TypeError
       { expected :: [String],
         actual :: Type,
-        typeErrorExpr :: Maybe Expr
+        typeErrorExpr :: Expr
       }
   | CastError
       { to :: Type,
@@ -64,14 +64,15 @@ data SemantError
         actualType :: Type,
         callExpr' :: Expr
       }
-  | Redeclaration String RedeclarationKind
+  | Redeclaration String RedeclarationKind Int
   | EmptyProgram
   | NoMain
   | AddressError Expr
   | ReturnTypeMismatchError
       { actualRetTyp :: Type,
         inFunc' :: SFunction,
-        returnExpr :: Maybe Expr
+        returnExpr :: Maybe Expr,
+        returnOff :: Int
       }
   | DerefError Expr
   | AssignmentError
@@ -88,7 +89,7 @@ data SemantError
         expectedIndicesNumber :: Int,
         actualIndicesNumber :: Int
       }
-  | DeadCode Statement [Statement]
+  | DeadCode Statement [Statement] Int
   deriving (Show)
 
 data BindingLoc
@@ -117,10 +118,17 @@ instance Pretty SemantError where
             FunctionBinding {inFunc = SFunction _ name _ _} -> pretty "in function" <+> pretty name
             StructBinding {inStruct = SStruct name _ _} -> pretty "in struct" <+> pretty name
             Toplevel -> pretty "at top level"
-      UndefinedSymbol symbolName symbolKind referenceExpr ->
+      UndefinedSymbol symbolName symbolKind referenceExpr _ ->
         pretty "Undefined" <+> pretty symbolKind <+> pretty symbolName
-          <+> pretty "referenced in:" <> hardline <> pretty referenceExpr
-      VoidFormal formName funcName ->
+          <> case referenceExpr of
+            (Just expr) ->
+              emptyDoc
+                <> comma
+                <+> pretty "referenced in:"
+                <+> pretty referenceExpr
+                <> dot
+            Nothing -> dot
+      VoidFormal formName funcName _ ->
         pretty "In definition of function"
           <+> pretty funcName
           <> comma
@@ -144,13 +152,11 @@ instance Pretty SemantError where
           <+> pretty message
       BinopArgTypeError {..} ->
         pretty "Type error in binary expression:"
-          <+> indent
-            indentAmount
-            ( pretty parentExpr
-                <> hardline
-                <+> pretty "in argument expression:"
-                <+> indent indentAmount (pretty argExpr)
-            )
+          <+> ( pretty parentExpr
+                  <> hardline
+                  <> comma
+                  <> indent indentAmount (pretty "in argument expression:" <+> pretty argExpr)
+              )
           <+> hardline
           <+> pretty "Cannot apply operator"
           <+> pretty infixOp'
@@ -165,16 +171,13 @@ instance Pretty SemantError where
         pretty "Type error: expected one of" <+> pretty expected <+> pretty "but got"
           <+> pretty actual
           <> dot
-          <+> ( case typeErrorExpr of
-                  (Just expr) ->
-                    indent
-                      indentAmount
-                      ( pretty "Error occured in expression:"
-                          <> hardline
-                          <> pretty expr
-                      )
-                  Nothing -> emptyDoc
-              )
+          <+> indent
+            indentAmount
+            ( pretty "Error occured in expression:"
+                <> hardline
+                <> pretty typeErrorExpr
+                <> dot
+            )
       CastError {..} ->
         pretty "Cast error: can only cast between pointers, int to double, char to int, or between pointers and ints, not from"
           <+> pretty from
@@ -184,7 +187,7 @@ instance Pretty SemantError where
           <> hardline
           <> indent
             indentAmount
-            ( pretty "Error occured in expression:" <+> pretty castErrorExpr
+            ( pretty "Error occured in expression:" <+> pretty castErrorExpr <> dot
             )
       CallArgsNumberError {..} ->
         pretty "Argument error: function"
@@ -199,7 +202,7 @@ instance Pretty SemantError where
           <> indent
             indentAmount
             ( pretty "Error occured in call:"
-                <+> pretty callExpr
+                <+> pretty callExpr <> dot
             )
       CallArgsTypeError {..} ->
         pretty "Argument error: function"
@@ -215,23 +218,23 @@ instance Pretty SemantError where
           <> indent
             indentAmount
             ( pretty "Error occured in call:"
-                <+> pretty callExpr'
+                <+> pretty callExpr' <> dot
             )
-      Redeclaration funcName RedeclFunc ->
+      Redeclaration funcName RedeclFunc _ ->
         pretty "Error: redeclaration of function"
           <+> pretty funcName
           <> dot
-      Redeclaration structName RedeclStruct ->
+      Redeclaration structName RedeclStruct _ ->
         pretty "Error: redeclaration of struct"
           <+> pretty structName
           <> dot
-      Redeclaration globalVarName RedeclGlobalVar ->
+      Redeclaration globalVarName RedeclGlobalVar _ ->
         pretty "Error: redeclaration of global variable"
           <+> pretty globalVarName
           <> dot
       NoMain -> pretty "Error: main function not defined."
       AssignmentError lhs rhs ->
-        pretty "Cannot assign" <+> pretty rhs <+> pretty "to" <+> pretty lhs
+        pretty "Cannot assign" <+> pretty rhs <+> pretty "to" <+> pretty lhs <> dot
       AddressError expr ->
         pretty "Cannot take address of" <> indent indentAmount (pretty expr)
           <+> hardline
@@ -247,6 +250,7 @@ instance Pretty SemantError where
           <+> pretty targetStruct
           <+> pretty "with"
           <+> pretty field
+          <> dot
       ReturnTypeMismatchError {..} ->
         pretty "Invalid return type"
           <+> pretty actualRetTyp
@@ -265,17 +269,21 @@ instance Pretty SemantError where
           <+> pretty "with given indices number"
           <+> pretty actualIndicesNumber
           <> dot
-          <+> pretty "Expected "
+          <+> pretty "Expected"
           <+> pretty expectedIndicesNumber
-          <+> pretty "index expressions."
-      DeadCode return deadStmts ->
-        pretty "Error: nothing may follow a return. Error occured in statement:"
-          <> hardline
-          <> indent indentAmount (pretty return)
+          <+> pretty "index expressions"
           <> dot
+      DeadCode return deadStmts _ ->
+        pretty "Nothing may follow a return."
           <> hardline
-          <> pretty "Dead code is:"
-          <> vcat [indent indentAmount (pretty stmt) | stmt <- deadStmts]
+          <> indent indentAmount (pretty "Error occured after the statement:" <+> pretty return)
+          <> hardline
+          <> indent
+            indentAmount
+            ( pretty "Dead code is:"
+                <> hardline
+                <> vcat [indent indentAmount (pretty stmt) | stmt <- deadStmts]
+            )
 
 instance Pretty SymbolKind where
   pretty = \case
