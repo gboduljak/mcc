@@ -12,7 +12,7 @@ import Data.Void
 import Lexer.Combinator.Lexer (lex')
 import Lexer.Lexeme as L
 import Lexer.Token as T
-import Parser.Ast (isPointer, isPrimitive)
+import Parser.Ast (getExprOff, isPointer, isPrimitive)
 import qualified Parser.Ast as Ast
 import Parser.AstVisualiser (visualiseAst)
 import Parser.Combinator.CustomCombinators.Chains
@@ -42,6 +42,7 @@ construct :: Parser Ast.Construct
 construct =
   recoverUsingFollows
     ( do
+        off <- getOffset
         typ <- type'
         if isPrimitive typ
           then do
@@ -54,69 +55,72 @@ construct =
                 funcDefOrFuncDeclOrVarDecl typ name
               else
                 (>?)
-                  [ (L.is L.LBrace, structDecl (structName typ)),
+                  [ (L.is L.LBrace, structDecl off (structName typ)),
                     (L.isIdent, ident >>= funcDefOrFuncDeclOrVarDecl typ . nameFrom)
                   ]
     )
     followsConstruct
     (return Ast.ConstructError)
   where
-    nameFrom (Ast.Ident x) = x
+    nameFrom (Ast.Ident x _) = x
     structName (Ast.StructType x _) = x
 
-structDecl :: String -> Parser Ast.Construct
-structDecl name = do
-  vars <- structFields
+structDecl :: Int -> String -> Parser Ast.Construct
+structDecl off name = do
+  vars <- structFields off
   expect Semi
-  return (Ast.StructDecl $ Ast.Struct name vars)
+  return (Ast.StructDecl $ Ast.Struct name vars off)
   where
-    structName (Ast.Ident x) = x
+    structName (Ast.Ident x _) = x
 
-structFields :: Parser [Ast.VarDecl]
-structFields = do
+structFields :: Int -> Parser [Ast.VarDecl]
+structFields off = do
   expect L.LBrace
   manyTill recField (expect L.RBrace)
   where
-    recField = recoverUsingFollows field followsStructField (return Ast.VarDeclError)
+    recField = recoverUsingFollows field followsStructField (return (Ast.VarDeclError off))
     field = do
       typ <- type'
       nameId <- ident
-      varDecl typ (name nameId)
-    name (Ast.Ident x) = x
+      varDecl off typ (name nameId)
+    name (Ast.Ident x _) = x
 
 funcDefOrFuncDeclOrVarDecl :: Ast.Type -> String -> Parser Ast.Construct
 funcDefOrFuncDeclOrVarDecl typ name = do
+  off <- getOffset
   (>?)
-    [ (L.is LParen, func' typ name),
-      (L.is LBrack, varDecl' typ name),
-      (L.is Semi, varDecl' typ name)
+    [ (L.is LParen, func' off typ name),
+      (L.is LBrack, varDecl' off typ name),
+      (L.is Semi, varDecl' off typ name)
     ]
   where
-    func' typ name = do
+    func' off typ name = do
       args <- between (expect L.LParen) (expect L.RParen) formals
       (>?)
-        [ (L.is Semi, Ast.FuncDecl <$> funcDecl typ name args),
-          (L.is LBrace, Ast.FuncDefn <$> funcDefn typ name args)
+        [ (L.is Semi, Ast.FuncDecl <$> funcDecl off typ name args),
+          (L.is LBrace, Ast.FuncDefn <$> funcDefn off typ name args)
         ]
-    varDecl' typ name = Ast.VarDecl <$> varDecl typ name
+    varDecl' off typ name = Ast.VarDecl <$> varDecl off typ name
 
-funcDecl :: Ast.Type -> String -> [Ast.Formal] -> Parser Ast.FuncDecl
-funcDecl rettyp funcName formals = do
+funcDecl :: Int -> Ast.Type -> String -> [Ast.Formal] -> Parser Ast.FuncDecl
+funcDecl off rettyp funcName formals = do
   expect L.Semi
-  return (Ast.Func rettyp funcName formals)
+  return (Ast.Func rettyp funcName formals off)
 
-funcDefn :: Ast.Type -> String -> [Ast.Formal] -> Parser Ast.FuncDef
-funcDefn rettyp funcName formals = do
-  Ast.FuncDef rettyp funcName formals <$> block
+funcDefn :: Int -> Ast.Type -> String -> [Ast.Formal] -> Parser Ast.FuncDef
+funcDefn off rettyp funcName formals = do
+  block' <- block
+  return (Ast.FuncDef rettyp funcName formals block' off)
 
-varDecl :: Ast.Type -> String -> Parser Ast.VarDecl
-varDecl typ name = do
+varDecl :: Int -> Ast.Type -> String -> Parser Ast.VarDecl
+varDecl off typ name = do
   sizes <- arraySizes
   expect Semi
-  return (Ast.Var typ name sizes)
+  return (Ast.Var typ name sizes off)
 
 statement :: Parser Ast.Statement
-statement =
+statement = do
+  off <- getOffset
   recoverUsingFollows
     ( (>?)
         [ (L.is L.While, while),
@@ -129,26 +133,31 @@ statement =
         ]
     )
     followsStatement
-    (return Ast.StatementError)
+    (return $ Ast.StatementError off)
   where
-    exprStmt = do exp <- expr; expect Semi; return (Ast.Expr exp)
-    blockStmt = do Ast.BlockStatement <$> block
+    exprStmt = do exp <- expr; expect Semi; return (Ast.Expr exp (getExprOff exp))
+    blockStmt = do block' <- block; Ast.BlockStatement block' <$> getOffset
     returnStmt = do ret <- return'; expect Semi; return ret
     varDeclStmt = do
+      off <- getOffset
       typ <- type'
       nameId <- ident
-      Ast.VarDeclStatement <$> varDecl typ (varName nameId)
+      decl <- varDecl off typ (varName nameId)
+      return (Ast.VarDeclStatement decl off)
       where
-        varName (Ast.Ident name) = name
+        varName (Ast.Ident name _) = name
 
 while :: Parser Ast.Statement
 while = do
+  off <- getOffset
   expect L.While
   cond <- between (expect L.LParen) (expect L.RParen) expr
-  Ast.While cond <$> statement
+  body <- statement
+  return (Ast.While cond body off)
 
 for :: Parser Ast.Statement
 for = do
+  off <- getOffset
   expect L.For
   expect L.LParen
   init <- optionalExpr
@@ -157,14 +166,17 @@ for = do
   expect L.Semi
   incr <- optionalExpr
   expect L.RParen
-  Ast.For init cond incr <$> statement
+  body <- statement
+  return (Ast.For init cond incr body off)
 
 if' :: Parser Ast.Statement
 if' = do
+  off <- getOffset
   expect L.If
   cond <- between (expect L.LParen) (expect L.RParen) expr
   conseq <- statement
-  Ast.If cond conseq <$> alt
+  alt' <- alt
+  return (Ast.If cond conseq alt' off)
   where
     alt =
       look >>= \case
@@ -173,14 +185,17 @@ if' = do
 
 return' :: Parser Ast.Statement
 return' = do
+  off <- getOffset
   expect L.Return
-  Ast.Return <$> optionalExpr
+  expr <- optionalExpr
+  return (Ast.Return expr off)
 
 block :: Parser Ast.Block
 block = do
+  off <- getOffset
   expect L.LBrace
   stmts <- manyTill statement (expect L.RBrace)
-  return (Ast.Block stmts)
+  return (Ast.Block stmts off)
 
 optionalExpr :: Parser (Maybe Ast.Expr)
 optionalExpr =
@@ -190,76 +205,76 @@ optionalExpr =
     ]
 
 expr :: Parser Ast.Expr
-expr = recoverUsingFollows assignLevelExpr followsExp (return Ast.ExprError)
+expr = do off <- getOffset; recoverUsingFollows assignLevelExpr followsExp (return (Ast.ExprError off))
 
 assignLevelExpr :: Parser Ast.Expr
 assignLevelExpr = logicalOrLevelExpr `lookchainr1` binop assign
   where
-    assign = [(L.Assign, Ast.Assign)]
+    assign = [(L.Assign, \left right -> Ast.Assign left right (getExprOff left))]
 
 logicalOrLevelExpr :: Parser Ast.Expr
 logicalOrLevelExpr = logicalAndLevelExpr `lookchainl1` binop logicorop
   where
     logicorop =
-      [(L.Or, (`Ast.Binop` Ast.Or))]
+      [(L.Or, \left right -> Ast.Binop left Ast.Or right (getExprOff left))]
 
 logicalAndLevelExpr :: Parser Ast.Expr
 logicalAndLevelExpr = bitwiseOrLevelExpr `lookchainl1` binop logicandop
   where
     logicandop =
-      [(L.And, (`Ast.Binop` Ast.And))]
+      [(L.And, \left right -> Ast.Binop left Ast.And right (getExprOff left))]
 
 bitwiseOrLevelExpr :: Parser Ast.Expr
 bitwiseOrLevelExpr = xorLevelExpr `lookchainl1` binop bitorop
   where
     bitorop =
-      [(L.Bar, (`Ast.Binop` Ast.BitwiseOr))]
+      [(L.Bar, \left right -> Ast.Binop left Ast.BitwiseOr right (getExprOff left))]
 
 xorLevelExpr :: Parser Ast.Expr
 xorLevelExpr = bitwiseAndLevelExpr `lookchainl1` binop bitxorop
   where
     bitxorop =
-      [(L.Caret, (`Ast.Binop` Ast.BitwiseXor))]
+      [(L.Caret, \left right -> Ast.Binop left Ast.BitwiseXor right (getExprOff left))]
 
 bitwiseAndLevelExpr :: Parser Ast.Expr
 bitwiseAndLevelExpr = eqLevelExpr `lookchainl1` binop bitandop
   where
     bitandop =
-      [(L.Ampers, (`Ast.Binop` Ast.BitwiseAnd))]
+      [(L.Ampers, \left right -> Ast.Binop left Ast.BitwiseAnd right (getExprOff left))]
 
 eqLevelExpr :: Parser Ast.Expr
 eqLevelExpr = compLevelExpr `lookchainl1` binop eqops
   where
     eqops =
-      [ (L.Equal, (`Ast.Binop` Ast.Equal)),
-        (L.Neq, (`Ast.Binop` Ast.Neq))
+      [ (L.Equal, \left right -> Ast.Binop left Ast.Equal right (getExprOff left)),
+        (L.Neq, \left right -> Ast.Binop left Ast.Neq right (getExprOff left))
       ]
 
 compLevelExpr :: Parser Ast.Expr
 compLevelExpr = addLevelExpr `lookchainl1` binop compops
   where
     compops =
-      [ (L.Less, (`Ast.Binop` Ast.Less)),
-        (L.Leq, (`Ast.Binop` Ast.Leq)),
-        (L.Greater, (`Ast.Binop` Ast.Greater)),
-        (L.Geq, (`Ast.Binop` Ast.Geq))
+      [ (L.Less, \left right -> Ast.Binop left Ast.Less right (getExprOff left)),
+        (L.Leq, \left right -> Ast.Binop left Ast.Leq right (getExprOff left)),
+        (L.Greater, \left right -> Ast.Binop left Ast.Greater right (getExprOff left)),
+        (L.Geq, \left right -> Ast.Binop left Ast.Geq right (getExprOff left))
       ]
 
 addLevelExpr :: Parser Ast.Expr
 addLevelExpr = multLevelExpr `lookchainl1` binop addops
   where
     addops =
-      [ (L.Plus, (`Ast.Binop` Ast.Add)),
-        (L.Minus, (`Ast.Binop` Ast.Sub))
+      [ (L.Plus, \left right -> Ast.Binop left Ast.Add right (getExprOff left)),
+        (L.Minus, \left right -> Ast.Binop left Ast.Sub right (getExprOff left))
       ]
 
 multLevelExpr :: Parser Ast.Expr
 multLevelExpr = castLevelExpr `lookchainl1` binop mulops
   where
     mulops =
-      [ (L.Asterisk, (`Ast.Binop` Ast.Mul)),
-        (L.Div, (`Ast.Binop` Ast.Div)),
-        (L.Mod, (`Ast.Binop` Ast.Mod))
+      [ (L.Asterisk, \left right -> Ast.Binop left Ast.Mul right (getExprOff left)),
+        (L.Div, \left right -> Ast.Binop left Ast.Div right (getExprOff left)),
+        (L.Mod, \left right -> Ast.Binop left Ast.Mod right (getExprOff left))
       ]
 
 binop ::
@@ -276,20 +291,22 @@ castLevelExpr =
 
 castTypeOrExp :: Parser Ast.Expr
 castTypeOrExp = do
+  off <- getOffset
   expect L.LParen
   (>?)
-    [ (startsType, castType),
-      (startsExpr, nestedExpr)
+    [ (startsType, castType off),
+      (startsExpr, nestedExpr off)
     ]
   where
-    castType = do
+    castType off = do
       typ <- type'
       expect L.RParen
-      Ast.Typecast typ <$> castLevelExpr
-    nestedExpr = do
+      expr <- castLevelExpr
+      return (Ast.Typecast typ expr off)
+    nestedExpr off = do
       exp <- expr
       expect L.RParen
-      return (Ast.Nested exp)
+      return (Ast.Nested exp off)
 
 unaryLevelExpr :: Parser Ast.Expr
 unaryLevelExpr =
@@ -304,37 +321,46 @@ unaryLevelExpr =
 
 sizeof :: Parser Ast.Expr
 sizeof = do
+  off <- getOffset
   expect L.Sizeof
-  between (expect L.LParen) (expect L.RParen) sizeOfArg
+  between (expect L.LParen) (expect L.RParen) (sizeOfArg off)
   where
-    sizeOfArg =
+    sizeOfArg off =
       (>?)
-        [ (startsType, Ast.Sizeof . Left <$> type'),
-          (const True, Ast.Sizeof . Right <$> expr)
+        [ (startsType, do typ <- type'; return (Ast.Sizeof (Left typ) off)),
+          (const True, do exp <- expr; return (Ast.Sizeof (Right exp) off))
         ]
 
 addressOf :: Parser Ast.Expr
 addressOf = do
+  off <- getOffset
   expect L.Ampers
-  Ast.AddressOf <$> unaryLevelExpr
+  expr <- unaryLevelExpr
+  return (Ast.AddressOf expr off)
 
 deref :: Parser Ast.Expr
 deref = do
+  off <- getOffset
   expect L.Asterisk
-  Ast.Deref <$> unaryLevelExpr
+  expr <- unaryLevelExpr
+  return (Ast.Deref expr off)
 
 negative :: Parser Ast.Expr
 negative = do
+  off <- getOffset
   expect L.Minus
-  Ast.Negative <$> unaryLevelExpr
+  expr <- unaryLevelExpr
+  return (Ast.Negative expr off)
 
 negate :: Parser Ast.Expr
 negate = do
+  off <- getOffset
   expect L.Not
-  Ast.Negate <$> unaryLevelExpr
+  expr <- unaryLevelExpr
+  return (Ast.Negate expr off)
 
 callLevelExpr :: Parser Ast.Expr
-callLevelExpr = do
+callLevelExpr =
   baseExprOrFuncCall
     `lookchainl1'` [ (L.is Dot, fieldAccess),
                      (L.is LBrack, arrayAccess),
@@ -345,39 +371,39 @@ baseExprOrFuncCall :: Parser Ast.Expr
 baseExprOrFuncCall = do
   base <- baseExpr
   case base of
-    (Ast.Ident func) -> do
+    (Ast.Ident func _) ->
       look >>= \case
-        LParen -> funcCall func
+        LParen -> funcCall func (getExprOff base)
         _ -> return base
     _ -> return base
 
-funcCall :: String -> Parser Ast.Expr
-funcCall func = do
+funcCall :: String -> Int -> Parser Ast.Expr
+funcCall func off = do
   expect LParen
   actuals <- actuals
   expect RParen
-  return (Ast.Call func actuals)
+  return (Ast.Call func actuals off)
 
 indirect :: Parser (Ast.Expr -> Ast.Expr)
 indirect = do
   expect L.Arrow
   id <- ident
-  return (\left -> Ast.Indirect left (field id))
+  return (\left -> Ast.Indirect left (field id) (getExprOff left))
   where
-    field (Ast.Ident x) = x
+    field (Ast.Ident x _) = x
 
 arrayAccess :: Parser (Ast.Expr -> Ast.Expr)
 arrayAccess = do
   index <- between (expect L.LBrack) (expect L.RBrack) expr
-  return (`Ast.ArrayAccess` index)
+  return (\left -> Ast.ArrayAccess left index (getExprOff left))
 
 fieldAccess :: Parser (Ast.Expr -> Ast.Expr)
 fieldAccess = do
   expect L.Dot
   id <- ident
-  return (\left -> Ast.FieldAccess left (field id))
+  return (\left -> Ast.FieldAccess left (field id) (getExprOff left))
   where
-    field (Ast.Ident x) = x
+    field (Ast.Ident x _) = x
 
 baseExpr :: Parser Ast.Expr
 baseExpr =
@@ -388,14 +414,19 @@ baseExpr =
       (isLitChar, litChar),
       (L.is L.LitNull, litNull),
       (L.isIdent, ident),
-      (L.is L.LParen, Ast.Nested <$> between (expect L.LParen) (expect L.RParen) expr)
+      ( L.is L.LParen,
+        do
+          off <- getOffset
+          exp <- between (expect L.LParen) (expect L.RParen) expr
+          return (Ast.Nested exp off)
+      )
     ]
 
 ident :: Parser Ast.Expr
-ident = token test Set.empty <?> "identifier"
+ident = do off <- getOffset; token (test off) Set.empty <?> "identifier"
   where
-    test (Token (L.Ident name) _ _ _) = Just (Ast.Ident name)
-    test _ = Nothing
+    test off (Token (L.Ident name) _ _ _) = Just (Ast.Ident name off)
+    test _ _ = Nothing
 
 type' :: Parser Ast.Type
 type' =
@@ -417,37 +448,37 @@ structType = do
   id <- ident
   Ast.StructType (structName id) <$> stars
   where
-    structName (Ast.Ident x) = x
+    structName (Ast.Ident x _) = x
 
 end :: Parser L.Lexeme
 end = expect L.Eof
 
 litInt :: Parser Ast.Expr
-litInt = token test Set.empty <?> "integer literal"
+litInt = do off <- getOffset; token (test off) Set.empty <?> "integer literal"
   where
-    test (Token (L.LitInt n) _ _ _) = Just (Ast.LitInt n)
-    test _ = Nothing
+    test off (Token (L.LitInt n) _ _ _) = Just (Ast.LitInt n off)
+    test _ _ = Nothing
 
 litDouble :: Parser Ast.Expr
-litDouble = token test Set.empty <?> "double literal"
+litDouble = do off <- getOffset; token (test off) Set.empty <?> "double literal"
   where
-    test (Token (L.LitDouble n) _ _ _) = Just (Ast.LitDouble n)
-    test _ = Nothing
+    test off (Token (L.LitDouble n) _ _ _) = Just (Ast.LitDouble n off)
+    test _ _ = Nothing
 
 litString :: Parser Ast.Expr
-litString = token test Set.empty <?> "string literal"
+litString = do off <- getOffset; token (test off) Set.empty <?> "string literal"
   where
-    test (Token (L.LitString str) _ _ _) = Just (Ast.LitString str)
-    test _ = Nothing
+    test off (Token (L.LitString str) _ _ _) = Just (Ast.LitString str off)
+    test _ _ = Nothing
 
 litChar :: Parser Ast.Expr
-litChar = token test Set.empty <?> "char literal"
+litChar = do off <- getOffset; token (test off) Set.empty <?> "char literal"
   where
-    test (Token (L.LitChar char) _ _ _) = Just (Ast.LitChar char)
-    test _ = Nothing
+    test off (Token (L.LitChar char) _ _ _) = Just (Ast.LitChar char off)
+    test _ _ = Nothing
 
 litNull :: Parser Ast.Expr
-litNull = expect L.LitNull >> return Ast.Null <?> "NULL"
+litNull = do off <- getOffset; expect L.LitNull >> return (Ast.Null off) <?> "NULL"
 
 stars :: Parser Int
 stars = do
@@ -458,7 +489,7 @@ arraySizes :: Parser [Int]
 arraySizes = many (between (expect L.LBrack) (expect L.RBrack) size)
   where
     size = getSize <$> litInt
-    getSize (Ast.LitInt x) = x
+    getSize (Ast.LitInt x _) = x
 
 actuals :: Parser [Ast.Expr]
 actuals = sepBy expr (expect L.Comma)
@@ -468,17 +499,19 @@ formals = sepBy formal (expect L.Comma)
 
 formal :: Parser Ast.Formal
 formal = do
+  off <- getOffset
   typ <- type'
-  Ast.Formal typ . formalName <$> ident
+  ident' <- ident
+  return (Ast.Formal typ (formalName ident') off)
   where
-    formalName (Ast.Ident x) = x
+    formalName (Ast.Ident x _) = x
 
 include :: Parser Ast.Directive
 include = do
   expect L.Include
   Ast.Include . file <$> litString
   where
-    file (Ast.LitString name) = name
+    file (Ast.LitString name _) = name
 
 includes :: Parser [Ast.Directive]
 includes = many include

@@ -28,7 +28,7 @@ import Semant.Semant
 import Semant.Type
 
 analyseStructDecl :: StructDecl -> Semant SStruct
-analyseStructDecl (Struct structName fieldDecls) = do
+analyseStructDecl (Struct structName fieldDecls _) = do
   setBindingLoc tempStructBinding
   enterScope
   fields <- mapM processVarDecl fieldDecls

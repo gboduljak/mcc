@@ -27,6 +27,9 @@ data ParserState = ParserState
 
 type Parser a = ExceptT ParserError (State ParserState) a
 
+getOffset :: Parser Int
+getOffset = gets offset
+
 registerParseError :: ParserError -> Parser ()
 registerParseError error =
   modify

@@ -35,50 +35,50 @@ data Construct
   | ConstructError
   deriving (Show, Eq)
 
-data StructDecl = Struct String [VarDecl] deriving (Show, Eq)
+data StructDecl = Struct String [VarDecl] Int deriving (Show, Eq)
 
-data FuncDecl = Func Type String [Formal] deriving (Show, Eq)
+data FuncDecl = Func Type String [Formal] Int deriving (Show, Eq)
 
-data FuncDef = FuncDef Type String [Formal] Block deriving (Show, Eq)
+data FuncDef = FuncDef Type String [Formal] Block Int deriving (Show, Eq)
 
-data VarDecl = Var Type String [Int] | VarDeclError deriving (Show, Eq)
+data VarDecl = Var Type String [Int] Int | VarDeclError Int deriving (Show, Eq)
 
-data Formal = Formal Type String | FormalError deriving (Show, Eq)
+data Formal = Formal Type String Int | FormalError Int deriving (Show, Eq)
 
-data Block = Block [Statement] deriving (Show, Eq)
+data Block = Block [Statement] Int deriving (Show, Eq)
 
 data Statement
-  = Expr Expr
-  | BlockStatement Block
-  | VarDeclStatement VarDecl
-  | While Expr Statement
-  | For (Maybe Expr) (Maybe Expr) (Maybe Expr) Statement
-  | If Expr Statement (Maybe Statement)
-  | Return (Maybe Expr)
-  | StatementError
+  = Expr Expr Int
+  | BlockStatement Block Int
+  | VarDeclStatement VarDecl Int
+  | While Expr Statement Int
+  | For (Maybe Expr) (Maybe Expr) (Maybe Expr) Statement Int
+  | If Expr Statement (Maybe Statement) Int
+  | Return (Maybe Expr) Int
+  | StatementError Int
   deriving (Show, Eq)
 
 data Expr
-  = LitInt Int
-  | LitDouble Double
-  | LitString String
-  | LitChar Char
-  | Null
-  | Ident String
-  | Nested Expr
-  | Binop Expr InfixOp Expr
-  | Deref Expr
-  | AddressOf Expr
-  | Negate Expr
-  | Negative Expr
-  | FieldAccess Expr String
-  | ArrayAccess Expr Expr
-  | Indirect Expr String
-  | Sizeof (Either Type Expr)
-  | Typecast Type Expr
-  | Call String [Expr]
-  | Assign Expr Expr
-  | ExprError
+  = LitInt Int Int
+  | LitDouble Double Int
+  | LitString String Int
+  | LitChar Char Int
+  | Null Int
+  | Ident String Int
+  | Nested Expr Int
+  | Binop Expr InfixOp Expr Int
+  | Deref Expr Int
+  | AddressOf Expr Int
+  | Negate Expr Int
+  | Negative Expr Int
+  | FieldAccess Expr String Int
+  | ArrayAccess Expr Expr Int
+  | Indirect Expr String Int
+  | Sizeof (Either Type Expr) Int
+  | Typecast Type Expr Int
+  | Call String [Expr] Int
+  | Assign Expr Expr Int
+  | ExprError Int
   deriving (Show, Eq)
 
 data Type
@@ -125,5 +125,51 @@ isStruct :: Type -> Bool
 isStruct = not . isPrimitive
 
 isArray :: VarDecl -> Bool
-isArray (Var _ _ x) = (not . null) x
+isArray (Var _ _ x _) = (not . null) x
 isArray _ = False
+
+-- data Expr
+--   = LitInt Int Int
+--   | LitDouble Double Int
+--   | LitString String Int
+--   | LitChar Char Int
+--   | Null Int
+--   | Ident String Int
+--   | Nested Expr Int
+--   | Binop Expr InfixOp Expr Int
+--   | Deref Expr Int
+--   | AddressOf Expr Int
+--   | Negate Expr Int
+--   | Negative Expr Int
+--   | FieldAccess Expr String Int
+--   | ArrayAccess Expr Expr Int
+--   | Indirect Expr String Int
+--   | Sizeof (Either Type Expr) Int
+--   | Typecast Type Expr Int
+--   | Call String [Expr] Int
+--   | Assign Expr Expr Int
+--   | ExprError Int
+getExprOff :: Expr -> Int
+getExprOff (LitInt _ off) = off
+getExprOff (LitDouble _ off) = off
+getExprOff (LitString _ off) = off
+getExprOff (LitChar _ off) = off
+getExprOff (Null off) = off
+getExprOff (Ident _ off) = off
+getExprOff (Nested _ off) = off
+getExprOff (Binop _ _ _ off) = off
+getExprOff (Deref _ off) = off
+getExprOff (AddressOf _ off) = off
+getExprOff (Negate _ off) = off
+getExprOff (Negative _ off) = off
+getExprOff (FieldAccess _ _ off) = off
+getExprOff (ArrayAccess _ _ off) = off
+getExprOff (Indirect _ _ off) = off
+getExprOff (Sizeof _ off) = off
+getExprOff (Typecast _ _ off) = off
+getExprOff (Call _ _ off) = off
+getExprOff (Assign _ _ off) = off
+getExprOff (ExprError off) = off
+
+getBlockOffset :: Block -> Int
+getBlockOffset (Block _ off) = off

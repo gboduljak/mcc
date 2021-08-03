@@ -12,11 +12,11 @@ import Prelude hiding (takeWhile)
 withRecovery :: Parser a -> (ParserError -> Parser a) -> Parser a
 withRecovery p q = p `catchError` q
 
-withFollowsRecovery :: Parser a -> (L.Lexeme -> Bool) -> a -> Parser a
+withFollowsRecovery :: Parser a -> (L.Lexeme -> Bool) -> Parser a -> Parser a
 withFollowsRecovery p f q =
   withRecovery
     p
     ( \error -> do
         takeWhile (not . f)
-        return q
+        q
     )

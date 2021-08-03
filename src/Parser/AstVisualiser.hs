@@ -108,7 +108,7 @@ instance AstDrawable Directive where
     return includeId
 
 instance AstDrawable VarDecl where
-  visualise decl@(Var typ name arraySizes) = do
+  visualise decl@(Var typ name arraySizes _) = do
     declNodeId <- nextId
     nameId <- nextId
     if isArray decl
@@ -139,7 +139,7 @@ instance AstDrawable VarDecl where
         return declNodeId
 
 instance AstDrawable StructDecl where
-  visualise decl@(Struct name vardecls) = do
+  visualise decl@(Struct name vardecls _) = do
     declNodeId <- nextId
     emit
       ( "    node"
@@ -160,7 +160,7 @@ instance AstDrawable StructDecl where
     return declNodeId
 
 instance AstDrawable Formal where
-  visualise (Formal typ name) = do
+  visualise (Formal typ name _) = do
     formalId <- nextId
     emit
       ( "    node"
@@ -174,7 +174,7 @@ instance AstDrawable Formal where
     return formalId
 
 instance AstDrawable FuncDef where
-  visualise decl@(FuncDef rettyp name formals body) = do
+  visualise decl@(FuncDef rettyp name formals body _) = do
     declNodeId <- nextId
     emit
       ( "    node"
@@ -203,7 +203,7 @@ instance AstDrawable FuncDef where
     return declNodeId
 
 instance AstDrawable FuncDecl where
-  visualise decl@(Func rettyp name formals) = do
+  visualise decl@(Func rettyp name formals _) = do
     declNodeId <- nextId
     emit
       ( "    node"
@@ -227,7 +227,7 @@ instance AstDrawable FuncDecl where
     return declNodeId
 
 instance AstDrawable Block where
-  visualise (Block stmts) = do
+  visualise (Block stmts _) = do
     blockId <- nextId
     lbraceId <- nextId
     rbraceId <- nextId
@@ -258,10 +258,10 @@ instance AstDrawable (Maybe Expr) where
     return emptyId
 
 instance AstDrawable Statement where
-  visualise (Expr expr) = visualise expr
-  visualise (BlockStatement stmt) = visualise stmt
-  visualise (VarDeclStatement stmt) = visualise stmt
-  visualise (While cond body) = do
+  visualise (Expr expr _) = visualise expr
+  visualise (BlockStatement stmt _) = visualise stmt
+  visualise (VarDeclStatement stmt _) = visualise stmt
+  visualise (While cond body _) = do
     whileId <- nextId
     emit
       ( "    node"
@@ -278,7 +278,7 @@ instance AstDrawable Statement where
     bodyId <- visualise body
     emit ("    node" ++ show whileId ++ ":f2 -> node" ++ show bodyId)
     return whileId
-  visualise (For init cond incr body) = do
+  visualise (For init cond incr body _) = do
     forId <- nextId
     emit
       ( "    node"
@@ -303,7 +303,7 @@ instance AstDrawable Statement where
     bodyId <- visualise body
     emit ("    node" ++ show forId ++ ":f4 -> node" ++ show bodyId)
     return forId
-  visualise (If cond body (Just alt)) = do
+  visualise (If cond body (Just alt) _) = do
     ifId <- nextId
     emit
       ( "    node"
@@ -324,7 +324,7 @@ instance AstDrawable Statement where
     altId <- visualise alt
     emit ("    node" ++ show ifId ++ ":f3 -> node" ++ show altId)
     return ifId
-  visualise (If cond body Nothing) = do
+  visualise (If cond body Nothing _) = do
     ifId <- nextId
     emit
       ( "    node"
@@ -341,7 +341,7 @@ instance AstDrawable Statement where
     bodyId <- visualise body
     emit ("    node" ++ show ifId ++ ":f2 -> node" ++ show bodyId)
     return ifId
-  visualise (Return (Just retVal)) = do
+  visualise (Return (Just retVal) _) = do
     returnId <- nextId
     emit
       ( "    node"
@@ -354,7 +354,7 @@ instance AstDrawable Statement where
     retValId <- visualise retVal
     emit ("    node" ++ show returnId ++ ":f1 -> node" ++ show retValId)
     return returnId
-  visualise (Return Nothing) = do
+  visualise (Return Nothing _) = do
     returnId <- nextId
     emit
       ( "    node"
@@ -367,7 +367,7 @@ instance AstDrawable Statement where
     return returnId
 
 instance AstDrawable Expr where
-  visualise (Assign target value) = do
+  visualise (Assign target value _) = do
     assignId <- nextId
     equalId <- nextId
     emitNode assignId "Assign"
@@ -378,7 +378,7 @@ instance AstDrawable Expr where
     connect assignId equalId
     connect assignId valueId
     return assignId
-  visualise (Call func actuals) = do
+  visualise (Call func actuals _) = do
     callId <- nextId
     nameId <- nextId
     lparenId <- nextId
@@ -397,7 +397,7 @@ instance AstDrawable Expr where
     emitNode rparenId ")"
     connect callId rparenId
     return callId
-  visualise (Typecast typ expr) = do
+  visualise (Typecast typ expr _) = do
     typecastId <- nextId
     lparenId <- nextId
     typeId <- nextId
@@ -412,7 +412,7 @@ instance AstDrawable Expr where
     connect typecastId rparenId
     connect typecastId exprId
     return typecastId
-  visualise (Sizeof (Right expr)) = do
+  visualise (Sizeof (Right expr) _) = do
     sizeofId <- nextId
     lparenId <- nextId
     rparenId <- nextId
@@ -424,7 +424,7 @@ instance AstDrawable Expr where
     connect sizeofId exprId
     connect sizeofId rparenId
     return sizeofId
-  visualise (Sizeof (Left typ)) = do
+  visualise (Sizeof (Left typ) _) = do
     sizeofId <- nextId
     lparenId <- nextId
     typeId <- nextId
@@ -437,7 +437,7 @@ instance AstDrawable Expr where
     connect sizeofId typeId
     connect sizeofId rparenId
     return sizeofId
-  visualise (Indirect target field) = do
+  visualise (Indirect target field _) = do
     indirectId <- nextId
     fieldId <- nextId
     arrowId <- nextId
@@ -449,7 +449,7 @@ instance AstDrawable Expr where
     connect indirectId arrowId
     connect indirectId fieldId
     return indirectId
-  visualise (ArrayAccess target index) = do
+  visualise (ArrayAccess target index _) = do
     accessId <- nextId
     lbrackId <- nextId
     rbrackId <- nextId
@@ -463,7 +463,7 @@ instance AstDrawable Expr where
     connect accessId indexId
     connect accessId rbrackId
     return accessId
-  visualise (FieldAccess expr field) = do
+  visualise (FieldAccess expr field _) = do
     accessId <- nextId
     fieldId <- nextId
     dotId <- nextId
@@ -475,31 +475,31 @@ instance AstDrawable Expr where
     connect accessId dotId
     connect accessId fieldId
     return accessId
-  visualise (Negative expr) = do
+  visualise (Negative expr _) = do
     negativeId <- nextId
     emitNode negativeId "-"
     innerId <- visualise expr
     connect negativeId innerId
     return negativeId
-  visualise (Negate expr) = do
+  visualise (Negate expr _) = do
     negateId <- nextId
     emitNode negateId "!"
     innerId <- visualise expr
     connect negateId innerId
     return negateId
-  visualise (AddressOf expr) = do
+  visualise (AddressOf expr _) = do
     addressOfId <- nextId
     emitNode addressOfId "AddressOf"
     innerId <- visualise expr
     connect addressOfId innerId
     return addressOfId
-  visualise (Deref expr) = do
+  visualise (Deref expr _) = do
     derefId <- nextId
     emitNode derefId "Deref"
     innerId <- visualise expr
     connect derefId innerId
     return derefId
-  visualise (Binop left op right) = do
+  visualise (Binop left op right _) = do
     binopId <- nextId
     emitNode binopId (display op)
     leftId <- visualise left
@@ -526,7 +526,7 @@ instance AstDrawable Expr where
           BitwiseAnd -> "&"
           BitwiseOr -> "\\|"
           BitwiseXor -> "^"
-  visualise (Nested expr) = do
+  visualise (Nested expr _) = do
     nestedId <- nextId
     lparenId <- nextId
     rparenId <- nextId
@@ -538,7 +538,7 @@ instance AstDrawable Expr where
     connect nestedId exprId
     connect nestedId rparenId
     return nestedId
-  visualise (Ident name) = do
+  visualise (Ident name _) = do
     litId <- nextId
     emit
       ( "    node"
@@ -550,7 +550,7 @@ instance AstDrawable Expr where
           ++ "\", shape=record]"
       )
     return litId
-  visualise Null = do
+  visualise (Null _) = do
     nullId <- nextId
     emit
       ( "    node"
@@ -560,7 +560,7 @@ instance AstDrawable Expr where
           ++ "\", shape=record]"
       )
     return nullId
-  visualise (LitInt int) = do
+  visualise (LitInt int _) = do
     litId <- nextId
     emit
       ( "    node"
@@ -574,7 +574,7 @@ instance AstDrawable Expr where
           ++ "\", shape=record]"
       )
     return litId
-  visualise (LitDouble double) = do
+  visualise (LitDouble double _) = do
     litId <- nextId
     emit
       ( "    node"
@@ -588,7 +588,7 @@ instance AstDrawable Expr where
           ++ "\", shape=record]"
       )
     return litId
-  visualise (LitString string) = do
+  visualise (LitString string _) = do
     litId <- nextId
     emit
       ( "    node"
@@ -602,7 +602,7 @@ instance AstDrawable Expr where
           ++ "\", shape=record]"
       )
     return litId
-  visualise (LitChar char) = do
+  visualise (LitChar char _) = do
     litId <- nextId
     emit
       ( "    node"

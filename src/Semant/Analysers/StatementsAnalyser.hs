@@ -22,7 +22,7 @@ import Semant.Type (Type (Any, Array, Scalar), isChar, isCond, isDouble, isInt, 
 import Prelude hiding (lookup)
 
 analyseBlock :: Block -> Semant SBlock
-analyseBlock (Block stmts) = do
+analyseBlock (Block stmts _) = do
   enterScope
   block <- SBlock <$> mapM analyseStatement stmts
   exitScope
@@ -35,13 +35,13 @@ analyseBlock (Block stmts) = do
 
 followsReturn :: [Statement] -> Maybe (Statement, [Statement])
 followsReturn [] = Nothing
-followsReturn [return@(Return _)] = Nothing
-followsReturn (return@(Return _) : stmts) = Just (return, stmts)
+followsReturn [return@(Return _ _)] = Nothing
+followsReturn (return@(Return _ _) : stmts) = Just (return, stmts)
 followsReturn (_ : stmts) = followsReturn stmts
 
 flattenStmts :: [Statement] -> [Statement]
 flattenStmts [] = []
-flattenStmts ((BlockStatement (Block stmts')) : stmts) = flattenStmts stmts' ++ flattenStmts stmts
+flattenStmts ((BlockStatement (Block stmts' _) _) : stmts) = flattenStmts stmts' ++ flattenStmts stmts
 flattenStmts (stmt : stmts) = stmt : flattenStmts stmts
 
 analyseMaybeStatement :: Maybe Statement -> Semant (Maybe SStatement)
@@ -49,10 +49,10 @@ analyseMaybeStatement Nothing = return Nothing
 analyseMaybeStatement (Just stmt) = Just <$> analyseStatement stmt
 
 analyseStatement :: Statement -> Semant SStatement
-analyseStatement (Expr expr) = SExpr <$> analyseExpr expr
-analyseStatement (BlockStatement block) = SBlockStatement <$> analyseBlock block
-analyseStatement (VarDeclStatement decl) = SVarDeclStatement <$> processVarDecl decl
-analyseStatement (If cond conseq alt) = do
+analyseStatement (Expr expr _) = SExpr <$> analyseExpr expr
+analyseStatement (BlockStatement block _) = SBlockStatement <$> analyseBlock block
+analyseStatement (VarDeclStatement decl _) = SVarDeclStatement <$> processVarDecl decl
+analyseStatement (If cond conseq alt _) = do
   cond'@(condTyp, _) <- analyseExpr cond
   conseq' <- analyseStatement conseq
   alt' <- analyseMaybeStatement alt
@@ -62,7 +62,7 @@ analyseStatement (If cond conseq alt) = do
     else do
       registerError (TypeError ["int", "double", "char", "pointer"] condTyp (Just cond))
       return (SIf cond' conseq' alt')
-analyseStatement (Return expr) = do
+analyseStatement (Return expr _) = do
   loc <- bindingLoc
   expr'@(exprTyp, _) <- analyseMaybeExpr expr
   case loc of
@@ -73,7 +73,7 @@ analyseStatement (Return expr) = do
           registerError (ReturnTypeMismatchError exprTyp func expr)
           return (SReturn expr')
     _ -> error "fatal error when processing return"
-analyseStatement (While cond body) = do
+analyseStatement (While cond body _) = do
   cond'@(condTyp, _) <- analyseExpr cond
   body' <- analyseStatement body
   unless (isCond condTyp) $
@@ -81,7 +81,7 @@ analyseStatement (While cond body) = do
   return (rewriteAsDoWhile doNothing cond' body' doNothing)
   where
     doNothing = (Scalar (PrimitiveType L.Void 0), SEmptyExpr)
-analyseStatement stmt@(For init (Just cond) incr body) = do
+analyseStatement stmt@(For init (Just cond) incr body _) = do
   init' <- analyseMaybeExpr init
   cond'@(condTyp, _) <- analyseExpr cond
   incr' <- analyseMaybeExpr incr
@@ -89,7 +89,7 @@ analyseStatement stmt@(For init (Just cond) incr body) = do
   unless (isCond condTyp) $
     registerError (TypeError ["int", "double", "char", "pointer"] condTyp (Just cond))
   return (rewriteAsDoWhile init' cond' body' incr')
-analyseStatement stmt@(For init Nothing incr body) = do
+analyseStatement stmt@(For init Nothing incr body _) = do
   init' <- analyseMaybeExpr init
   incr' <- analyseMaybeExpr incr
   body' <- analyseStatement body
@@ -126,7 +126,7 @@ blockify stmts = SBlock [stmt | stmt <- stmts, stmt /= emptyStmt]
     emptyStmt = SExpr (voidTyp, SEmptyExpr)
 
 processVarDecl :: VarDecl -> Semant SVarDecl
-processVarDecl decl@(Var typ name arraySizes) = do
+processVarDecl decl@(Var typ name arraySizes _) = do
   scope <- currentScope
   loc <- bindingLoc
   case lookup scope name of

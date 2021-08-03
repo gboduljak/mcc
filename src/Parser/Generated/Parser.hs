@@ -1514,7 +1514,7 @@ happyReduction_8 (_ `HappyStk`
 	_ `HappyStk`
 	happyRest)
 	 = HappyAbsSyn7
-		 (P.Struct happy_var_2 (reverse happy_var_4)
+		 (P.Struct happy_var_2 (reverse happy_var_4) 0
 	) `HappyStk` happyRest
 
 happyReduce_9 = happyReduce 5 8 happyReduction_9
@@ -1525,7 +1525,7 @@ happyReduction_9 (_ `HappyStk`
 	(HappyAbsSyn19  happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn8
-		 (P.Func happy_var_1 happy_var_2 []
+		 (P.Func happy_var_1 happy_var_2 [] 0
 	) `HappyStk` happyRest
 
 happyReduce_10 = happyReduce 6 8 happyReduction_10
@@ -1537,7 +1537,7 @@ happyReduction_10 (_ `HappyStk`
 	(HappyAbsSyn19  happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn8
-		 (P.Func happy_var_1 happy_var_2 (reverse happy_var_4)
+		 (P.Func happy_var_1 happy_var_2 (reverse happy_var_4) 0
 	) `HappyStk` happyRest
 
 happyReduce_11 = happyReduce 5 9 happyReduction_11
@@ -1548,7 +1548,7 @@ happyReduction_11 ((HappyAbsSyn14  happy_var_5) `HappyStk`
 	(HappyAbsSyn19  happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn9
-		 (P.FuncDef happy_var_1 happy_var_2 [] happy_var_5
+		 (P.FuncDef happy_var_1 happy_var_2 [] happy_var_5 0
 	) `HappyStk` happyRest
 
 happyReduce_12 = happyReduce 6 9 happyReduction_12
@@ -1560,7 +1560,7 @@ happyReduction_12 ((HappyAbsSyn14  happy_var_6) `HappyStk`
 	(HappyAbsSyn19  happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn9
-		 (P.FuncDef happy_var_1 happy_var_2 (reverse happy_var_4) happy_var_6
+		 (P.FuncDef happy_var_1 happy_var_2 (reverse happy_var_4) happy_var_6 0
 	) `HappyStk` happyRest
 
 happyReduce_13 = happyReduce 4 10 happyReduction_13
@@ -1570,7 +1570,7 @@ happyReduction_13 (_ `HappyStk`
 	(HappyAbsSyn19  happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn10
-		 (P.Var happy_var_1 happy_var_2 (reverse happy_var_3)
+		 (P.Var happy_var_1 happy_var_2 (reverse happy_var_3) 0
 	) `HappyStk` happyRest
 
 happyReduce_14 = happySpecReduce_2  11 happyReduction_14
@@ -1608,7 +1608,7 @@ happyReduce_18 = happySpecReduce_2  13 happyReduction_18
 happyReduction_18 (HappyTerminal (L.Ident happy_var_2))
 	(HappyAbsSyn19  happy_var_1)
 	 =  HappyAbsSyn13
-		 (P.Formal happy_var_1 happy_var_2
+		 (P.Formal happy_var_1 happy_var_2 0
 	)
 happyReduction_18 _ _  = notHappyAtAll 
 
@@ -1617,7 +1617,7 @@ happyReduction_19 _
 	(HappyAbsSyn15  happy_var_2)
 	_
 	 =  HappyAbsSyn14
-		 (P.Block (reverse happy_var_2)
+		 (P.Block (reverse happy_var_2) 0
 	)
 happyReduction_19 _ _ _  = notHappyAtAll 
 
@@ -1638,14 +1638,14 @@ happyReduce_22 = happySpecReduce_2  16 happyReduction_22
 happyReduction_22 _
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn16
-		 (P.Expr happy_var_1
+		 (P.Expr happy_var_1 0
 	)
 happyReduction_22 _ _  = notHappyAtAll 
 
 happyReduce_23 = happySpecReduce_1  16 happyReduction_23
 happyReduction_23 (HappyAbsSyn14  happy_var_1)
 	 =  HappyAbsSyn16
-		 (P.BlockStatement happy_var_1
+		 (P.BlockStatement happy_var_1 0
 	)
 happyReduction_23 _  = notHappyAtAll 
 
@@ -1657,7 +1657,7 @@ happyReduction_24 ((HappyAbsSyn16  happy_var_5) `HappyStk`
 	_ `HappyStk`
 	happyRest)
 	 = HappyAbsSyn16
-		 (P.While happy_var_3 happy_var_5
+		 (P.While happy_var_3 happy_var_5 0
 	) `HappyStk` happyRest
 
 happyReduce_25 = happyReduce 9 16 happyReduction_25
@@ -1672,7 +1672,7 @@ happyReduction_25 ((HappyAbsSyn16  happy_var_9) `HappyStk`
 	_ `HappyStk`
 	happyRest)
 	 = HappyAbsSyn16
-		 (P.For happy_var_3 happy_var_5 happy_var_7 happy_var_9
+		 (P.For happy_var_3 happy_var_5 happy_var_7 happy_var_9 0
 	) `HappyStk` happyRest
 
 happyReduce_26 = happyReduce 7 16 happyReduction_26
@@ -1685,7 +1685,7 @@ happyReduction_26 ((HappyAbsSyn16  happy_var_7) `HappyStk`
 	_ `HappyStk`
 	happyRest)
 	 = HappyAbsSyn16
-		 (P.If happy_var_3 happy_var_5 (Just happy_var_7)
+		 (P.If happy_var_3 happy_var_5 (Just happy_var_7) 0
 	) `HappyStk` happyRest
 
 happyReduce_27 = happyReduce 5 16 happyReduction_27
@@ -1696,7 +1696,7 @@ happyReduction_27 ((HappyAbsSyn16  happy_var_5) `HappyStk`
 	_ `HappyStk`
 	happyRest)
 	 = HappyAbsSyn16
-		 (P.If happy_var_3 happy_var_5 Nothing
+		 (P.If happy_var_3 happy_var_5 Nothing 0
 	) `HappyStk` happyRest
 
 happyReduce_28 = happySpecReduce_3  16 happyReduction_28
@@ -1704,55 +1704,55 @@ happyReduction_28 _
 	(HappyAbsSyn18  happy_var_2)
 	_
 	 =  HappyAbsSyn16
-		 (P.Return happy_var_2
+		 (P.Return happy_var_2 0
 	)
 happyReduction_28 _ _ _  = notHappyAtAll 
 
 happyReduce_29 = happySpecReduce_1  16 happyReduction_29
 happyReduction_29 (HappyAbsSyn10  happy_var_1)
 	 =  HappyAbsSyn16
-		 (P.VarDeclStatement happy_var_1
+		 (P.VarDeclStatement happy_var_1 0
 	)
 happyReduction_29 _  = notHappyAtAll 
 
 happyReduce_30 = happySpecReduce_1  17 happyReduction_30
 happyReduction_30 (HappyTerminal (L.LitInt happy_var_1))
 	 =  HappyAbsSyn17
-		 (P.LitInt happy_var_1
+		 (P.LitInt happy_var_1 0
 	)
 happyReduction_30 _  = notHappyAtAll 
 
 happyReduce_31 = happySpecReduce_1  17 happyReduction_31
 happyReduction_31 (HappyTerminal (L.LitDouble happy_var_1))
 	 =  HappyAbsSyn17
-		 (P.LitDouble happy_var_1
+		 (P.LitDouble happy_var_1 0
 	)
 happyReduction_31 _  = notHappyAtAll 
 
 happyReduce_32 = happySpecReduce_1  17 happyReduction_32
 happyReduction_32 (HappyTerminal (L.LitChar happy_var_1))
 	 =  HappyAbsSyn17
-		 (P.LitChar happy_var_1
+		 (P.LitChar happy_var_1 0
 	)
 happyReduction_32 _  = notHappyAtAll 
 
 happyReduce_33 = happySpecReduce_1  17 happyReduction_33
 happyReduction_33 (HappyTerminal (L.LitString happy_var_1))
 	 =  HappyAbsSyn17
-		 (P.LitString happy_var_1
+		 (P.LitString happy_var_1 0
 	)
 happyReduction_33 _  = notHappyAtAll 
 
 happyReduce_34 = happySpecReduce_1  17 happyReduction_34
 happyReduction_34 _
 	 =  HappyAbsSyn17
-		 (P.Null
+		 (P.Null 0
 	)
 
 happyReduce_35 = happySpecReduce_1  17 happyReduction_35
 happyReduction_35 (HappyTerminal (L.Ident happy_var_1))
 	 =  HappyAbsSyn17
-		 (P.Ident happy_var_1
+		 (P.Ident happy_var_1 0
 	)
 happyReduction_35 _  = notHappyAtAll 
 
@@ -1761,7 +1761,7 @@ happyReduction_36 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Assign happy_var_1 happy_var_3
+		 (P.Assign happy_var_1 happy_var_3 0
 	)
 happyReduction_36 _ _ _  = notHappyAtAll 
 
@@ -1770,7 +1770,7 @@ happyReduction_37 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.Or happy_var_3
+		 (P.Binop happy_var_1 P.Or happy_var_3 0
 	)
 happyReduction_37 _ _ _  = notHappyAtAll 
 
@@ -1779,7 +1779,7 @@ happyReduction_38 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.And happy_var_3
+		 (P.Binop happy_var_1 P.And happy_var_3 0
 	)
 happyReduction_38 _ _ _  = notHappyAtAll 
 
@@ -1788,7 +1788,7 @@ happyReduction_39 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.BitwiseOr happy_var_3
+		 (P.Binop happy_var_1 P.BitwiseOr happy_var_3 0
 	)
 happyReduction_39 _ _ _  = notHappyAtAll 
 
@@ -1797,7 +1797,7 @@ happyReduction_40 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.BitwiseXor happy_var_3
+		 (P.Binop happy_var_1 P.BitwiseXor happy_var_3 0
 	)
 happyReduction_40 _ _ _  = notHappyAtAll 
 
@@ -1806,7 +1806,7 @@ happyReduction_41 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.BitwiseAnd happy_var_3
+		 (P.Binop happy_var_1 P.BitwiseAnd happy_var_3 0
 	)
 happyReduction_41 _ _ _  = notHappyAtAll 
 
@@ -1815,7 +1815,7 @@ happyReduction_42 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.Equal happy_var_3
+		 (P.Binop happy_var_1 P.Equal happy_var_3 0
 	)
 happyReduction_42 _ _ _  = notHappyAtAll 
 
@@ -1824,7 +1824,7 @@ happyReduction_43 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.Neq happy_var_3
+		 (P.Binop happy_var_1 P.Neq happy_var_3 0
 	)
 happyReduction_43 _ _ _  = notHappyAtAll 
 
@@ -1833,7 +1833,7 @@ happyReduction_44 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.Geq happy_var_3
+		 (P.Binop happy_var_1 P.Geq happy_var_3 0
 	)
 happyReduction_44 _ _ _  = notHappyAtAll 
 
@@ -1842,7 +1842,7 @@ happyReduction_45 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.Greater happy_var_3
+		 (P.Binop happy_var_1 P.Greater happy_var_3 0
 	)
 happyReduction_45 _ _ _  = notHappyAtAll 
 
@@ -1851,7 +1851,7 @@ happyReduction_46 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.Leq happy_var_3
+		 (P.Binop happy_var_1 P.Leq happy_var_3 0
 	)
 happyReduction_46 _ _ _  = notHappyAtAll 
 
@@ -1860,7 +1860,7 @@ happyReduction_47 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.Less happy_var_3
+		 (P.Binop happy_var_1 P.Less happy_var_3 0
 	)
 happyReduction_47 _ _ _  = notHappyAtAll 
 
@@ -1869,7 +1869,7 @@ happyReduction_48 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.Add happy_var_3
+		 (P.Binop happy_var_1 P.Add happy_var_3 0
 	)
 happyReduction_48 _ _ _  = notHappyAtAll 
 
@@ -1878,7 +1878,7 @@ happyReduction_49 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.Sub happy_var_3
+		 (P.Binop happy_var_1 P.Sub happy_var_3 0
 	)
 happyReduction_49 _ _ _  = notHappyAtAll 
 
@@ -1887,7 +1887,7 @@ happyReduction_50 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.Mul happy_var_3
+		 (P.Binop happy_var_1 P.Mul happy_var_3 0
 	)
 happyReduction_50 _ _ _  = notHappyAtAll 
 
@@ -1896,7 +1896,7 @@ happyReduction_51 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.Div happy_var_3
+		 (P.Binop happy_var_1 P.Div happy_var_3 0
 	)
 happyReduction_51 _ _ _  = notHappyAtAll 
 
@@ -1905,7 +1905,7 @@ happyReduction_52 (HappyAbsSyn17  happy_var_3)
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Binop happy_var_1 P.Mod happy_var_3
+		 (P.Binop happy_var_1 P.Mod happy_var_3 0
 	)
 happyReduction_52 _ _ _  = notHappyAtAll 
 
@@ -1914,7 +1914,7 @@ happyReduction_53 _
 	(HappyAbsSyn17  happy_var_2)
 	_
 	 =  HappyAbsSyn17
-		 (P.Nested happy_var_2
+		 (P.Nested happy_var_2 0
 	)
 happyReduction_53 _ _ _  = notHappyAtAll 
 
@@ -1922,7 +1922,7 @@ happyReduce_54 = happySpecReduce_2  17 happyReduction_54
 happyReduction_54 (HappyAbsSyn17  happy_var_2)
 	_
 	 =  HappyAbsSyn17
-		 (P.Negative happy_var_2
+		 (P.Negate happy_var_2 0
 	)
 happyReduction_54 _ _  = notHappyAtAll 
 
@@ -1930,7 +1930,7 @@ happyReduce_55 = happySpecReduce_2  17 happyReduction_55
 happyReduction_55 (HappyAbsSyn17  happy_var_2)
 	_
 	 =  HappyAbsSyn17
-		 (P.Negate happy_var_2
+		 (P.Negative happy_var_2 0
 	)
 happyReduction_55 _ _  = notHappyAtAll 
 
@@ -1938,7 +1938,7 @@ happyReduce_56 = happySpecReduce_2  17 happyReduction_56
 happyReduction_56 (HappyAbsSyn17  happy_var_2)
 	_
 	 =  HappyAbsSyn17
-		 (P.AddressOf happy_var_2
+		 (P.AddressOf happy_var_2 0
 	)
 happyReduction_56 _ _  = notHappyAtAll 
 
@@ -1946,7 +1946,7 @@ happyReduce_57 = happySpecReduce_2  17 happyReduction_57
 happyReduction_57 (HappyAbsSyn17  happy_var_2)
 	_
 	 =  HappyAbsSyn17
-		 (P.Deref happy_var_2
+		 (P.Deref happy_var_2 0
 	)
 happyReduction_57 _ _  = notHappyAtAll 
 
@@ -1955,7 +1955,7 @@ happyReduction_58 (HappyTerminal (L.Ident happy_var_3))
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.FieldAccess happy_var_1 happy_var_3
+		 (P.FieldAccess happy_var_1 happy_var_3 0
 	)
 happyReduction_58 _ _ _  = notHappyAtAll 
 
@@ -1966,7 +1966,7 @@ happyReduction_59 (_ `HappyStk`
 	(HappyAbsSyn17  happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn17
-		 (P.ArrayAccess happy_var_1 happy_var_3
+		 (P.ArrayAccess happy_var_1 happy_var_3 0
 	) `HappyStk` happyRest
 
 happyReduce_60 = happySpecReduce_3  17 happyReduction_60
@@ -1974,7 +1974,7 @@ happyReduction_60 (HappyTerminal (L.Ident happy_var_3))
 	_
 	(HappyAbsSyn17  happy_var_1)
 	 =  HappyAbsSyn17
-		 (P.Indirect happy_var_1 happy_var_3
+		 (P.Indirect happy_var_1 happy_var_3 0
 	)
 happyReduction_60 _ _ _  = notHappyAtAll 
 
@@ -1985,7 +1985,7 @@ happyReduction_61 (_ `HappyStk`
 	_ `HappyStk`
 	happyRest)
 	 = HappyAbsSyn17
-		 (P.Sizeof (Left happy_var_3)
+		 (P.Sizeof (Left happy_var_3) 0
 	) `HappyStk` happyRest
 
 happyReduce_62 = happyReduce 4 17 happyReduction_62
@@ -1995,7 +1995,7 @@ happyReduction_62 (_ `HappyStk`
 	_ `HappyStk`
 	happyRest)
 	 = HappyAbsSyn17
-		 (P.Sizeof (Right happy_var_3)
+		 (P.Sizeof (Right happy_var_3) 0
 	) `HappyStk` happyRest
 
 happyReduce_63 = happyReduce 4 17 happyReduction_63
@@ -2005,7 +2005,7 @@ happyReduction_63 ((HappyAbsSyn17  happy_var_4) `HappyStk`
 	_ `HappyStk`
 	happyRest)
 	 = HappyAbsSyn17
-		 (P.Typecast happy_var_2 happy_var_4
+		 (P.Typecast happy_var_2 happy_var_4 0
 	) `HappyStk` happyRest
 
 happyReduce_64 = happyReduce 4 17 happyReduction_64
@@ -2015,7 +2015,7 @@ happyReduction_64 (_ `HappyStk`
 	(HappyTerminal (L.Ident happy_var_1)) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn17
-		 (P.Call happy_var_1 (reverse happy_var_3)
+		 (P.Call happy_var_1 (reverse happy_var_3) 0
 	) `HappyStk` happyRest
 
 happyReduce_65 = happySpecReduce_3  17 happyReduction_65
@@ -2023,7 +2023,7 @@ happyReduction_65 _
 	_
 	(HappyTerminal (L.Ident happy_var_1))
 	 =  HappyAbsSyn17
-		 (P.Call happy_var_1 []
+		 (P.Call happy_var_1 [] 0
 	)
 happyReduction_65 _ _ _  = notHappyAtAll 
 

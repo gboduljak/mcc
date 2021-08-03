@@ -29,7 +29,7 @@ import System.Directory.Internal.Prelude (traverse_)
 import Prelude hiding (lookup)
 
 analyseFuncDecl :: FuncDecl -> Semant SFunction
-analyseFuncDecl (Func retTyp name formals) = do
+analyseFuncDecl (Func retTyp name formals _) = do
   existing <- lookupFunc name
   case existing of
     (Just funcDefn) -> do
@@ -38,14 +38,14 @@ analyseFuncDecl (Func retTyp name formals) = do
     Nothing -> defineAndInstallFunc retTyp name formals Nothing
 
 analyseFuncDefn :: FuncDef -> Semant SFunction
-analyseFuncDefn (FuncDef retTyp name formals body) = do
+analyseFuncDefn (FuncDef retTyp name formals body _) = do
   existing <- lookupFunc name
   case existing of
     (Just funcDefn@(SFunction _ _ _ (Just _))) -> do
       registerError (Redeclaration name RedeclFunc)
       return funcDefn
     (Just funcDefn@(SFunction retTyp' _ formals' Nothing)) -> do
-      let defnFormals = [SFormal (Scalar formTyp) formName | (Formal formTyp formName) <- formals]
+      let defnFormals = [SFormal (Scalar formTyp) formName | (Formal formTyp formName _) <- formals]
       if Scalar retTyp /= retTyp' || defnFormals /= formals'
         then do
           registerError (Redeclaration name RedeclFunc)
@@ -57,7 +57,7 @@ defineAndInstallFunc :: Ast.Type -> String -> [Formal] -> Maybe Block -> Semant 
 defineAndInstallFunc retTyp name formals body = do
   formals' <-
     mapM
-      ( \(Formal formTyp formName) -> do
+      ( \(Formal formTyp formName _) -> do
           unless (formTyp /= PrimitiveType L.Void 0) $
             registerError (VoidFormal formName name)
           return (SFormal (Scalar formTyp) formName)

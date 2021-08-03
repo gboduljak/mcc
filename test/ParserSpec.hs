@@ -2,9 +2,13 @@ module ParserSpec where
 
 import Data.Foldable (traverse_)
 import Data.Text (pack)
+import Data.Text.Prettyprint.Doc
+import Data.Text.Prettyprint.Doc.Render.String
 import qualified Lexer.Combinator.Lexer as CombinatorLexer (lex')
 import Lexer.Lexeme (Lexeme)
 import Lexer.Token (Token (lexeme))
+import Parser.Ast
+import Parser.AstPrettyPrinter
 import qualified Parser.Combinator.Naive.Parser as CombinatorParser (parse)
 import qualified Parser.Combinator.Predictive.Parser as PredictiveCombinatorParser (parse)
 import Parser.Errors.PrettyPrinter (prettyPrintErrors)
@@ -59,21 +63,24 @@ parseProgram folder = it ("parses program " ++ folder ++ "...") $ do
             printParseErrors "naive combinator" error input
             expectationFailure ("with naive combinator, expected successfull parse of " ++ file)
           (Right ast) -> do
-            ast `shouldBe` astParsedWithGen
+            prettyPrintAst ast `shouldBe` prettyPrintAst astParsedWithGen
         case parsedWithPredComb of
           (Left error) -> do
             printParseErrors "predictive combinator" error input
             expectationFailure ("with predictive combinator, expected successfull parse of " ++ file)
           (Right ast) -> do
-            ast `shouldBe` astParsedWithGen
+            prettyPrintAst ast `shouldBe` prettyPrintAst astParsedWithGen
         case parsedWithPratt of
           (Left error) -> do
             printParseErrors "pratt" error input
             expectationFailure ("with pratt, expected successfull parse of " ++ file)
           (Right ast) -> do
-            ast `shouldBe` astParsedWithGen
+            prettyPrintAst ast `shouldBe` prettyPrintAst astParsedWithGen
     )
     filesToLex
+
+prettyPrintAst :: Program -> String
+prettyPrintAst = renderString . layoutSmart defaultLayoutOptions . pretty
 
 printParseErrors parser errors input = do
   putStrLn $ "Parser " ++ parser ++ " failed with: "
