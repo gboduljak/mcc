@@ -127,7 +127,9 @@ test-suite mcc-test
       ScopingSpec
       SemanticAnalyserSpec
       TestCases
+      Typechecker.ArraysPtrsDerefsSpec
       Typechecker.LiteralExpressionsSpec
+      Typechecker.Utils.SpecUtils
       Paths_mcc
   hs-source-dirs:
       test

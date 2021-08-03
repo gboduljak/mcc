@@ -25,9 +25,10 @@ import System.Directory (getDirectoryContents)
 import System.FilePath (takeExtension)
 import Test.Hspec (Spec, SpecWith, describe, expectationFailure, it, shouldBe)
 import Prelude hiding (id, lex)
+import Typechecker.Utils.SpecUtils (getExprSpec)
 
 typechecksLiteralExpressionsSpec :: Spec
-typechecksLiteralExpressionsSpec = getSpec specDesc testDesc path test
+typechecksLiteralExpressionsSpec = getExprSpec specDesc testDesc path test
   where
     specDesc = "typechecks literal expressions..."
     testDesc = "correctly typechecks literal expressions"
@@ -35,7 +36,7 @@ typechecksLiteralExpressionsSpec = getSpec specDesc testDesc path test
     test = \expr -> (isRight . analyseExpr') expr `shouldBe` True
 
 typechecksFailingLiteralExpressionsSpec :: Spec
-typechecksFailingLiteralExpressionsSpec = getSpec specDesc testDesc path test
+typechecksFailingLiteralExpressionsSpec = getExprSpec specDesc testDesc path test
   where
     specDesc = "typechecks literal expressions..."
     testDesc = "correctly typechecks failing literal expressions"
@@ -43,7 +44,7 @@ typechecksFailingLiteralExpressionsSpec = getSpec specDesc testDesc path test
     test = \expr -> (isRight . analyseExpr') expr `shouldBe` False
 
 typechecksStatefulExpressionsSpec :: Spec
-typechecksStatefulExpressionsSpec = getSpec specDesc testDesc path test
+typechecksStatefulExpressionsSpec = getExprSpec specDesc testDesc path test
   where
     specDesc = "typechecks literal expressions..."
     testDesc = "correctly typechecks failing literal expressions"
@@ -66,36 +67,3 @@ typechecksStatefulExpressionsSpec = getSpec specDesc testDesc path test
           parentId = Nothing,
           symbolTable = Map.fromList [("a", ("a", Scalar (PrimitiveType Int 0)))]
         }
-
-getSpec :: String -> String -> FilePath -> (Ast.Expr -> IO a) -> SpecWith ()
-getSpec specDesc testDesc path test =
-  describe specDesc $ do
-    it testDesc $ do
-      exprsInput <- readFile path
-      let tokens = lex "" exprsInput
-      case PrattParser.parseExprs "" tokens of
-        (Left errorBundle) -> do
-          expectationFailure "with pratt, expected successfull parse of exprs"
-        (Right exprs) -> do
-          traverse_
-            ( \expr -> do
-                putStrLn $ "   typechecking " ++ prettyPrintExpr expr ++ " ..."
-                test expr
-            )
-            exprs
-
-prettyPrintExpr :: Ast.Expr -> String
-prettyPrintExpr = renderString . layoutSmart defaultLayoutOptions . pretty
-
-printParseErrors errors input = do
-  pretty <- supportsPretty
-  let errorMessages = prettyPrintErrors errors (pack input) pretty
-   in do
-        putStrLn errorMessages
-
-lex :: String -> String -> [Token]
-lex file input = case result of
-  (Left errors) -> []
-  (Right tokens) -> tokens
-  where
-    result = CombinatorLexer.lex' file input

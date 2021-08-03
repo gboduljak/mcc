@@ -489,6 +489,28 @@ parseExprs file tokens = case result of
           pstateLinePrefix = ""
         }
 
+parseStatements :: String -> [T.Token] -> Either (ParseErrorBundle TokenStream Void) [Ast.Statement]
+parseStatements file tokens = case result of
+  (Left error) -> Left (bundle $ reverse (error : errors state))
+  (Right ast) -> case errors state of
+    [] -> Right ast
+    errors -> Left (bundle $ reverse errors)
+  where
+    (result, state) = runState (runExceptT (many statement startsStmt)) (ParserState tokens 0 [])
+    bundle errors = ParseErrorBundle (Ne.fromList (nub . mergeErrorsBasedOnPos $ errors)) initPosState
+    initPosState =
+      PosState
+        { pstateInput =
+            TokenStream
+              { tokenStreamInput = intercalate ", " . map (L.display . T.lexeme) $ tokens,
+                unTokenStream = tokens
+              },
+          pstateOffset = 0,
+          pstateSourcePos = initialPos file,
+          pstateTabWidth = mkPos 8,
+          pstateLinePrefix = ""
+        }
+
 parseExpr :: String -> [T.Token] -> Either (ParseErrorBundle TokenStream Void) Ast.Expr
 parseExpr file tokens = case result of
   (Left error) -> Left (bundle $ reverse (error : errors state))
