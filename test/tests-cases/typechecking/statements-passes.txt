@@ -1,0 +1,25 @@
+{}
+int a;
+{ a + 5 + 10; }
+int b;
+char c;
+a = 5;
+int *x;
+x = &a;
+int i;
+int arr[10];
+for (;;) {}
+for (; a < 5; ) { a = a + 1; }
+for (a = 1; a < 10; a = a + 1) { printf("%d", a); }
+for (;; a = a + 1) { if (a < 10) {} }
+while (a < 10) { for (i = 0; i < 10; i=i+1) { arr[i] = i; }}
+while (a < 10) { if (i < 10) c = 'c'; }
+while (1) { for (;;) {} }
+{ char b; b + 'c'; }
+{ double b; {char b; b + 'c';} b = b + 10.0; } 
+for (; a < 5; ) { a = a + 1; { double b; {char b; b + 'c';} b = b + 10.0; }  }
+if (a < 10 < b + 40) {} else {}
+if (a < 10 < b + 40) { int a; { double a; } printf("%d", a); }
+if (a < 10 < b + 40) { int a; { double a; } printf("%d", a); } else  { printf("%d", b); }
+{ {} { { a == b; } }}
+if (x != (int*)NULL) { x = (int*)NULL; }
