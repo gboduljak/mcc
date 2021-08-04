@@ -71,6 +71,7 @@ library
       Semant.Env
       Semant.Errors.SemantError
       Semant.Errors.SemantErrorBundle
+      Semant.Exports
       Semant.Operators.Cond
       Semant.Scope
       Semant.Semant

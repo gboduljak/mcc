@@ -4,7 +4,7 @@ import Semant.Ast.SemantAst as SAst hiding (funcs, structs)
 import Semant.Env (Env (..))
 import Semant.Errors.SemantError (BindingLoc (..))
 import Semant.Scope (Scope (..), rootScopeId, symbolTable)
-import Semant.SemanticAnalyser (analyseStmtStateful')
+import Semant.Exports (analyseStmtStateful)
 import qualified Data.Map as Map
 import Semant.Type
 import Lexer.Lexeme (BuiltinType (..))
@@ -21,7 +21,7 @@ typechecksArraysPtrsDerefsPassingSpec = getStmtSpec specDesc testDesc path test
     specDesc = "typechecks arrays, ptrs and derefs ..."
     testDesc = "correctly typechecks passing arrays, ptrs and derefs"
     path = "./test/tests-cases/typechecking/arrays-ptrs-derefs-passing.txt"
-    test = \expr -> isRight (analyseStmtStateful' expr testEnv) `shouldBe` True
+    test = \expr -> isRight (analyseStmtStateful expr testEnv) `shouldBe` True
 
 typechecksArraysPtrsDerefsFailingSpec :: Spec
 typechecksArraysPtrsDerefsFailingSpec = getStmtSpec specDesc testDesc path test
@@ -29,7 +29,7 @@ typechecksArraysPtrsDerefsFailingSpec = getStmtSpec specDesc testDesc path test
     specDesc = "typechecks arrays, ptrs and derefs ..."
     testDesc = "correctly typechecks passing arrays, ptrs and derefs"
     path = "./test/tests-cases/typechecking/arrays-ptrs-derefs-failures.txt"
-    test = \expr -> isLeft (analyseStmtStateful' expr testEnv) `shouldBe` True
+    test = \expr -> isLeft (analyseStmtStateful expr testEnv) `shouldBe` True
 
 testEnv :: Env
 testEnv =

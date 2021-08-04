@@ -26,7 +26,7 @@ import Semant.Ast.SemantAst (SProgram)
 import Semant.Ast.SemantAstVisualiser (visualiseSemantAst)
 import Semant.Env (Env)
 import Semant.Semant (getBaseEnv)
-import Semant.SemanticAnalyser (analyseProgs, prettyPrintSemantError)
+import Semant.Exports (analyseProgs, prettyPrintSemantError)
 import System.Console.Pretty
 import System.Environment (getArgs)
 import Text.Megaparsec (ParseErrorBundle (ParseErrorBundle))

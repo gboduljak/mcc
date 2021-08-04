@@ -18,7 +18,7 @@ import Semant.Ast.SemantAst as SAst hiding (funcs, structs)
 import Semant.Env (Env (..))
 import Semant.Errors.SemantError (BindingLoc (..))
 import Semant.Scope (Scope (..), rootScopeId, symbolTable)
-import Semant.SemanticAnalyser (analyseStmtStateful')
+import Semant.Exports (analyseStmtStateful)
 import Semant.Type
 import System.Console.Pretty (supportsPretty)
 import System.Directory (getDirectoryContents)
@@ -37,10 +37,10 @@ statementsPassingSpec =
         (Left errorBundle) -> do
           expectationFailure "with pratt, expected successfull parse of exprs"
         (Right stmts) -> do
-          traverse_  (\stmt -> putStrLn $ prettyPrintStatement stmt) stmts
+          traverse_  (putStrLn . prettyPrintStatement) stmts
           let rootStmt = BlockStatement (Block stmts 0) 0
-          isRight (analyseStmtStateful' rootStmt testEnv) `shouldBe` True
-  where 
+          isRight (analyseStmtStateful rootStmt testEnv) `shouldBe` True
+  where
     specDesc = "typechecks statements..."
     testDesc = "correctly typechecks statements"
     path = "./test/tests-cases/typechecking/statements-passes.txt"

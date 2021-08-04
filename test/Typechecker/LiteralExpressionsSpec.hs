@@ -18,7 +18,7 @@ import Semant.Ast.SemantAst as SAst hiding (funcs, structs)
 import Semant.Env (Env (..))
 import Semant.Errors.SemantError (BindingLoc (..))
 import Semant.Scope (Scope (..), rootScopeId, symbolTable)
-import Semant.SemanticAnalyser (analyseExpr', analyseExprStateful')
+import Semant.Exports (analyseExpr, analyseExprStateful)
 import Semant.Type
 import System.Console.Pretty (supportsPretty)
 import System.Directory (getDirectoryContents)
@@ -33,7 +33,7 @@ typechecksLiteralExpressionsSpec = getExprSpec specDesc testDesc path test
     specDesc = "typechecks literal expressions..."
     testDesc = "correctly typechecks literal expressions"
     path = "./test/tests-cases/typechecking/literal-expressions-passes.txt"
-    test = \expr -> (isRight . analyseExpr') expr `shouldBe` True
+    test = \expr -> (isRight . analyseExpr) expr `shouldBe` True
 
 typechecksFailingLiteralExpressionsSpec :: Spec
 typechecksFailingLiteralExpressionsSpec = getExprSpec specDesc testDesc path test
@@ -41,7 +41,7 @@ typechecksFailingLiteralExpressionsSpec = getExprSpec specDesc testDesc path tes
     specDesc = "typechecks literal expressions..."
     testDesc = "correctly typechecks failing literal expressions"
     path = "./test/tests-cases/typechecking/literal-expressions-failures.txt"
-    test = \expr -> (isRight . analyseExpr') expr `shouldBe` False
+    test = \expr -> (isRight . analyseExpr) expr `shouldBe` False
 
 typechecksStatefulExpressionsSpec :: Spec
 typechecksStatefulExpressionsSpec = getExprSpec specDesc testDesc path test
@@ -49,7 +49,7 @@ typechecksStatefulExpressionsSpec = getExprSpec specDesc testDesc path test
     specDesc = "typechecks literal expressions..."
     testDesc = "correctly typechecks failing literal expressions"
     path = "./test/tests-cases/typechecking/stateful-expressions-passes.txt"
-    test = \expr -> isRight (analyseExprStateful' expr testEnv) `shouldBe` True
+    test = \expr -> isRight (analyseExprStateful expr testEnv) `shouldBe` True
 
     testEnv :: Env
     testEnv =

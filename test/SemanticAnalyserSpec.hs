@@ -23,7 +23,7 @@ import Semant.Env (Env (bindingLoc))
 import Semant.Errors.SemantError (BindingLoc (..), SemantError)
 import Semant.Scope (Scope (..), rootScopeId, symbolTable)
 import Semant.Semant (getBaseEnv)
-import Semant.SemanticAnalyser (analyseExpr', analyseExprStateful', analyseProg, analyseProgs)
+import Semant.Exports (analyseExpr, analyseExprStateful, analyseProg, analyseProgs)
 import Semant.Type
 import System.Console.Pretty (supportsPretty)
 import System.Directory (getDirectoryContents)
