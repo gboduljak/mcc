@@ -16,10 +16,11 @@ import Semant.Analysers.ExpressionsAnalyser (analyseExpr, analyseMaybeExpr)
 import Semant.Ast.SemantAst
 import Semant.Errors.SemantError as E hiding (bindingLoc)
 import Semant.Operators.Cond ((<||>), (|>), (||>))
-import Semant.Scope (lookup)
 import Semant.Semant as S
 import Semant.Type (Type (Any, Array, Scalar), isChar, isCond, isDouble, isInt, isPointer, voidTyp)
 import Prelude hiding (lookup)
+import SymbolTable.SymbolTable (enterScope, exitScope, defineVar, currentScope)
+import SymbolTable.Scope (lookup)
 
 analyseBlock :: Block -> Semant SBlock
 analyseBlock (Block stmts _) = do

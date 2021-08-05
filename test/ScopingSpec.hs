@@ -6,20 +6,22 @@ import Lexer.Lexeme
 import Parser.Ast
 import Semant.Ast.SemantAst (SFunction (..), SStruct (..))
 import Semant.Env hiding (defineFunc, defineStruct, lookupFunc, lookupStruct)
-import Semant.Scope hiding (defineVar, lookup)
+import SymbolTable.Scope hiding (lookup)
 import Semant.Semant
   ( Semant,
-    currentScope,
     defineFunc,
     defineStruct,
-    defineVar,
-    enterScope,
-    exitScope,
     getEmptyEnv,
     lookupFunc,
     lookupStruct,
-    lookupVar,
     runSemant,
+  )
+import SymbolTable.SymbolTable(
+    defineVar,
+    lookupVar,
+    currentScope,
+    enterScope,
+    exitScope
   )
 import Semant.Type (Type (Scalar))
 import qualified Semant.Type as SemantType

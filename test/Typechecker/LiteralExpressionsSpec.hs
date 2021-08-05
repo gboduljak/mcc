@@ -10,14 +10,14 @@ import GHC.IO.Buffer (checkBuffer)
 import qualified Lexer.Combinator.Lexer as CombinatorLexer (lex')
 import Lexer.Lexeme (BuiltinType (..))
 import Lexer.Token (Token (lexeme))
-import Parser.Ast as Ast
+import Parser.Ast as Ast hiding (Type)
 import Parser.AstPrettyPrinter
 import Parser.Errors.PrettyPrinter (prettyPrintErrors)
 import qualified Parser.Pratt.Parser as PrattParser (parseExprs)
 import Semant.Ast.SemantAst as SAst hiding (funcs, structs)
 import Semant.Env (Env (..))
 import Semant.Errors.SemantError (BindingLoc (..))
-import Semant.Scope (Scope (..), rootScopeId, symbolTable)
+import SymbolTable.Scope (Scope (..), rootScopeId, symbolTable)
 import Semant.Exports (analyseExpr, analyseExprStateful)
 import Semant.Type
 import System.Console.Pretty (supportsPretty)
@@ -51,7 +51,7 @@ typechecksStatefulExpressionsSpec = getExprSpec specDesc testDesc path test
     path = "./test/tests-cases/typechecking/stateful-expressions-passes.txt"
     test = \expr -> isRight (analyseExprStateful expr testEnv) `shouldBe` True
 
-    testEnv :: Env
+    testEnv :: (Env Semant.Type.Type)
     testEnv =
       Env
         { funcs = Map.empty,
@@ -60,10 +60,10 @@ typechecksStatefulExpressionsSpec = getExprSpec specDesc testDesc path test
           currentScopeId = rootScopeId,
           bindingLoc = Toplevel
         }
-    rootScope :: Scope
+    rootScope :: (Scope Semant.Type.Type)
     rootScope =
       Scope
         { id = rootScopeId,
           parentId = Nothing,
-          symbolTable = Map.fromList [("a", ("a", Scalar (PrimitiveType Int 0)))]
+          symbolTable = Map.fromList [("a", Scalar (PrimitiveType Int 0))]
         }

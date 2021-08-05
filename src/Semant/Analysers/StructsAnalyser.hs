@@ -26,6 +26,7 @@ import Semant.Errors.SemantError hiding (Void)
 import Semant.Operators.Cond ((<||>), (|>), (||>))
 import Semant.Semant
 import Semant.Type
+import SymbolTable.SymbolTable (enterScope, exitScope)
 
 analyseStructDecl :: StructDecl -> Semant SStruct
 analyseStructDecl (Struct structName fieldDecls pos) = do

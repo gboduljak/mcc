@@ -25,6 +25,9 @@ source-repository head
 
 library
   exposed-modules:
+      Codegen.Codegen
+      Codegen.Env
+      Codegen.TypeMappings
       Lexer.AdHoc.Lexer
       Lexer.AdHoc.LexError
       Lexer.AdHoc.LexState
@@ -73,10 +76,12 @@ library
       Semant.Errors.SemantErrorBundle
       Semant.Exports
       Semant.Operators.Cond
-      Semant.Scope
       Semant.Semant
       Semant.SemanticAnalyser
       Semant.Type
+      SymbolTable.Scope
+      SymbolTable.ScopingEnv
+      SymbolTable.SymbolTable
       Utils.CharPredicates
   other-modules:
       Paths_mcc
@@ -89,6 +94,8 @@ library
     , directory
     , filepath
     , hspec
+    , llvm-hs-pretty >=0.9 && <1
+    , llvm-hs-pure ==9.*
     , megaparsec
     , mtl
     , pretty-terminal
@@ -110,6 +117,8 @@ executable mcc-exe
     , directory
     , filepath
     , hspec
+    , llvm-hs-pretty >=0.9 && <1
+    , llvm-hs-pure ==9.*
     , mcc
     , megaparsec
     , mtl
@@ -142,6 +151,8 @@ test-suite mcc-test
     , directory
     , filepath
     , hspec
+    , llvm-hs-pretty >=0.9 && <1
+    , llvm-hs-pure ==9.*
     , mcc
     , megaparsec
     , mtl

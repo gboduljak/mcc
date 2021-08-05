@@ -24,6 +24,7 @@ import Semant.Errors.SemantError hiding (Void)
 import Semant.Operators.Cond ((<||>), (|>), (||>))
 import Semant.Semant
 import Semant.Type
+import SymbolTable.SymbolTable (lookupVar)
 
 analyseMaybeExpr :: Maybe Expr -> Semant SExpr
 analyseMaybeExpr (Just expr) = analyseExpr expr

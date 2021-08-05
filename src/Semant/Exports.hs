@@ -27,6 +27,7 @@ import Parser.Errors.PrettyPrinter (prettyPrintErrors)
 import Data.Text (pack)
 import Data.Text.Prettyprint.Doc.Render.String (renderString)
 import Data.Text.Prettyprint.Doc (layoutSmart, defaultLayoutOptions, Pretty (pretty))
+import Semant.Type (Type)
 
 analyseExpr :: Ast.Expr -> Either [SemantError] SExpr
 analyseExpr expr = case result of
@@ -35,28 +36,28 @@ analyseExpr expr = case result of
   where
     result = evalState (runWriterT (ExprAnalyser.analyseExpr expr)) getBaseEnv
 
-analyseExprStateful :: Ast.Expr -> Env -> Either [SemantError] SExpr
+analyseExprStateful :: Ast.Expr -> Env Type -> Either [SemantError] SExpr
 analyseExprStateful expr env = case result of
   (expr, []) -> Right expr
   (_, errors) -> Left errors
   where
     result = evalState (runWriterT (ExprAnalyser.analyseExpr expr)) env
 
-analyseStmtStateful :: Ast.Statement -> Env -> Either [SemantError] SStatement
+analyseStmtStateful :: Ast.Statement -> Env Type -> Either [SemantError] SStatement
 analyseStmtStateful stmt env = case result of
   (stmt, []) -> Right stmt
   (_, errors) -> Left errors
   where
     result = evalState (runWriterT (analyseStatement stmt)) env
 
-analyseProg :: String -> String -> [Token] -> Ast.Program -> Env -> Either (ParseErrorBundle TokenStream Void, String) (SProgram, Env)
+analyseProg :: String -> String -> [Token] -> Ast.Program -> Env Type -> Either (ParseErrorBundle TokenStream Void, String) (SProgram, Env Type)
 analyseProg file input tokens prog env = case result of
   (prog, []) -> Right (fst result, env')
   (_, errors) -> Left (bundleSemantErrors file tokens errors, input)
   where
     (result, env') = runState (runWriterT (analyse prog)) env
 
-analyseProgs :: [(String, String, [Token], Ast.Program)] -> Env -> Either (ParseErrorBundle TokenStream Void, String) [SProgram]
+analyseProgs :: [(String, String, [Token], Ast.Program)] -> Env Type -> Either (ParseErrorBundle TokenStream Void, String) [SProgram]
 analyseProgs [] _ = Left (bundleSemantErrors "" [] [EmptyProgram], "")
 analyseProgs [(file, input, tokens, program)] env = case analyseProg file input tokens program env of
   (Left errors) -> Left errors

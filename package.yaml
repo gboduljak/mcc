@@ -31,7 +31,8 @@ dependencies:
 - filepath
 - hspec
 - pretty-terminal
-
+- llvm-hs-pure >= 9 && < 10
+- llvm-hs-pretty >= 0.9 && < 1
 library:
   source-dirs: src
 

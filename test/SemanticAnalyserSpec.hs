@@ -21,7 +21,7 @@ import Preprocessor.IncludesPreprocessor (preprocess)
 import Semant.Ast.SemantAst as SAst hiding (funcs, structs)
 import Semant.Env (Env (bindingLoc))
 import Semant.Errors.SemantError (BindingLoc (..), SemantError)
-import Semant.Scope (Scope (..), rootScopeId, symbolTable)
+import SymbolTable.Scope (Scope (..), rootScopeId, symbolTable)
 import Semant.Semant (getBaseEnv)
 import Semant.Exports (analyseExpr, analyseExprStateful, analyseProg, analyseProgs)
 import Semant.Type

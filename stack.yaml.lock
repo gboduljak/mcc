@@ -10,4 +10,11 @@ snapshots:
     sha256: c632012da648385b9fa3c29f4e0afd56ead299f1c5528ee789058be410e883c0
     url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/0.yaml
     size: 585393
-packages: []
+packages:
+- original:
+    hackage: llvm-hs-pretty-0.9.0.0@sha256:b7a5de5f3dd97893d19d2b47af1e4dd8d075a5cf57062180a912d1f3ef1def60,1671
+  completed:
+    pantry-tree:
+      sha256: 8cf6d628bb4f962575ad0993bb1010e9989cea00b325b8a45ac35ac201061386
+      size: 4685
+    hackage: llvm-hs-pretty-0.9.0.0@sha256:b7a5de5f3dd97893d19d2b47af1e4dd8d075a5cf57062180a912d1f3ef1def60,1671

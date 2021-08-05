@@ -17,7 +17,7 @@ import qualified Parser.Pratt.Parser as PrattParser (parseStatements)
 import Semant.Ast.SemantAst as SAst hiding (funcs, structs)
 import Semant.Env (Env (..))
 import Semant.Errors.SemantError (BindingLoc (..))
-import Semant.Scope (Scope (..), rootScopeId, symbolTable)
+import SymbolTable.Scope (Scope (..), rootScopeId, symbolTable)
 import Semant.Exports (analyseStmtStateful)
 import Semant.Type
 import System.Console.Pretty (supportsPretty)
@@ -46,7 +46,7 @@ statementsPassingSpec =
     path = "./test/tests-cases/typechecking/statements-passes.txt"
 
 
-testEnv :: Env
+testEnv :: Env Semant.Type.Type
 testEnv =
   Env
     { funcs = Map.empty,
@@ -56,12 +56,12 @@ testEnv =
       bindingLoc = Toplevel
     }
 
-rootScope :: Scope
+rootScope :: Scope Semant.Type.Type
 rootScope =
   Scope
     { id = rootScopeId,
       parentId = Nothing,
       symbolTable = Map.fromList [
-        ("a", ("a", Scalar (PrimitiveType Int 0)))
+        ("a", Scalar (PrimitiveType Int 0))
       ]
     }

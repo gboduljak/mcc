@@ -3,7 +3,7 @@ import Typechecker.Utils.SpecUtils
 import Semant.Ast.SemantAst as SAst hiding (funcs, structs)
 import Semant.Env (Env (..))
 import Semant.Errors.SemantError (BindingLoc (..))
-import Semant.Scope (Scope (..), rootScopeId, symbolTable)
+import SymbolTable.Scope (Scope (..), rootScopeId, symbolTable)
 import Semant.Exports (analyseStmtStateful)
 import qualified Data.Map as Map
 import Semant.Type
@@ -31,7 +31,7 @@ typechecksArraysPtrsDerefsFailingSpec = getStmtSpec specDesc testDesc path test
     path = "./test/tests-cases/typechecking/arrays-ptrs-derefs-failures.txt"
     test = \expr -> isLeft (analyseStmtStateful expr testEnv) `shouldBe` True
 
-testEnv :: Env
+testEnv :: (Env Semant.Type.Type)
 testEnv =
   Env
     { funcs = Map.empty,
@@ -40,17 +40,17 @@ testEnv =
       currentScopeId = rootScopeId,
       bindingLoc = Toplevel
     }
-rootScope :: Scope
+rootScope :: (Scope Semant.Type.Type)
 rootScope =
   Scope
     { id = rootScopeId,
       parentId = Nothing,
       symbolTable = Map.fromList [
-        ("ptr", ("ptr", Scalar (PrimitiveType Int 1))),
-        ("ptr2", ("ptr2", Scalar (PrimitiveType Int 2))),
-        ("arr", ("arr", Array (PrimitiveType Int 0) [10])),
-        ("arr2", ("arr2", Array (PrimitiveType Int 0) [10, 20])),
-        ("bag", ("bag", Array (PrimitiveType Int 3) [10, 20])),
-        ("x", ("x", Scalar (PrimitiveType Int 0)))
+        ("ptr", Scalar (PrimitiveType Int 1)),
+        ("ptr2",  Scalar (PrimitiveType Int 2)),
+        ("arr", Array (PrimitiveType Int 0) [10]),
+        ("arr2", Array (PrimitiveType Int 0) [10, 20]),
+        ("bag", Array (PrimitiveType Int 3) [10, 20]),
+        ("x", Scalar (PrimitiveType Int 0))
       ]
     }
