@@ -32,3 +32,6 @@ builtins =
         body = Just (SBlock [])
       }
   ]
+
+isBuiltin :: SFunction -> Bool 
+isBuiltin func = func `elem` builtins

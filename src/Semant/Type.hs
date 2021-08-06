@@ -30,6 +30,9 @@ isCond condTyp =
 voidTyp :: Type
 voidTyp = Scalar (Ast.PrimitiveType Void 0)
 
+isVoid :: Type -> Bool 
+isVoid typ = typ == voidTyp
+
 isInt :: Type -> Bool
 isInt (Scalar (Ast.PrimitiveType Int 0)) = True
 isInt _ = False

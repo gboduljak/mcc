@@ -31,6 +31,9 @@ import System.Console.Pretty
 import System.Environment (getArgs)
 import Text.Megaparsec (ParseErrorBundle (ParseErrorBundle))
 import Prelude hiding (lex)
+import LLVM.Pretty (ppllvm)
+import Codegen.Compiler (compile)
+import Data.Text.Lazy (unpack)
 
 main :: IO ()
 main = do
@@ -61,6 +64,8 @@ main = do
               traverse_
                 ( \(file, tree) -> do
                     writeFile (file ++ ".sast.dot") (visualiseSemantAst tree)
+                    print  (compile file tree)
+                    putStrLn $ unpack $ ppllvm (compile file tree)
                 )
                 (zip order trees)
         else do

@@ -9,10 +9,11 @@ import LLVM.AST (Operand)
 import Semant.Ast.SemantAst (SStruct)
 import Data.Map (Map)
 import SymbolTable.ScopingEnv ( ScopingEnv(..) )
-import SymbolTable.Scope (ScopeId, Scope)
+import SymbolTable.Scope (ScopeId, Scope, rootScopeId, rootScope)
 import Control.Monad.RWS (MonadState)
 import SymbolTable.SymbolTable (defineVar)
 import Control.Monad (void)
+import qualified GHC.Exts as Map
 
 data Env a = Env {
     structs :: [SStruct],
@@ -20,6 +21,15 @@ data Env a = Env {
     scopes :: Map ScopeId (Scope a),
     currentScopeId :: ScopeId
 } deriving (Eq, Show)
+
+
+emptyEnv :: Env Operand
+emptyEnv = Env {
+  structs = [],
+  strings = Map.fromList [],
+  scopes = Map.fromList [(rootScopeId, rootScope)],
+  currentScopeId = rootScopeId
+} 
 
 instance ScopingEnv Env where
   scopes = Codegen.Env.scopes
