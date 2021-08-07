@@ -7,17 +7,17 @@ module Codegen.Env where
 
 import LLVM.AST (Operand)
 import Semant.Ast.SemantAst (SStruct)
-import Data.Map (Map)
+import qualified Data.Map as Map (Map, fromList, empty)
 import SymbolTable.ScopingEnv ( ScopingEnv(..) )
 import SymbolTable.Scope (ScopeId, Scope, rootScopeId, rootScope)
-import Control.Monad.RWS (MonadState)
+import Control.Monad.RWS (MonadState, modify)
 import SymbolTable.SymbolTable (defineVar)
 import Control.Monad (void)
-import qualified GHC.Exts as Map
+import Data.Map (Map)
 
 data Env a = Env {
     structs :: [SStruct],
-    strings :: Map String a,
+    funcs :: Map String a,
     scopes :: Map ScopeId (Scope a),
     currentScopeId :: ScopeId
 } deriving (Eq, Show)
@@ -26,10 +26,10 @@ data Env a = Env {
 emptyEnv :: Env Operand
 emptyEnv = Env {
   structs = [],
-  strings = Map.fromList [],
+  funcs = Map.empty,
   scopes = Map.fromList [(rootScopeId, rootScope)],
   currentScopeId = rootScopeId
-} 
+}
 
 instance ScopingEnv Env where
   scopes = Codegen.Env.scopes
@@ -40,7 +40,7 @@ instance ScopingEnv Env where
 modifyScopes :: Env a -> Map ScopeId (Scope a) -> Env a
 modifyScopes Env{..} newScopes = Env {
   structs,
-  strings,
+  funcs,
   scopes = newScopes,
   currentScopeId
 }
@@ -48,7 +48,7 @@ modifyScopes Env{..} newScopes = Env {
 modifyCurrentScopeId :: Env a -> ScopeId-> Env a
 modifyCurrentScopeId Env {..} scopeId = Env {
   structs,
-  strings,
+  funcs,
   scopes,
   currentScopeId = scopeId
 }

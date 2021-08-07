@@ -1,22 +1,23 @@
 module Semant.Builtins where
 
-import Lexer.Lexeme (BuiltinType (Int, Void))
+import Lexer.Lexeme (BuiltinType (Int, Void, Char))
 import qualified Parser.Ast as Ast
 import Semant.Ast.SemantAst
 import Semant.Type
+import Parser.Ast
 
 builtins :: [SFunction]
 builtins =
   [ SFunction
       { returnType = voidTyp,
         funcName = "printf",
-        formals = [],
+        formals = [SFormal (Scalar (Ast.PrimitiveType Char 1)) "formatStr"],
         body = Just (SBlock [])
       },
     SFunction
       { returnType = voidTyp,
         funcName = "scanf",
-        formals = [],
+        formals = [SFormal (Scalar (Ast.PrimitiveType Char 1)) "formatStr"],
         body = Just (SBlock [])
       },
     SFunction

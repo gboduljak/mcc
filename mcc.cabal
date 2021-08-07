@@ -29,6 +29,8 @@ library
       Codegen.Compiler
       Codegen.Env
       Codegen.Exports
+      Codegen.Generators.Builtins
+      Codegen.Generators.Expression
       Codegen.Generators.Function
       Codegen.Generators.Program
       Codegen.Generators.Statement
