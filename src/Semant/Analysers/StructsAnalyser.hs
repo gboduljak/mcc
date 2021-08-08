@@ -23,7 +23,6 @@ import Semant.Analysers.StatementsAnalyser
 import Semant.Ast.SemantAst
 import Semant.Ast.SemantAstVisualiser (visualise, visualiseSemantAst)
 import Semant.Errors.SemantError hiding (Void)
-import Semant.Operators.Cond ((<||>), (|>), (||>))
 import Semant.Semant
 import Semant.Type
 import SymbolTable.SymbolTable (enterScope, exitScope)

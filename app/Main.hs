@@ -65,7 +65,6 @@ main = do
               traverse_
                 ( \(file, tree) -> do
                     writeFile (file ++ ".sast.dot") (visualiseSemantAst tree)
-                    print  (compile file tree)
                     let llvm = unpack $ ppllvm (compile file tree)
                     putStrLn llvm
                     writeFile (replaceExtension file ".ll") llvm

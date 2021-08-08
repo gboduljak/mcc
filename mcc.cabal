@@ -82,7 +82,6 @@ library
       Semant.Errors.SemantError
       Semant.Errors.SemantErrorBundle
       Semant.Exports
-      Semant.Operators.Cond
       Semant.Semant
       Semant.SemanticAnalyser
       Semant.Type
@@ -90,6 +89,7 @@ library
       SymbolTable.ScopingEnv
       SymbolTable.SymbolTable
       Utils.CharPredicates
+      Utils.Cond
   other-modules:
       Paths_mcc
   hs-source-dirs:

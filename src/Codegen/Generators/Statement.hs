@@ -31,7 +31,7 @@ generateMaybeStatement Nothing = return ()
 generateStatement :: SStatement -> Codegen ()
 generateStatement (SExpr expr@(_, SCall _ _)) = void $ generateExpression expr
 generateStatement (SExpr expr@(_, SAssign _ _)) = void $ generateExpression expr
-generateStatement (SExpr _) = return () -- this statement does not make sense
+generateStatement (SExpr _) = return () -- statements of this type do not make sense
 generateStatement (SBlockStatement block) = generateBlock block
 generateStatement (SVarDeclStatement varDecl) = generateVarDecl varDecl
 generateStatement (SDoWhile cond body) = do
@@ -44,7 +44,7 @@ generateStatement (SDoWhile cond body) = do
   generateStatement body
   condExpr <- generateExpression cond
   thruty <- L.icmp L.IntegerPredicate.NE condExpr (L.int32 0)
-  L.condBr thruty bodyName exitName
+  generateTerm (L.condBr thruty bodyName exitName)
 
   L.emitBlockStart exitName
 
@@ -67,6 +67,7 @@ generateStatement (SIf cond conseq alt) = do
 
   L.emitBlockStart mergeName
 
+-- handle return struct by value, we know we are sreting so write into sret arg
 generateStatement (SReturn (_, SEmptyExpr)) = L.retVoid 
 generateStatement (SReturn expr) = do
   exp <- generateExpression expr

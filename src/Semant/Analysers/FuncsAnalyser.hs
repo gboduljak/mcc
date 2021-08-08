@@ -21,7 +21,6 @@ import Semant.Analysers.ExpressionsAnalyser (analyseExpr, analyseMaybeExpr)
 import Semant.Analysers.StatementsAnalyser (analyseBlock)
 import Semant.Ast.SemantAst
 import Semant.Errors.SemantError as E hiding (bindingLoc)
-import Semant.Operators.Cond ((<||>), (|>), (||>))
 import Semant.Semant as S
 import Semant.Type (Type (Any, Array, Scalar), isChar, isCond, isDouble, isInt, isPointer)
 import System.Directory.Internal.Prelude (traverse_)

@@ -21,7 +21,7 @@ import Semant.Analysers.CallArgAnalyser (analyseArgBind)
 import Semant.Ast.SemantAst
 import Semant.Ast.SemantAstVisualiser (visualise, visualiseSemantAst)
 import Semant.Errors.SemantError hiding (Void)
-import Semant.Operators.Cond ((<||>), (|>), (||>))
+import Utils.Cond ((<||>), (|>), (||>))
 import Semant.Semant
 import Semant.Type
 import SymbolTable.SymbolTable (lookupVar)
