@@ -25,6 +25,13 @@ jmoragPrograms =
     "./test/tests-cases/jmorag/gcd2/"
   ]
 
+gabrijelPrograms :: [String]
+gabrijelPrograms =
+  [ "./test/tests-cases/gabrijel/array1/", 
+    "./test/tests-cases/gabrijel/ptr-matrix1/",
+    "./test/tests-cases/gabrijel/sophisticated-linear-algebra/"
+  ]
+
 sortingPrograms :: [String]
 sortingPrograms =
   [ "./test/tests-cases/sorting/counting-sort/",

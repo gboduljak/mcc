@@ -55,10 +55,10 @@ generateExpression (_, SNegative expr@(exprTyp, _))
   | otherwise = error ("semantic analysis failed on:" ++ show expr)
 generateExpression (_, SSizeof (Left (SizeofType baseTyp arraySizes))) = do 
   size <- fromIntegral <$> llvmSizeOf (Array baseTyp arraySizes)
-  return (L.int64 size)
+  return (L.int32 size)
 generateExpression (_, SSizeof (Right (exprTyp, _))) = do
   typSize <- fromIntegral <$> llvmSizeOf exprTyp
-  return (L.int64 typSize)
+  return (L.int32 typSize)
 generateExpression expr@(targetTyp, STypecast _ srcExpr@(exprTyp, _)) = do
   expr' <- generateExpression srcExpr
   exprTyp' <- llvmType exprTyp
@@ -83,6 +83,7 @@ generateExpression (_, SCall func actualExprs) = do
   -- load depending on whether arr, struct or expr typ
   -- expressions involving struct or expr type in identifier 
   -- posn are all invalid except assign
+generateExpression (Array _ _, LVal val) = generateLVal val
 generateExpression (_, LVal val) = flip L.load 0 =<< generateLVal val
 -- assign struct and array is special, perform copy there
 generateExpression (_, SAssign (_, LVal val) expr) = do
@@ -179,4 +180,9 @@ generateCallArg (typ, op) = return op -- incorporate byval for structs
 generateLVal :: LValue -> Codegen Operand
 generateLVal (SIdent name) = fromJust <$> lookupVar name
 generateLVal (SDeref expr) = generateExpression expr
+generateLVal (SArrayAccess expr indexExprs) = do
+  accessOp <- generateExpression expr
+  indexers <- mapM generateExpression indexExprs
+  L.gep accessOp (L.int32 0 : indexers)
+generateLVal (SNoAddrLVal) = error "semantic analyser failed to detect invalid lval"
   -- expr is a pointer type, which is loaded by generateExpr

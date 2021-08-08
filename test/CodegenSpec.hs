@@ -36,7 +36,8 @@ import TestCases
   ( dynamicProgrammingPrograms,
     miniPrograms,
     sortingPrograms,
-    jmoragPrograms
+    jmoragPrograms,
+    gabrijelPrograms
   )
 import Prelude hiding (id, lex)
 import Codegen.Compiler (compile)
@@ -46,29 +47,13 @@ import Data.List
 
 jmoragProgramsSpec :: Spec
 jmoragProgramsSpec = do
-  describe "compiles programs taken from https://github.com/jmorag/mcc/ ..." $ do
+  describe "correctly compiles programs taken from https://github.com/jmorag/mcc/ ..." $ do
     mapM_ codegenProgram jmoragPrograms
 
-
--- miniProgramsSpec :: Spec
--- miniProgramsSpec = do
---   describe "semantically analysing mini programs ..." $ do
---     mapM_ codegenProgram miniPrograms
-
--- sortingSpec :: Spec
--- sortingSpec = do
---   describe "semantically analysing sorting programs ..." $ do
---     mapM_ codegenProgram sortingPrograms
-
--- dynamicProgrammingSpec :: Spec
--- dynamicProgrammingSpec = do
---   describe "semantically analysing dynamic programming programs ..." $ do
---     mapM_ codegenProgram dynamicProgrammingPrograms
-
--- ticTacToeSpec :: Spec
--- ticTacToeSpec =
---   describe "semantically analysing tic tac toe program ..." $ do
---     codegenProgram "./test/tests-cases/tictactoe/"
+gabrijelProgramsSpec :: Spec
+gabrijelProgramsSpec = do
+  describe "correctly compiles Gabrijel's interesting programs..." $ do
+    mapM_ codegenProgram gabrijelPrograms
 
 codegenProgram :: String -> SpecWith ()
 codegenProgram folder = it ("compiles program " ++ folder ++ "...") $ do

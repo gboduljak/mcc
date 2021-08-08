@@ -165,7 +165,7 @@ analyseExpr expr@(Assign left right _) = do
       (Any, _) -> return (Any, SAssign left' right')
       (_, Any) -> return (Any, SAssign left' right')
       (_, _) -> do
-        if leftTyp == rightTyp
+        if leftTyp == rightTyp && (not . isArray) leftTyp -- arrays are not assignable
           then return (leftTyp, SAssign left' right')
           else
             registerError (AssignmentError left right)
