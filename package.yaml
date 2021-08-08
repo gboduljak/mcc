@@ -35,6 +35,7 @@ dependencies:
 - llvm-hs-pretty >= 0.9 && < 1
 - bytestring
 - string-conversions
+- process
 library:
   source-dirs: src
 

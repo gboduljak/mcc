@@ -26,3 +26,6 @@ cabal.project.local~
 *.sast.*
 .vscode
 node_modules
+*.txt
+*.out
+*.ll

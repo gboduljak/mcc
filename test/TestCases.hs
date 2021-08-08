@@ -12,6 +12,19 @@ miniPrograms =
     "./test/tests-cases/mini/palindrome/"
   ]
 
+jmoragPrograms :: [String]
+jmoragPrograms =
+  [ "./test/tests-cases/jmorag/add1/", 
+    "./test/tests-cases/jmorag/arith1/", 
+    "./test/tests-cases/jmorag/arith2/",
+    "./test/tests-cases/jmorag/arith3/",
+    "./test/tests-cases/jmorag/bitwise-ops/",
+    "./test/tests-cases/jmorag/fib/",
+    "./test/tests-cases/jmorag/local2/",
+    "./test/tests-cases/jmorag/gcd1/",
+    "./test/tests-cases/jmorag/gcd2/"
+  ]
+
 sortingPrograms :: [String]
 sortingPrograms =
   [ "./test/tests-cases/sorting/counting-sort/",

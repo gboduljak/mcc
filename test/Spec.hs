@@ -5,7 +5,8 @@ import qualified SemanticAnalyserSpec (dynamicProgrammingSpec, miniProgramsSpec,
 import Test.Hspec (hspec)
 import qualified Typechecker.LiteralExpressionsSpec (typechecksFailingLiteralExpressionsSpec, typechecksLiteralExpressionsSpec, typechecksStatefulExpressionsSpec)
 import qualified Typechecker.ArraysPtrsDerefsSpec (typechecksArraysPtrsDerefsPassingSpec, typechecksArraysPtrsDerefsFailingSpec)
-import qualified Typechecker.StatementsSpec(statementsPassingSpec)
+import qualified Typechecker.StatementsSpec (statementsPassingSpec)
+import qualified CodegenSpec (jmoragProgramsSpec)
 main :: IO ()
 main = do
   hspec LexerSpec.miniProgramsSpec
@@ -27,3 +28,4 @@ main = do
   hspec Typechecker.ArraysPtrsDerefsSpec.typechecksArraysPtrsDerefsPassingSpec
   hspec Typechecker.ArraysPtrsDerefsSpec.typechecksArraysPtrsDerefsFailingSpec
   hspec Typechecker.StatementsSpec.statementsPassingSpec
+  hspec CodegenSpec.jmoragProgramsSpec
