@@ -85,6 +85,7 @@ generateBody :: LLVM.AST.Type.Type -> SBlock -> [(LLVM.AST.Type.Type, String)] -
 generateBody retTyp  body opMeta ops = do
   L.block `L.named` cs "entry"
   enterScope
+  retValPtr <- L.alloca retTyp Nothing 0
   mapM_ (\((typ, name), op) -> do
     addr <- L.alloca typ Nothing 0
     L.store addr 0 op
@@ -97,7 +98,6 @@ generateBody retTyp  body opMeta ops = do
     else do 
       generateTerm (
         do
-          retValPtr <- L.alloca retTyp Nothing 0
           retVal <- L.load retValPtr 0
           L.ret retVal
         )

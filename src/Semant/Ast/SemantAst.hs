@@ -54,7 +54,7 @@ data SExpr'
   | SNull
   | SEmptyExpr
   | SBinop SExpr InfixOp SExpr
-  | SAddressOf SExpr
+  | SAddressOf LValue
   | SNegate SExpr
   | SNegative SExpr
   | SSizeof (Either Ast.Type SExpr)
@@ -69,6 +69,7 @@ data LValue
   | SIdent String
   | SFieldAccess SExpr String
   | SArrayAccess SExpr [SExpr]
+  | SNoAddrLVal
   deriving (Show, Eq)
 
 getFields :: String -> SStruct -> [SVarDecl]

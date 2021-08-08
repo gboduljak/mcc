@@ -14,8 +14,7 @@ import Codegen.Codegen (Codegen, LLVM)
 charPtr :: LLVM.AST.Type
 charPtr = LLVM.AST.ptr LLVM.AST.i8
 
-
-llvmType :: Semant.Type -> LLVM LLVM.AST.Type
+llvmType :: (MonadState (Env a) m) => Semant.Type -> m LLVM.AST.Type
 llvmType (Scalar (PrimitiveType Void 0)) = return LLVM.AST.void
 llvmType (Scalar (PrimitiveType Int 0)) = return LLVM.AST.i32
 llvmType (Scalar (PrimitiveType Char 0)) = return LLVM.AST.i8
@@ -25,3 +24,10 @@ llvmType (Scalar (PrimitiveType typ ptrs)) = do
   innerTyp <- llvmType (Scalar (PrimitiveType typ (ptrs - 1)))
   return (LLVM.AST.ptr innerTyp)
 llvmType _ = undefined
+
+llvmSizeOf :: (MonadState (Env a) m) => Semant.Type.Type -> m Int
+llvmSizeOf (Scalar (PrimitiveType Char 0)) = return 1
+llvmSizeOf (Scalar (PrimitiveType Int 0)) = return 4
+llvmSizeOf (Scalar (PrimitiveType Double 0)) = return 8
+llvmSizeOf (Scalar (PrimitiveType Void 0)) = return 0
+llvmSizeOf (Scalar (PrimitiveType _ ptrs)) = return 8

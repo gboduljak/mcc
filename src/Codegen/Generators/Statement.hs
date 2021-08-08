@@ -3,7 +3,7 @@ module Codegen.Generators.Statement
 where 
 
 import Codegen.Codegen
-import Semant.Ast.SemantAst (SStatement(..), SBlock(..), SVarDecl (..), SExpr' (SEmptyExpr))
+import Semant.Ast.SemantAst (SStatement(..), SBlock(..), SVarDecl (..), SExpr' (SEmptyExpr, SCall, SAssign))
 import Codegen.Generators.Expression (generateExpression)
 import Control.Monad (void)
 import SymbolTable.SymbolTable ( enterScope, exitScope )
@@ -29,28 +29,43 @@ generateMaybeStatement (Just stmt) = generateStatement stmt
 generateMaybeStatement Nothing = return ()
 
 generateStatement :: SStatement -> Codegen ()
-generateStatement (SExpr expr) = void $ generateExpression expr
+generateStatement (SExpr expr@(_, SCall _ _)) = void $ generateExpression expr
+generateStatement (SExpr expr@(_, SAssign _ _)) = void $ generateExpression expr
+generateStatement (SExpr _) = return () -- this statement does not make sense
 generateStatement (SBlockStatement block) = generateBlock block
 generateStatement (SVarDeclStatement varDecl) = generateVarDecl varDecl
-generateStatement (SDoWhile cond body) = undefined
+generateStatement (SDoWhile cond body) = do
+  bodyName <- freshName (cs "loop.body")
+  exitName <- freshName (cs "loop.exit")
+
+  generateTerm (L.br bodyName)
+
+  L.emitBlockStart bodyName
+  generateStatement body
+  condExpr <- generateExpression cond
+  thruty <- L.icmp L.IntegerPredicate.NE condExpr (L.int32 0)
+  L.condBr thruty bodyName exitName
+
+  L.emitBlockStart exitName
+
 generateStatement (SIf cond conseq alt) = do
-  freshConseq <- freshName (cs "if.conseq")
-  freshAlt <- freshName (cs "if.alt")
-  freshMerge <- freshName (cs "if.merge")
+  conseqName <- freshName (cs "if.conseq")
+  altName <- freshName (cs "if.alt")
+  mergeName <- freshName (cs "if.merge")
 
   condExpr <- generateExpression cond
   thruty <- L.icmp L.IntegerPredicate.NE condExpr (L.int32 0)
-  L.condBr thruty freshConseq freshAlt
+  L.condBr thruty conseqName altName
 
-  L.emitBlockStart freshConseq
+  L.emitBlockStart conseqName
   generateStatement conseq
-  generateTerm (L.br freshMerge)
+  generateTerm (L.br mergeName)
 
-  L.emitBlockStart freshAlt
+  L.emitBlockStart altName
   generateMaybeStatement alt 
-  generateTerm (L.br freshMerge)
+  generateTerm (L.br mergeName)
 
-  L.emitBlockStart freshMerge
+  L.emitBlockStart mergeName
 
 generateStatement (SReturn (_, SEmptyExpr)) = L.retVoid 
 generateStatement (SReturn expr) = do

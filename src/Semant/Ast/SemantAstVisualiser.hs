@@ -399,7 +399,16 @@ instance SemantAstDrawable LValue where
       indices
     connect accessId targetId
     return accessId
-
+  visualise SNoAddrLVal = do
+    noAddrId <- nextId
+    emit
+      ( "    node"
+          ++ show noAddrId
+          ++ "[label=\"<f0>"
+          ++ "no address lval"
+          ++ "\", shape=record]"
+      )
+    return noAddrId
 instance SemantAstDrawable SExpr where
   visualise (typ, SCall func actuals) = do
     callId <- nextId

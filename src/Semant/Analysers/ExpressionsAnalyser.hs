@@ -77,12 +77,12 @@ analyseExpr (AddressOf expr _) = do
   sexpr'@(typ, sexpr) <- analyseExpr expr
   case (typ, sexpr) of
     (Any, LVal lval) ->
-      return (Any, SAddressOf sexpr')
+      return (Any, SAddressOf lval)
     (Scalar (PrimitiveType typ' ptrs), LVal lval) ->
-      return (Scalar (PrimitiveType typ' (ptrs + 1)), SAddressOf sexpr')
+      return (Scalar (PrimitiveType typ' (ptrs + 1)), SAddressOf lval)
     (Scalar (StructType name ptrs), LVal lval) ->
-      return (Scalar (StructType name (ptrs + 1)), SAddressOf sexpr')
-    _ -> registerError (AddressError expr) >> return (Any, SAddressOf sexpr')
+      return (Scalar (StructType name (ptrs + 1)), SAddressOf lval)
+    _ -> registerError (AddressError expr) >> return (Any, SAddressOf SNoAddrLVal)
 analyseExpr (Deref expr _) = do
   sexpr'@(typ, sexpr) <- analyseExpr expr
   if isPointer typ
