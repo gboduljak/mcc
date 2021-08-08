@@ -6,9 +6,10 @@ import Semant.Ast.SemantAst (SProgram)
 import qualified LLVM.AST
 import LLVM.IRBuilder.Module (buildModuleT)
 import Data.String.Conversions (cs)
-import Control.Monad.State (evalState)
+import Control.Monad.State (evalState, evalStateT)
 import Codegen.Env (emptyEnv)
 import Data.String (IsString(fromString))
+import Control.Monad.Identity (Identity(runIdentity))
 
 compile :: String -> SProgram -> LLVM.AST.Module
-compile name program = evalState (buildModuleT (cs "test") (generateProgram program)) emptyEnv
+compile name program = evalState (buildModuleT (cs name) (generateProgram program)) emptyEnv

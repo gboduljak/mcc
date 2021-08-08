@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# LANGUAGE BangPatterns #-}
 module Codegen.Generators.Expression 
 
 where 
@@ -15,6 +16,11 @@ import LLVM.AST.Operand
 import Data.Maybe (fromJust)
 import SymbolTable.SymbolTable (lookupVar)
 import qualified Semant.Type
+import Debug.Trace (traceShowId)
+import Control.Monad.State
+import qualified Codegen.Env
+import qualified Data.Map
+import qualified Data.Map as Map
 
 generateExpression :: SExpr -> Codegen Operand
 generateExpression (_, SLitInt x) = return (L.int32 (fromIntegral x))
@@ -33,8 +39,8 @@ generateExpression (_, SAssign (_, LVal val) expr) = do
 generateExpression (_, SCall func actualExprs) = do 
   actuals <- mapM generateExpression actualExprs
   args <- mapM generateCallArg $ zip (fst <$> actualExprs) actuals
-  func <- lookupFunc func
-  L.call func [(arg, []) | arg <- args] -- handle pass struct byval
+  callee <- lookupFunc func
+  L.call callee [(arg, []) | arg <- args] -- handle pass struct byval
 
 generateCallArg :: (Semant.Type.Type, Operand) -> Codegen Operand 
 generateCallArg (typ, op) = pure op

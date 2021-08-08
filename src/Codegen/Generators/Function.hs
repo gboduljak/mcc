@@ -5,7 +5,6 @@ module Codegen.Generators.Function
 where
 
 import Semant.Ast.SemantAst (SFunction (..), SFormal (SFormal), SBlock (SBlock))
-import Codegen.Codegen
 import Codegen.Generators.Common (generateTerm)
 import qualified Semant.Type (isVoid, Type)
 import Codegen.TypeMappings (llvmType)
@@ -24,24 +23,30 @@ import qualified GHC.Base as AST
 import qualified LLVM.AST.Type
 import Semant.Type (Type(Scalar))
 import Parser.Ast (Type(StructType))
-import Codegen.Env (registerOperand)
-import Codegen.Codegen (registerFunc)
-import Debug.Trace (traceShowId)
+import Codegen.Env (registerOperand, Env (funcs))
+import Codegen.Codegen (registerFunc, LLVM)
+import Control.Monad.State (get, gets, MonadTrans (lift))
+import Control.Monad
+import qualified Data.Map as Map
 
-generateFunction :: SFunction -> LLVM ()
-generateFunction func@SFunction{..}
+
+generateFunctionDecl :: SFunction -> LLVM ()
+generateFunctionDecl func@SFunction{..} =  do
+  funcSign <- llvmFuncSignature func
+  tempFuncOperand <- llvmFuncOperand (funcType funcSign) (mkName funcName)
+  registerFunc funcName tempFuncOperand
+
+generateFunctionDefn :: SFunction -> LLVM ()
+generateFunctionDefn func@SFunction{..}
   | (not . hasBody) body = return ()
   | isBuiltin func = generateBuiltin func
   | otherwise = do
       funcSign <- llvmFuncSignature func
-      tempFuncOperand <- llvmFuncOperand (funcType funcSign) (mkName funcName)
-      registerFunc funcName tempFuncOperand
       actualFuncOperand <- L.function
         (mkName funcName)
         [(paramTyp, ParameterName (cs paramName)) | (paramTyp, paramName) <- funcParams funcSign]
         (funcRetTyp funcSign) (generateBody (funcRetTyp funcSign) funcBody (funcParams funcSign))
-      registerFunc funcName (traceShowId actualFuncOperand)
-      return ()
+      registerFunc funcName actualFuncOperand
 
   where
     funcBody = extractBody body
@@ -71,13 +76,13 @@ llvmFuncSignature SFunction{..} = do
 
 llvmParamType :: Semant.Type.Type -> LLVM LLVM.AST.Type
 llvmParamType (Scalar (StructType name 0)) = return undefined -- implement as a byval struct pointer
-llvmParamType typ = llvmType typ
+llvmParamType typ =  llvmType typ
 
 llvmFuncOperand :: LLVM.AST.Type -> Name -> LLVM Operand
 llvmFuncOperand funcTyp funcName = return (ConstantOperand $ GlobalReference funcTyp funcName)
 
-generateBody :: LLVM.AST.Type -> SBlock -> [(LLVM.AST.Type, String)] -> [Operand] -> Codegen ()
-generateBody retTyp body opMeta ops = do
+generateBody :: LLVM.AST.Type.Type -> SBlock -> [(LLVM.AST.Type.Type, String)] -> [Operand] -> Codegen ()
+generateBody retTyp  body opMeta ops = do
   L.block `L.named` cs "entry"
   enterScope
   mapM_ (\((typ, name), op) -> do
