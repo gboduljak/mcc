@@ -24,7 +24,7 @@ import qualified LLVM.AST.Type
 import Semant.Type (Type(Scalar))
 import Parser.Ast (Type(StructType))
 import Codegen.Env (registerOperand, Env (funcs))
-import Codegen.Codegen (registerFunc, LLVM)
+import Codegen.Codegen (registerFunc, LLVM, Codegen)
 import Control.Monad.State (get, gets, MonadTrans (lift))
 import Control.Monad
 import qualified Data.Map as Map
