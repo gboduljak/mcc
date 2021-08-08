@@ -152,6 +152,13 @@
         ]
     },
     {
+        "left": "sizeoftype",
+        "right": [
+            "type",
+            "array_sizes"
+        ]
+    },
+    {
         "left": "primitive_type",
         "right": [
             "BuiltinType",
@@ -597,7 +604,7 @@
         "right": [
             "Sizeof",
             "LParen",
-            "type",
+            "sizeoftype",
             "RParen"
         ]
     },

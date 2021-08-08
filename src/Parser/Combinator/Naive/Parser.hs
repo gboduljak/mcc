@@ -258,9 +258,14 @@ sizeof = do
   expect L.Sizeof
   between (expect L.LParen) (expect L.RParen) (sizeOfArg off)
   where
-    sizeOfType off = do typ <- type'; return (Ast.Sizeof (Left typ) off)
+    sizeOfType off = do typ <- sizeofType; return (Ast.Sizeof (Left typ) off)
     sizeOfExpr off = do exp <- expr; return (Ast.Sizeof (Right exp) off)
     sizeOfArg off = sizeOfType off <|> sizeOfExpr off
+
+sizeofType :: Parser Ast.SizeofType
+sizeofType = do
+  typ <- type'
+  Ast.SizeofType typ <$> arraySizes
 
 addressOf :: Parser Ast.Expr
 addressOf = do

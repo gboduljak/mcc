@@ -74,7 +74,7 @@ data Expr
   | FieldAccess Expr String Int
   | ArrayAccess Expr Expr Int
   | Indirect Expr String Int
-  | Sizeof (Either Type Expr) Int
+  | Sizeof (Either SizeofType Expr) Int
   | Typecast Type Expr Int
   | Call String [Expr] Int
   | Assign Expr Expr Int
@@ -85,6 +85,8 @@ data Type
   = PrimitiveType BuiltinType Int
   | StructType String Int
   deriving (Show, Eq)
+
+data SizeofType = SizeofType Type [Int] deriving (Show, Eq)
 
 data InfixOp
   = Add

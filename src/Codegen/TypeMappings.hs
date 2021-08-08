@@ -6,7 +6,7 @@ import qualified Semant.Type as Semant
 import qualified LLVM.AST.Type as LLVM.AST
 import Parser.Ast (Type(PrimitiveType, StructType))
 import Lexer.Lexeme (BuiltinType(..))
-import Semant.Type (Type(Scalar))
+import Semant.Type (Type(Scalar, Array))
 import Control.Monad.State (MonadState (get))
 import Codegen.Env (Env)
 import Codegen.Codegen (Codegen, LLVM)
@@ -31,3 +31,6 @@ llvmSizeOf (Scalar (PrimitiveType Int 0)) = return 4
 llvmSizeOf (Scalar (PrimitiveType Double 0)) = return 8
 llvmSizeOf (Scalar (PrimitiveType Void 0)) = return 0
 llvmSizeOf (Scalar (PrimitiveType _ ptrs)) = return 8
+llvmSizeOf (Array baseType arraySizes) = do 
+  baseTypSize <- llvmSizeOf (Scalar baseType)
+  return (baseTypSize * product arraySizes)

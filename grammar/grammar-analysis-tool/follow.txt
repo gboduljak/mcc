@@ -86,19 +86,26 @@
     ],
     "type": [
         "Ident",
+        "LBrack",
+        "RParen"
+    ],
+    "sizeoftype": [
         "RParen"
     ],
     "primitive_type": [
         "Ident",
+        "LBrack",
         "RParen"
     ],
     "struct_type": [
         "Ident",
+        "LBrack",
         "RParen"
     ],
     "BuiltinType": [
         "Asterisk",
         "Ident",
+        "LBrack",
         "RParen"
     ],
     "formals": [
@@ -612,10 +619,12 @@
     ],
     "array_sizes": [
         "Semi",
-        "LBrack"
+        "LBrack",
+        "RParen"
     ],
     "stars": [
         "Ident",
+        "LBrack",
         "RParen"
     ]
 }

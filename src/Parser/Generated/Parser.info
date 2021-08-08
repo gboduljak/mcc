@@ -67,7 +67,7 @@ Grammar
 	expr -> expr '.' ident                             (58)
 	expr -> expr '[' expr ']'                          (59)
 	expr -> expr '->' ident                            (60)
-	expr -> sizeof '(' type ')'                        (61)
+	expr -> sizeof '(' type array_sizes ')'            (61)
 	expr -> sizeof '(' expr ')'                        (62)
 	expr -> '(' type ')' expr                          (63)
 	expr -> ident '(' actuals ')'                      (64)
@@ -333,6 +333,7 @@ State 13
 
 	ident          reduce using rule 75
 	')'            reduce using rule 75
+	'['            reduce using rule 75
 	'*'            reduce using rule 75
 
 	stars          goto state 23
@@ -343,6 +344,7 @@ State 14
 
 	ident          reduce using rule 75
 	')'            reduce using rule 75
+	'['            reduce using rule 75
 	'*'            reduce using rule 75
 
 	stars          goto state 22
@@ -353,6 +355,7 @@ State 15
 
 	ident          reduce using rule 70
 	')'            reduce using rule 70
+	'['            reduce using rule 70
 	'*'            reduce using rule 70
 
 
@@ -362,6 +365,7 @@ State 16
 
 	ident          reduce using rule 71
 	')'            reduce using rule 71
+	'['            reduce using rule 71
 	'*'            reduce using rule 71
 
 
@@ -371,6 +375,7 @@ State 17
 
 	ident          reduce using rule 72
 	')'            reduce using rule 72
+	'['            reduce using rule 72
 	'*'            reduce using rule 72
 
 
@@ -380,6 +385,7 @@ State 18
 
 	ident          reduce using rule 73
 	')'            reduce using rule 73
+	'['            reduce using rule 73
 	'*'            reduce using rule 73
 
 
@@ -415,6 +421,7 @@ State 22
 
 	ident          reduce using rule 69
 	')'            reduce using rule 69
+	'['            reduce using rule 69
 	'*'            shift, and enter state 27
 
 
@@ -425,6 +432,7 @@ State 23
 
 	ident          reduce using rule 68
 	')'            reduce using rule 68
+	'['            reduce using rule 68
 	'*'            shift, and enter state 27
 
 
@@ -477,6 +485,7 @@ State 27
 
 	ident          reduce using rule 76
 	')'            reduce using rule 76
+	'['            reduce using rule 76
 	'*'            reduce using rule 76
 
 
@@ -712,6 +721,7 @@ State 46
 
 	ident          reduce using rule 74
 	')'            reduce using rule 74
+	'['            reduce using rule 74
 	'*'            reduce using rule 74
 
 
@@ -829,6 +839,7 @@ State 55
 	array_sizes -> array_sizes '[' int ']' .            (rule 78)
 
 	';'            reduce using rule 78
+	')'            reduce using rule 78
 	'['            reduce using rule 78
 
 
@@ -1331,7 +1342,7 @@ State 75
 
 State 76
 
-	expr -> sizeof . '(' type ')'                       (rule 61)
+	expr -> sizeof . '(' type array_sizes ')'           (rule 61)
 	expr -> sizeof . '(' expr ')'                       (rule 62)
 
 	'('            shift, and enter state 77
@@ -1339,7 +1350,7 @@ State 76
 
 State 77
 
-	expr -> sizeof '(' . type ')'                       (rule 61)
+	expr -> sizeof '(' . type array_sizes ')'           (rule 61)
 	expr -> sizeof '(' . expr ')'                       (rule 62)
 
 	int            shift, and enter state 60
@@ -3416,39 +3427,20 @@ State 140
 
 State 141
 
-	expr -> sizeof '(' type . ')'                       (rule 61)
+	expr -> sizeof '(' type . array_sizes ')'           (rule 61)
 
-	')'            shift, and enter state 142
+	')'            reduce using rule 77
+	'['            reduce using rule 77
 
+	array_sizes    goto state 142
 
 State 142
 
-	expr -> sizeof '(' type ')' .                       (rule 61)
+	expr -> sizeof '(' type array_sizes . ')'           (rule 61)
+	array_sizes -> array_sizes . '[' int ']'            (rule 78)
 
-	'='            reduce using rule 61
-	','            reduce using rule 61
-	';'            reduce using rule 61
-	')'            reduce using rule 61
-	'['            reduce using rule 61
-	']'            reduce using rule 61
-	'+'            reduce using rule 61
-	'-'            reduce using rule 61
-	'*'            reduce using rule 61
-	'/'            reduce using rule 61
-	'%'            reduce using rule 61
-	'=='           reduce using rule 61
-	'!='           reduce using rule 61
-	'<'            reduce using rule 61
-	'<='           reduce using rule 61
-	'>'            reduce using rule 61
-	'>='           reduce using rule 61
-	'&&'           reduce using rule 61
-	'||'           reduce using rule 61
-	'&'            reduce using rule 61
-	'|'            reduce using rule 61
-	'^'            reduce using rule 61
-	'.'            reduce using rule 61
-	'->'           reduce using rule 61
+	')'            shift, and enter state 155
+	'['            shift, and enter state 38
 
 
 State 143
@@ -3754,7 +3746,7 @@ State 152
 
 	statement -> for '(' opt_expr ';' opt_expr . ';' opt_expr ')' statement    (rule 25)
 
-	';'            shift, and enter state 156
+	';'            shift, and enter state 157
 
 
 State 153
@@ -3810,7 +3802,7 @@ State 154
 	for            reduce using rule 27
 	while          reduce using rule 27
 	if             reduce using rule 27
-	else           shift, and enter state 155
+	else           shift, and enter state 156
 	'-'            reduce using rule 27
 	'*'            reduce using rule 27
 	'!'            reduce using rule 27
@@ -3819,6 +3811,36 @@ State 154
 
 
 State 155
+
+	expr -> sizeof '(' type array_sizes ')' .           (rule 61)
+
+	'='            reduce using rule 61
+	','            reduce using rule 61
+	';'            reduce using rule 61
+	')'            reduce using rule 61
+	'['            reduce using rule 61
+	']'            reduce using rule 61
+	'+'            reduce using rule 61
+	'-'            reduce using rule 61
+	'*'            reduce using rule 61
+	'/'            reduce using rule 61
+	'%'            reduce using rule 61
+	'=='           reduce using rule 61
+	'!='           reduce using rule 61
+	'<'            reduce using rule 61
+	'<='           reduce using rule 61
+	'>'            reduce using rule 61
+	'>='           reduce using rule 61
+	'&&'           reduce using rule 61
+	'||'           reduce using rule 61
+	'&'            reduce using rule 61
+	'|'            reduce using rule 61
+	'^'            reduce using rule 61
+	'.'            reduce using rule 61
+	'->'           reduce using rule 61
+
+
+State 156
 
 	statement -> if '(' expr ')' statement else . statement    (rule 26)
 
@@ -3847,13 +3869,13 @@ State 155
 
 	vardecl        goto state 56
 	block          goto state 57
-	statement      goto state 158
+	statement      goto state 159
 	expr           goto state 59
 	type           goto state 31
 	primitive_type goto state 13
 	struct_type    goto state 14
 
-State 156
+State 157
 
 	statement -> for '(' opt_expr ';' opt_expr ';' . opt_expr ')' statement    (rule 25)
 
@@ -3872,16 +3894,16 @@ State 156
 	sizeof         shift, and enter state 76
 
 	expr           goto state 87
-	opt_expr       goto state 157
+	opt_expr       goto state 158
 
-State 157
+State 158
 
 	statement -> for '(' opt_expr ';' opt_expr ';' opt_expr . ')' statement    (rule 25)
 
-	')'            shift, and enter state 159
+	')'            shift, and enter state 160
 
 
-State 158
+State 159
 
 	statement -> if '(' expr ')' statement else statement .    (rule 26)
 
@@ -3911,7 +3933,7 @@ State 158
 	sizeof         reduce using rule 26
 
 
-State 159
+State 160
 
 	statement -> for '(' opt_expr ';' opt_expr ';' opt_expr ')' . statement    (rule 25)
 
@@ -3940,13 +3962,13 @@ State 159
 
 	vardecl        goto state 56
 	block          goto state 57
-	statement      goto state 160
+	statement      goto state 161
 	expr           goto state 59
 	type           goto state 31
 	primitive_type goto state 13
 	struct_type    goto state 14
 
-State 160
+State 161
 
 	statement -> for '(' opt_expr ';' opt_expr ';' opt_expr ')' statement .    (rule 25)
 
@@ -3982,4 +4004,4 @@ Grammar Totals
 Number of rules: 83
 Number of terminals: 47
 Number of non-terminals: 23
-Number of states: 161
+Number of states: 162

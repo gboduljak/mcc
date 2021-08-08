@@ -151,7 +151,7 @@ expr:
   | expr '.' ident         { P.FieldAccess $1 $3 0 }
   | expr '[' expr ']'      { P.ArrayAccess $1 $3 0 }
   | expr '->' ident        { P.Indirect $1 $3 0 }
-  | sizeof '(' type ')'    { P.Sizeof (Left $3) 0 }
+  | sizeof '(' type array_sizes ')' { P.Sizeof (Left (P.SizeofType $3 $4)) 0 }
   | sizeof '(' expr ')'    { P.Sizeof (Right $3) 0 }
   | '(' type ')' expr %prec CAST { P.Typecast $2 $4 0}
   | ident '(' actuals ')'  { P.Call $1 (reverse $3) 0 }

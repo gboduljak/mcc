@@ -327,9 +327,14 @@ sizeof = do
   where
     sizeOfArg off =
       (>?)
-        [ (startsType, do typ <- type'; return (Ast.Sizeof (Left typ) off)),
+        [ (startsType, do typ <- sizeofType; return (Ast.Sizeof (Left typ) off)),
           (const True, do exp <- expr; return (Ast.Sizeof (Right exp) off))
         ]
+        
+sizeofType :: Parser Ast.SizeofType
+sizeofType = do
+  typ <- type'
+  Ast.SizeofType typ <$> arraySizes
 
 addressOf :: Parser Ast.Expr
 addressOf = do

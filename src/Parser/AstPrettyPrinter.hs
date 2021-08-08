@@ -35,6 +35,10 @@ instance Pretty Type where
   pretty (PrimitiveType builtin ptrs) = pretty builtin <> pretty (replicate ptrs '*')
   pretty (StructType name ptrs) = pretty name <> pretty (replicate ptrs '*')
 
+instance Pretty SizeofType where 
+  pretty (SizeofType typ sizes) = pretty typ <> pretty displayedSizes
+    where displayedSizes = concat ["[" ++ show size ++ "]" | size <- sizes]
+  
 instance Pretty Expr where
   pretty (LitInt x _) = pretty x
   pretty (LitDouble x _) = pretty x

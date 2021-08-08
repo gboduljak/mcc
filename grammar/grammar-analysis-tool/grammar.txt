@@ -29,6 +29,8 @@ funcdefn ::= type Ident LParen RParen block
 type ::= primitive_type
 type ::= struct_type
 
+sizeoftype ::= type array_sizes
+
 primitive_type ::= BuiltinType stars
 struct_type    ::= Struct Ident stars
 
@@ -111,7 +113,7 @@ unary_level_expr ::= call_level_expr
 deref     ::= Asterisk unary_level_expr
 addressof ::= Ampers unary_level_expr
 typecast  ::= LParen type RParen cast_level_expr
-sizeof    ::= Sizeof LParen type RParen
+sizeof    ::= Sizeof LParen sizeoftype RParen
 sizeof    ::= Sizeof LParen expr RParen
 
 call_level_expr ::= call_level_expr funccall

@@ -30,6 +30,7 @@ type ::= primitive_type
 
 primitive_type ::= (Type BuiltinType) stars
 struct_type    ::= Struct Ident stars
+sizeof_type    ::= type array_sizes
 
 BuiltinType ::= Int
               | Double

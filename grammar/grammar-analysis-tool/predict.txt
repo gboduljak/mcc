@@ -114,31 +114,31 @@
         "Struct"
     ],
     "21": [
+        "Struct",
         "Int",
         "Double",
         "Char",
         "Void"
     ],
     "22": [
-        "Struct"
-    ],
-    "23": [
-        "Int"
-    ],
-    "24": [
-        "Double"
-    ],
-    "25": [
-        "Char"
-    ],
-    "26": [
-        "Void"
-    ],
-    "27": [
-        "Struct",
         "Int",
         "Double",
         "Char",
+        "Void"
+    ],
+    "23": [
+        "Struct"
+    ],
+    "24": [
+        "Int"
+    ],
+    "25": [
+        "Double"
+    ],
+    "26": [
+        "Char"
+    ],
+    "27": [
         "Void"
     ],
     "28": [
@@ -156,6 +156,13 @@
         "Void"
     ],
     "30": [
+        "Struct",
+        "Int",
+        "Double",
+        "Char",
+        "Void"
+    ],
+    "31": [
         "LParen",
         "Minus",
         "Not",
@@ -169,35 +176,35 @@
         "LitNull",
         "Ident"
     ],
-    "31": [
+    "32": [
         "LBrace"
     ],
-    "32": [
+    "33": [
         "While"
     ],
-    "33": [
-        "For"
-    ],
     "34": [
-        "If"
+        "For"
     ],
     "35": [
         "If"
     ],
     "36": [
-        "Return"
+        "If"
     ],
     "37": [
+        "Return"
+    ],
+    "38": [
         "Struct",
         "Int",
         "Double",
         "Char",
         "Void"
     ],
-    "38": [
+    "39": [
         "LBrace"
     ],
-    "39": [
+    "40": [
         "While",
         "For",
         "If",
@@ -221,10 +228,10 @@
         "LitNull",
         "Ident"
     ],
-    "40": [
+    "41": [
         "RBrace"
     ],
-    "41": [
+    "42": [
         "LParen",
         "Minus",
         "Not",
@@ -237,24 +244,10 @@
         "LitDouble",
         "LitNull",
         "Ident"
-    ],
-    "42": [
-        "Semi",
-        "RParen"
     ],
     "43": [
-        "LParen",
-        "Minus",
-        "Not",
-        "Asterisk",
-        "Ampers",
-        "Sizeof",
-        "LitInt",
-        "LitString",
-        "LitChar",
-        "LitDouble",
-        "LitNull",
-        "Ident"
+        "Semi",
+        "RParen"
     ],
     "44": [
         "LParen",
@@ -635,9 +628,23 @@
         "Ident"
     ],
     "71": [
-        "LParen"
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
     ],
     "72": [
+        "LParen"
+    ],
+    "73": [
         "Minus",
         "Not",
         "Asterisk",
@@ -651,22 +658,22 @@
         "Ident",
         "LParen"
     ],
-    "73": [
+    "74": [
         "Minus"
     ],
-    "74": [
+    "75": [
         "Not"
     ],
-    "75": [
+    "76": [
         "Asterisk"
     ],
-    "76": [
+    "77": [
         "Ampers"
     ],
-    "77": [
+    "78": [
         "Sizeof"
     ],
-    "78": [
+    "79": [
         "LitInt",
         "LitString",
         "LitChar",
@@ -675,29 +682,20 @@
         "Ident",
         "LParen"
     ],
-    "79": [
+    "80": [
         "Asterisk"
     ],
-    "80": [
+    "81": [
         "Ampers"
     ],
-    "81": [
-        "LParen"
-    ],
     "82": [
-        "Sizeof"
+        "LParen"
     ],
     "83": [
         "Sizeof"
     ],
     "84": [
-        "LitInt",
-        "LitString",
-        "LitChar",
-        "LitDouble",
-        "LitNull",
-        "Ident",
-        "LParen"
+        "Sizeof"
     ],
     "85": [
         "LitInt",
@@ -736,54 +734,49 @@
         "LParen"
     ],
     "89": [
-        "Ident"
-    ],
-    "90": [
-        "Ident"
-    ],
-    "91": [
-        "LBrack"
-    ],
-    "92": [
-        "Dot"
-    ],
-    "93": [
-        "Arrow"
-    ],
-    "94": [
-        "LitInt"
-    ],
-    "95": [
-        "LitString"
-    ],
-    "96": [
-        "LitChar"
-    ],
-    "97": [
-        "LitDouble"
-    ],
-    "98": [
-        "LitNull"
-    ],
-    "99": [
-        "Ident"
-    ],
-    "100": [
-        "LParen"
-    ],
-    "101": [
-        "LParen",
-        "Minus",
-        "Not",
-        "Asterisk",
-        "Ampers",
-        "Sizeof",
         "LitInt",
         "LitString",
         "LitChar",
         "LitDouble",
         "LitNull",
+        "Ident",
+        "LParen"
+    ],
+    "90": [
         "Ident"
+    ],
+    "91": [
+        "Ident"
+    ],
+    "92": [
+        "LBrack"
+    ],
+    "93": [
+        "Dot"
+    ],
+    "94": [
+        "Arrow"
+    ],
+    "95": [
+        "LitInt"
+    ],
+    "96": [
+        "LitString"
+    ],
+    "97": [
+        "LitChar"
+    ],
+    "98": [
+        "LitDouble"
+    ],
+    "99": [
+        "LitNull"
+    ],
+    "100": [
+        "Ident"
+    ],
+    "101": [
+        "LParen"
     ],
     "102": [
         "LParen",
@@ -800,17 +793,33 @@
         "Ident"
     ],
     "103": [
-        "LBrack"
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
     ],
     "104": [
-        "Semi",
         "LBrack"
     ],
     "105": [
-        "Asterisk"
+        "Semi",
+        "LBrack",
+        "RParen"
     ],
     "106": [
+        "Asterisk"
+    ],
+    "107": [
         "Ident",
+        "LBrack",
         "RParen"
     ]
 }

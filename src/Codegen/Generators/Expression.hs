@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 module Codegen.Generators.Expression
 
 where
@@ -21,8 +20,8 @@ import qualified Codegen.Env
 import qualified Data.Map
 import qualified Data.Map as Map
 import Codegen.TypeMappings (llvmType, llvmSizeOf)
-import Parser.Ast (InfixOp (Add, Sub, Less, Neq, Greater, Mul, Div, Mod, Equal, Leq, Geq, And, Or, BitwiseAnd, BitwiseOr, BitwiseXor))
-import Semant.Type (isPointer, isInt, isChar, isDouble)
+import Parser.Ast (InfixOp (Add, Sub, Less, Neq, Greater, Mul, Div, Mod, Equal, Leq, Geq, And, Or, BitwiseAnd, BitwiseOr, BitwiseXor), SizeofType (SizeofType))
+import Semant.Type (isPointer, isInt, isChar, isDouble, Type (Scalar, Array))
 import qualified LLVM.AST.Type
 import qualified LLVM.AST.IntegerPredicate as L.IntegerPredicate
 import qualified LLVM.AST.FloatingPointPredicate as L.FloatPredicate
@@ -54,6 +53,12 @@ generateExpression (_, SNegative expr@(exprTyp, _))
   | isInt exprTyp = L.sub (L.int32 0) =<< generateExpression expr
   | isDouble exprTyp = L.fsub (L.double 0) =<< generateExpression expr
   | otherwise = error ("semantic analysis failed on:" ++ show expr)
+generateExpression (_, SSizeof (Left (SizeofType baseTyp arraySizes))) = do 
+  size <- fromIntegral <$> llvmSizeOf (Array baseTyp arraySizes)
+  return (L.int64 size)
+generateExpression (_, SSizeof (Right (exprTyp, _))) = do
+  typSize <- fromIntegral <$> llvmSizeOf exprTyp
+  return (L.int64 typSize)
 generateExpression expr@(targetTyp, STypecast _ srcExpr@(exprTyp, _)) = do
   expr' <- generateExpression srcExpr
   exprTyp' <- llvmType exprTyp
@@ -70,7 +75,6 @@ generateExpression expr@(targetTyp, STypecast _ srcExpr@(exprTyp, _)) = do
           <||> (isInt targetTyp && isChar exprTyp, L.zext expr' targetTyp')
           ||> error ("semantic analysis failed on:" ++ show expr)
       )
-
 generateExpression (_, SCall func actualExprs) = do
   actuals <- mapM generateExpression actualExprs
   args <- mapM generateCallArg $ zip (fst <$> actualExprs) actuals
@@ -166,6 +170,7 @@ generateBinop (_, SBinop _ Or _) leftOp rightOp = L.or leftOp rightOp
 generateBinop (_, SBinop _ BitwiseAnd _) leftOp rightOp = L.and leftOp rightOp
 generateBinop (_, SBinop _ BitwiseOr _) leftOp rightOp = L.or leftOp rightOp
 generateBinop (_, SBinop _ BitwiseXor _) leftOp rightOp = L.xor leftOp rightOp
+generateBinop expr _ _ =  error ("binop not a binop?" ++ show expr)
 
 generateCallArg :: (Semant.Type.Type, Operand) -> Codegen Operand
 generateCallArg (typ, op) = return op -- incorporate byval for structs

@@ -69,6 +69,13 @@
         "Char",
         "Void"
     ],
+    "sizeoftype": [
+        "Struct",
+        "Int",
+        "Double",
+        "Char",
+        "Void"
+    ],
     "primitive_type": [
         "Int",
         "Double",

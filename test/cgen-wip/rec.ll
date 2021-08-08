@@ -22,12 +22,12 @@ declare external ccc  void @scanf(i8*, ...)
 define external ccc  i32 @main()    {
 entry_0:
   %0 = alloca i32 
-  %1 =  call ccc  i32  @rec(i32  1)  
-  store  i32 %1, i32* %0 
-  %2 = load  i32, i32* %0 
-   call ccc  void (i8*, ...) @printf(i8*  getelementptr inbounds ([3 x i8], [3 x i8]* @str.0, i32 0, i32 0), i32  %2)  
-  %3 = alloca i32 
-  %4 = load  i32, i32* %3 
+  %1 = alloca i32 
+  %2 =  call ccc  i32  @rec(i32  1)  
+  store  i32 %2, i32* %1 
+  %3 = load  i32, i32* %1 
+   call ccc  void (i8*, ...) @printf(i8*  getelementptr inbounds ([3 x i8], [3 x i8]* @str.0, i32 0, i32 0), i32  %3)  
+  %4 = load  i32, i32* %0 
   ret i32 %4 
 }
 
@@ -41,19 +41,19 @@ entry_0:
 define external ccc  i32 @rec(i32  %arg_0)    {
 entry_0:
   %0 = alloca i32 
-  store  i32 %arg_0, i32* %0 
-  %1 = load  i32, i32* %0 
-  %2 = icmp ne i32 %1, 0 
-  br i1 %2, label %if.conseq_0, label %if.alt_0 
+  %1 = alloca i32 
+  store  i32 %arg_0, i32* %1 
+  %2 = load  i32, i32* %1 
+  %3 = icmp ne i32 %2, 0 
+  br i1 %3, label %if.conseq_0, label %if.alt_0 
 if.conseq_0:
    call ccc  void (i8*, ...) @printf(i8*  getelementptr inbounds ([10 x i8], [10 x i8]* @str.1, i32 0, i32 0))  
-  %3 =  call ccc  i32  @rec(i32  0)  
-  ret i32 %3 
+  %4 =  call ccc  i32  @rec(i32  0)  
+  ret i32 %4 
 if.alt_0:
    call ccc  void (i8*, ...) @printf(i8*  getelementptr inbounds ([6 x i8], [6 x i8]* @str.2, i32 0, i32 0))  
   ret i32 1 
 if.merge_0:
-  %4 = alloca i32 
-  %5 = load  i32, i32* %4 
+  %5 = load  i32, i32* %0 
   ret i32 %5 
 }

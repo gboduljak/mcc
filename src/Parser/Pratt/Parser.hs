@@ -332,11 +332,16 @@ sizeof = do
   expect (L.is L.LParen)
   expr <-
     (>?)
-      [ (startsType, do typ <- type'; return (Ast.Sizeof (Left typ) off)),
+      [ (startsType, do typ <- sizeofType; return (Ast.Sizeof (Left typ) off)),
         (const True, do exp <- expr 0; return (Ast.Sizeof (Right exp) off))
       ]
   expect (L.is L.RParen)
   return expr
+
+sizeofType :: Parser Ast.SizeofType
+sizeofType = do
+  typ <- type'
+  Ast.SizeofType typ <$> arraySizes
 
 identOrFuncCall :: Parser Ast.Expr
 identOrFuncCall = do

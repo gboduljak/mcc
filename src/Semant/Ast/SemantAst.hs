@@ -57,7 +57,7 @@ data SExpr'
   | SAddressOf LValue
   | SNegate SExpr
   | SNegative SExpr
-  | SSizeof (Either Ast.Type SExpr)
+  | SSizeof (Either Ast.SizeofType SExpr)
   | STypecast Ast.Type SExpr
   | SCall String [SExpr]
   | LVal LValue

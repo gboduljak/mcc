@@ -11,7 +11,7 @@ import Control.Monad.State (MonadState (get), State, gets, modify, runState)
 import Data.Foldable (traverse_)
 import Data.List
 import qualified Lexer.Lexeme as L
-import Parser.Ast (InfixOp (..), Type (PrimitiveType, StructType))
+import Parser.Ast (InfixOp (..), Type (PrimitiveType, StructType), SizeofType (SizeofType))
 import qualified Parser.Ast as Ast
 import Semant.Ast.SemantAst
 import Semant.Builtins (builtins)
@@ -534,12 +534,13 @@ instance SemantAstDrawable SExpr where
           ++ "\", shape=record]"
       )
     emitNode lparenId "("
-    emitNode typeId (displayType typ')
+    emitNode typeId (displaySizeofType typ')
     emitNode rparenId ")"
     connect sizeofId lparenId
     connect sizeofId typeId
     connect sizeofId rparenId
     return sizeofId
+
   visualise (typ, SNegative expr) = do
     negativeId <- nextId
     emit
@@ -743,6 +744,10 @@ displayType (PrimitiveType builtin ptrs) = display builtin ++ replicate ptrs '*'
     display L.Char = "char"
     display L.Void = " void"
 displayType (StructType name ptrs) = "struct " ++ name ++ replicate ptrs '*'
+
+displaySizeofType :: SizeofType -> [Char]
+displaySizeofType (SizeofType typ sizes) = displayType typ ++ displayedSizes
+  where displayedSizes = concat ["[" ++ show size ++ "]" | size <- sizes]
 
 escape :: String -> String
 escape name = "\\\"" ++ name ++ "\\\""

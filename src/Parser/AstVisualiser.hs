@@ -431,7 +431,7 @@ instance AstDrawable Expr where
     rparenId <- nextId
     emitNode sizeofId "Sizeof"
     emitNode lparenId "("
-    emitNode typeId (display typ)
+    emitNode typeId (displaySizeofType typ)
     emitNode rparenId ")"
     connect sizeofId lparenId
     connect sizeofId typeId
@@ -639,6 +639,10 @@ display (PrimitiveType builtin ptrs) = display builtin ++ replicate ptrs '*'
     display L.Char = "char"
     display L.Void = " void"
 display (StructType name ptrs) = "struct " ++ name ++ replicate ptrs '*'
+
+displaySizeofType :: SizeofType -> [Char]
+displaySizeofType (SizeofType typ sizes) = display typ ++ displayedSizes
+  where displayedSizes = concat ["[" ++ show size ++ "]" | size <- sizes]
 
 escape :: String -> String
 escape name = "\\\"" ++ name ++ "\\\""
