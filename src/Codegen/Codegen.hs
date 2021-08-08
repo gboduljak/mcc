@@ -17,6 +17,7 @@ import Data.String.Conversions
 import LLVM.Prelude (ShortByteString)
 import Data.String (fromString)
 import Data.Maybe (fromJust)
+import LLVM.AST.Name (mkName)
 
 type LLVM = ModuleBuilderT (State (Env Operand))
 type Codegen = IRBuilderT LLVM
@@ -29,3 +30,9 @@ registerFunc name func = modify (\env -> env { funcs = Map.insert name func (fun
 
 lookupFunc :: String -> Codegen Operand 
 lookupFunc name = gets (fromJust . Map.lookup name . funcs) 
+
+freshStrLitName :: Codegen Name
+freshStrLitName = do 
+  strLitId <- gets stringLitsCount
+  modify (\env -> env { stringLitsCount = strLitId + 1 })
+  return (mkName ("str." ++ show strLitId))

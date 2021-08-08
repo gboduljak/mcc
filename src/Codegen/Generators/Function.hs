@@ -6,6 +6,7 @@ where
 
 import Semant.Ast.SemantAst (SFunction (..), SFormal (SFormal), SBlock (SBlock))
 import Codegen.Codegen
+import Codegen.Generators.Common (generateTerm)
 import qualified Semant.Type (isVoid, Type)
 import Codegen.TypeMappings (llvmType)
 import LLVM.AST.Constant (Constant(GlobalReference))
@@ -24,6 +25,8 @@ import qualified LLVM.AST.Type
 import Semant.Type (Type(Scalar))
 import Parser.Ast (Type(StructType))
 import Codegen.Env (registerOperand)
+import Codegen.Codegen (registerFunc)
+import Debug.Trace (traceShowId)
 
 generateFunction :: SFunction -> LLVM ()
 generateFunction func@SFunction{..}
@@ -31,14 +34,14 @@ generateFunction func@SFunction{..}
   | isBuiltin func = generateBuiltin func
   | otherwise = do
       funcSign <- llvmFuncSignature func
-      funcOperand <- llvmFuncOperand (funcRetTyp funcSign) (mkName funcName)
-      registerFunc funcName funcOperand
-      L.function
+      tempFuncOperand <- llvmFuncOperand (funcType funcSign) (mkName funcName)
+      registerFunc funcName tempFuncOperand
+      actualFuncOperand <- L.function
         (mkName funcName)
         [(paramTyp, ParameterName (cs paramName)) | (paramTyp, paramName) <- funcParams funcSign]
         (funcRetTyp funcSign) (generateBody (funcRetTyp funcSign) funcBody (funcParams funcSign))
+      registerFunc funcName (traceShowId actualFuncOperand)
       return ()
-  | otherwise = return ()
 
   where
     funcBody = extractBody body
@@ -61,7 +64,7 @@ llvmFuncSignature SFunction{..} = do
     ) formals
   let funcTyp = FunctionType {
       resultType = funcRetTyp,
-      argumentTypes = map fst funcParams,
+      argumentTypes = fst <$> funcParams,
       isVarArg = False
     }
   return (FuncSignature funcName funcRetTyp funcParams funcTyp)
@@ -71,7 +74,7 @@ llvmParamType (Scalar (StructType name 0)) = return undefined -- implement as a 
 llvmParamType typ = llvmType typ
 
 llvmFuncOperand :: LLVM.AST.Type -> Name -> LLVM Operand
-llvmFuncOperand funcRetTyp funcName = return $ ConstantOperand $ GlobalReference funcRetTyp funcName
+llvmFuncOperand funcTyp funcName = return (ConstantOperand $ GlobalReference funcTyp funcName)
 
 generateBody :: LLVM.AST.Type -> SBlock -> [(LLVM.AST.Type, String)] -> [Operand] -> Codegen ()
 generateBody retTyp body opMeta ops = do
@@ -80,16 +83,19 @@ generateBody retTyp body opMeta ops = do
   mapM_ (\((typ, name), op) -> do
     addr <- L.alloca typ Nothing 0
     L.store addr 0 op
-    registerOperand name op
+    registerOperand name addr
     ) (zip opMeta ops)
   generateBlock body
   exitScope
   if isVoid retTyp 
-    then do L.retVoid
+    then generateTerm L.retVoid
     else do 
-      retValPtr <- L.alloca retTyp Nothing 0
-      retVal <- L.load retValPtr 0
-      L.ret retVal
+      generateTerm (
+        do
+          retValPtr <- L.alloca retTyp Nothing 0
+          retVal <- L.load retValPtr 0
+          L.ret retVal
+        )
   where isVoid retTyp = retTyp == LLVM.AST.Type.void
 
 generateBuiltin :: SFunction -> LLVM ()

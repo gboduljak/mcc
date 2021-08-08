@@ -16,10 +16,11 @@ import Control.Monad (void)
 import Data.Map (Map)
 
 data Env a = Env {
-    structs :: [SStruct],
-    funcs :: Map String a,
-    scopes :: Map ScopeId (Scope a),
-    currentScopeId :: ScopeId
+  structs :: [SStruct],
+  funcs :: Map String a,
+  stringLitsCount :: Int,
+  scopes :: Map ScopeId (Scope a),
+  currentScopeId :: ScopeId
 } deriving (Eq, Show)
 
 
@@ -27,6 +28,7 @@ emptyEnv :: Env Operand
 emptyEnv = Env {
   structs = [],
   funcs = Map.empty,
+  stringLitsCount = 0,
   scopes = Map.fromList [(rootScopeId, rootScope)],
   currentScopeId = rootScopeId
 }
@@ -41,6 +43,7 @@ modifyScopes :: Env a -> Map ScopeId (Scope a) -> Env a
 modifyScopes Env{..} newScopes = Env {
   structs,
   funcs,
+  stringLitsCount,
   scopes = newScopes,
   currentScopeId
 }
@@ -49,6 +52,7 @@ modifyCurrentScopeId :: Env a -> ScopeId-> Env a
 modifyCurrentScopeId Env {..} scopeId = Env {
   structs,
   funcs,
+  stringLitsCount,
   scopes,
   currentScopeId = scopeId
 }

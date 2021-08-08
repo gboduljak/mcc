@@ -16,5 +16,5 @@ generateProgram (SProgram _ funcs _) = do
   traverse_ generateFunction builtinFuncs
   traverse_ generateFunction customFuncs
   where 
-    builtinFuncs = [ func | func <- funcs, isBuiltin func]
-    customFuncs  = [ func | func <- funcs, (not . isBuiltin) func]
+    builtinFuncs = [ func | func <- funcs, isBuiltin func ]
+    customFuncs  = [ func | func <- funcs, (not . isBuiltin) func ]

@@ -34,6 +34,7 @@ import Prelude hiding (lex)
 import LLVM.Pretty (ppllvm)
 import Codegen.Compiler (compile)
 import Data.Text.Lazy (unpack)
+import System.FilePath.Posix (replaceExtension)
 
 main :: IO ()
 main = do
@@ -65,7 +66,9 @@ main = do
                 ( \(file, tree) -> do
                     writeFile (file ++ ".sast.dot") (visualiseSemantAst tree)
                     print  (compile file tree)
-                    putStrLn $ unpack $ ppllvm (compile file tree)
+                    let llvm = unpack $ ppllvm (compile file tree)
+                    putStrLn llvm
+                    writeFile (replaceExtension file ".ll") llvm
                 )
                 (zip order trees)
         else do

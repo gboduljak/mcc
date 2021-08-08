@@ -29,7 +29,7 @@ library
       Codegen.Compiler
       Codegen.Env
       Codegen.Exports
-      Codegen.Generators.Builtins
+      Codegen.Generators.Common
       Codegen.Generators.Expression
       Codegen.Generators.Function
       Codegen.Generators.Program
