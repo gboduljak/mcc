@@ -10,9 +10,11 @@ import Codegen.Generators.Function (generateFunctionDecl, generateFunctionDefn)
 import Codegen.Generators.Globals (generateGlobal)
 import Data.Foldable (traverse_)
 import Semant.Builtins (isBuiltin)
+import Codegen.Generators.Structs (generateStruct)
 
 generateProgram :: SProgram -> LLVM ()
-generateProgram (SProgram _ funcs globals) = do 
+generateProgram (SProgram structs funcs globals) = do 
+  traverse_ generateStruct structs
   traverse_ generateGlobal globals
   traverse_ generateFunctionDefn builtinFuncs
   traverse_ generateFunctionDecl customFuncs

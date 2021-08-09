@@ -1,6 +1,4 @@
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module Semant.Analysers.StructsAnalyser where
 
@@ -14,7 +12,7 @@ import Data.Text.Prettyprint.Doc.Render.String
 import Debug.Trace
 import Lexer.Combinator.Lexer (lex')
 import Lexer.Lexeme (BuiltinType (..), Lexeme (Not))
-import Parser.Ast (Expr (..), InfixOp (..), StructDecl (Struct), Type (PrimitiveType, StructType), VarDecl, decreasePointerLevel, pointerLevel)
+import Parser.Ast (Expr (..), InfixOp (..), StructDecl (Struct), Type (PrimitiveType, StructType), VarDecl (Var), decreasePointerLevel, pointerLevel)
 import qualified Parser.Ast as Ast
 import Parser.AstVisualiser
 import Parser.Errors.PrettyPrinter (prettyPrintErrors)
@@ -26,19 +24,22 @@ import Semant.Errors.SemantError hiding (Void)
 import Semant.Semant
 import Semant.Type
 import SymbolTable.SymbolTable (enterScope, exitScope)
+import Data.List (elem)
 
-analyseStructDecl :: StructDecl -> Semant SStruct
-analyseStructDecl (Struct structName fieldDecls pos) = do
+analyseStructDecl :: StructDecl -> Semant (Maybe SStruct)
+analyseStructDecl structDecl@(Struct structName fieldDecls pos) = do
   existing <- lookupStruct structName
   case existing of
     (Just _) -> do
       registerError (Redeclaration structName RedeclStruct pos)
-      return
-        ( SStruct
-            { structName,
-              fields = [],
-              fieldOffsets = Map.empty
-            }
+      return (
+        Just
+          ( SStruct
+              { structName,
+                fields = [],
+                fieldOffsets = Map.empty
+              }
+          )
         )
     Nothing -> do
       defineStruct initialStructDefn
@@ -47,14 +48,20 @@ analyseStructDecl (Struct structName fieldDecls pos) = do
       fields <- mapM processVarDecl fieldDecls
       exitScope
       setBindingLoc Toplevel
-      let struct =
-            SStruct
-              { structName,
-                fields,
-                fieldOffsets = Map.fromList . zip (map varName fields) $ [0 ..]
-              }
-      defineStruct struct
-      return struct
+
+      if (not . null) invalidDecls 
+        then do 
+          registerError (RecursiveStructDecl structDecl invalidDecls (pos - 1))
+          return Nothing
+        else do 
+          let struct =
+                SStruct
+                  { structName,
+                    fields,
+                    fieldOffsets = Map.fromList . zip (map varName fields) $ [0 ..]
+                  }
+          defineStruct struct
+          return (Just struct)
   where
     initialStructDefn =
       ( SStruct
@@ -64,3 +71,7 @@ analyseStructDecl (Struct structName fieldDecls pos) = do
           }
       )
     initialStructBinding = StructBinding initialStructDefn
+    invalidDecls = [ 
+      decl | decl@(Var fieldType _ _ _) <- fieldDecls, 
+      fieldType == StructType structName 0 
+      ]

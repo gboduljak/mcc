@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts #-}
 module Codegen.Codegen 
 
 where
@@ -18,6 +19,7 @@ import LLVM.Prelude (ShortByteString)
 import Data.String (fromString)
 import Data.Maybe (fromJust)
 import LLVM.AST.Name (mkName)
+import Codegen.Signatures.StructSignature (StructSignature)
 
 type LLVM = ModuleBuilderT (State (Env Operand))
 type Codegen = IRBuilderT LLVM
@@ -27,8 +29,14 @@ instance ConvertibleStrings String ShortByteString where
 registerFunc :: String -> Operand -> LLVM ()
 registerFunc name func = modify (\env -> env { funcs = Map.insert name func (funcs env) })
 
-lookupFunc :: String -> Codegen Operand 
-lookupFunc name = gets (fromJust . Map.lookup name . funcs) 
+registerStruct :: String -> StructSignature  -> LLVM ()
+registerStruct name struct = modify (\env -> env { structs =  Map.insert name struct (structs env) })
+
+lookupFunc :: (MonadState (Env Operand)) m => String -> m Operand 
+lookupFunc name = gets (fromJust . Map.lookup name . funcs)
+
+lookupStruct :: (MonadState (Env Operand)) m => String -> m StructSignature
+lookupStruct name = gets (fromJust . Map.lookup name . structs)
 
 freshStrLitName :: Codegen Name
 freshStrLitName = do 

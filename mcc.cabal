@@ -35,6 +35,9 @@ library
       Codegen.Generators.Globals
       Codegen.Generators.Program
       Codegen.Generators.Statement
+      Codegen.Generators.Structs
+      Codegen.Signatures.FuncSignature
+      Codegen.Signatures.StructSignature
       Codegen.TypeMappings
       Lexer.AdHoc.Lexer
       Lexer.AdHoc.LexError

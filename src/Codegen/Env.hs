@@ -14,10 +14,11 @@ import Control.Monad.RWS (MonadState, modify)
 import SymbolTable.SymbolTable (defineVar)
 import Control.Monad (void)
 import Data.Map (Map)
+import Codegen.Signatures.StructSignature (StructSignature)
 
 data Env a = Env {
-  structs :: [SStruct],
-  funcs :: Map String a,
+  structs :: Map String StructSignature,
+  funcs :: Map String Operand,
   stringLitsCount :: Int,
   scopes :: Map ScopeId (Scope a),
   currentScopeId :: ScopeId
@@ -26,7 +27,7 @@ data Env a = Env {
 
 emptyEnv :: Env Operand
 emptyEnv = Env {
-  structs = [],
+  structs = Map.empty,
   funcs = Map.empty,
   stringLitsCount = 0,
   scopes = Map.fromList [(rootScopeId, rootScope)],

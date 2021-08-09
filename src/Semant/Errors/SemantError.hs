@@ -12,7 +12,7 @@ import Parser.Ast
     InfixOp,
     Statement,
     StructDecl (Struct),
-    VarDecl,
+    VarDecl (Var),
   )
 import Parser.AstPrettyPrinter
 import Semant.Ast.SemantAst
@@ -25,6 +25,11 @@ data SemantError
         bindingLoc :: BindingLoc,
         bindingDecl :: VarDecl
       }
+  | RecursiveStructDecl { 
+      structDecl :: StructDecl,
+      recursiveDecls :: [VarDecl],
+      recursiveStructPos :: Int
+    }
   | UndefinedSymbol String SymbolKind (Maybe Expr) Int
   | VoidFormal String String Int
   | BinopTypeError
@@ -110,8 +115,22 @@ instance Pretty SemantError where
   pretty =
     \case
       EmptyProgram -> pretty "There is nothing to compile. :)"
+      RecursiveStructDecl structDecl@(Struct name _ _) decls _-> 
+        pretty "Struct definition error in: "
+          <+> pretty structDecl
+          <> hardline 
+          <>  (
+            pretty "Struct" <+> 
+            pretty name <+> 
+            pretty "has fields: " <+>
+            hardline <>
+            vcat [indent indentAmount (pretty decl) | decl <- decls] <>
+            hardline <>
+            pretty "of type as itself" <> 
+            dot
+          )
       IllegalBinding {..} ->
-        pretty "Binding Error: Illegal" <+> pretty bindingErrorKind
+        pretty "Binding error: Illegal" <+> pretty bindingErrorKind
           <+> pretty "binding,"
           <+> pretty bindingName
           <+> case bindingLoc of

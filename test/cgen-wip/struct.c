@@ -1,15 +1,30 @@
-struct st {
-  int x;
-  int y;
-  int z;
+
+struct dependent_struct
+{
+  struct dependent_struct inner;
+  struct dependent_struct outer;
+
+  /* data */
 };
 
-int main (){
-  struct st y;
-  y.x = 1;
-  y.y = 2;
-  y.z = 3;
+struct my_struct {
+  int x;
+  double y;
+  char z;
+  struct dependent_struct dep;
+};
 
-  y;
-  printf("%d", y.x);
+
+int main (){
+  
+  struct my_struct x;
+
+
+  // struct st y;
+  // y.x = 1;
+  // y.y = 2;
+  // y.z = 3;
+
+  // y;
+  // printf("%d", y.x);
 }

@@ -1,5 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE FlexibleContexts #-}
 module Codegen.Generators.Function
 
 where
@@ -25,10 +26,9 @@ import Semant.Type (Type(Scalar))
 import Parser.Ast (Type(StructType))
 import Codegen.Env (registerOperand, Env (funcs))
 import Codegen.Codegen (registerFunc, LLVM, Codegen)
-import Control.Monad.State (get, gets, MonadTrans (lift))
-import Control.Monad
+import Control.Monad.State (get, gets, MonadTrans (lift), MonadState)
 import qualified Data.Map as Map
-
+import Codegen.Signatures.FuncSignature (FuncSignature(..))
 
 generateFunctionDecl :: SFunction -> LLVM ()
 generateFunctionDecl func@SFunction{..} =  do
@@ -47,20 +47,12 @@ generateFunctionDefn func@SFunction{..}
         [(paramTyp, ParameterName (cs paramName)) | (paramTyp, paramName) <- funcParams funcSign]
         (funcRetTyp funcSign) (generateBody (funcRetTyp funcSign) funcBody (funcParams funcSign))
       registerFunc funcName actualFuncOperand
-
   where
     funcBody = extractBody body
     hasBody = isJust
     extractBody = fromJust
 
-data FuncSignature = FuncSignature {
-  funcName :: String,
-  funcRetTyp :: LLVM.AST.Type,
-  funcParams :: [(LLVM.AST.Type, String)],
-  funcType :: LLVM.AST.Type
-}
-
-llvmFuncSignature :: SFunction -> LLVM FuncSignature
+llvmFuncSignature :: MonadState (Env Operand) m => SFunction -> m FuncSignature
 llvmFuncSignature SFunction{..} = do 
   funcRetTyp <- llvmType returnType
   funcParams <- mapM (\(SFormal paramTyp paramName) -> do 
@@ -74,7 +66,7 @@ llvmFuncSignature SFunction{..} = do
     }
   return (FuncSignature funcName funcRetTyp funcParams funcTyp)
 
-llvmParamType :: Semant.Type.Type -> LLVM LLVM.AST.Type
+llvmParamType :: MonadState (Env Operand) m => Semant.Type.Type -> m LLVM.AST.Type
 llvmParamType (Scalar (StructType name 0)) = return undefined -- implement as a byval struct pointer
 llvmParamType typ =  llvmType typ
 

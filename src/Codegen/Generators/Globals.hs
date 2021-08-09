@@ -10,7 +10,7 @@ import qualified LLVM.IRBuilder as L
 import Codegen.Env (registerOperand, Env (Env))
 import Codegen.TypeMappings (llvmType)
 import Data.String.Conversions (cs)
-import LLVM.AST (mkName)
+import LLVM.AST (mkName, Operand)
 import Semant.Type (Type, isInt, isChar, isDouble, isArray, isPointer)
 import LLVM.AST.Constant (Constant (Int, Float, Null))
 import LLVM.AST.Float (SomeFloat(Double))
@@ -24,7 +24,7 @@ generateGlobal (SVar typ name) = do
   var <- L.global (mkName (cs name)) llvmTyp initVal
   registerOperand name var
 
-initValue :: MonadState (Env a) m => Type -> m Constant
+initValue :: MonadState (Env Operand) m => Type -> m Constant
 initValue typ 
   | isArray typ = LLVM.AST.AggregateZero <$> llvmType typ
   | isPointer typ = LLVM.AST.Constant.Null <$> llvmType typ
