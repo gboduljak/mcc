@@ -35,6 +35,7 @@ import LLVM.Pretty (ppllvm)
 import Codegen.Compiler (compile)
 import Data.Text.Lazy (unpack)
 import System.FilePath.Posix (replaceExtension)
+import Semant.ProgramBundle.Bundler (bundle)
 
 main :: IO ()
 main = do
@@ -65,11 +66,12 @@ main = do
               traverse_
                 ( \(file, tree) -> do
                     writeFile (file ++ ".sast.dot") (visualiseSemantAst tree)
-                    let llvm = unpack $ ppllvm (compile file tree)
-                    putStrLn llvm
-                    writeFile (replaceExtension file ".ll") llvm
                 )
                 (zip order trees)
+              let program = bundle trees
+              let llvm = unpack $ ppllvm (compile "compiled" program)
+              putStrLn llvm
+              writeFile "compiled.ll" llvm
         else do
           return ()
       -- case analyseProgs maybeProgs of

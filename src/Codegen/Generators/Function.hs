@@ -97,7 +97,9 @@ generateBody retTyp  body opMeta ops = do
     else do 
       generateTerm (
         do
-          L.ret (L.int32 0)
+          retValPtr <- L.alloca retTyp Nothing 0
+          retVal <- L.load retValPtr 0
+          L.ret retVal
         )
   where isVoid retTyp = retTyp == LLVM.AST.Type.void
 

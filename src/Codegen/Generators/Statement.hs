@@ -75,6 +75,6 @@ generateStatement (SReturn expr) = do
 
 generateVarDecl :: SVarDecl -> Codegen ()
 generateVarDecl (SVar typ name) = do
-  varTyp <- lift $ llvmType typ
+  varTyp <- llvmType typ
   varPtr <- L.alloca varTyp Nothing 0
   registerOperand name varPtr

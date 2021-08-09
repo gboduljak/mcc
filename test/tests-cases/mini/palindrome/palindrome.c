@@ -4,6 +4,8 @@ int main() {
   int c;
   int s;
 
+  s = 0;
+
   printf("Enter a number:\t");
   scanf("%d", &a);
   c = a;

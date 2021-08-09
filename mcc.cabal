@@ -32,6 +32,7 @@ library
       Codegen.Generators.Common
       Codegen.Generators.Expression
       Codegen.Generators.Function
+      Codegen.Generators.Globals
       Codegen.Generators.Program
       Codegen.Generators.Statement
       Codegen.TypeMappings

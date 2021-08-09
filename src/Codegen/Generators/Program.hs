@@ -7,11 +7,13 @@ import Semant.Ast.SemantAst (SProgram (SProgram))
 import qualified LLVM.AST
 import Codegen.Codegen
 import Codegen.Generators.Function (generateFunctionDecl, generateFunctionDefn)
+import Codegen.Generators.Globals (generateGlobal)
 import Data.Foldable (traverse_)
 import Semant.Builtins (isBuiltin)
 
 generateProgram :: SProgram -> LLVM ()
-generateProgram (SProgram _ funcs _) = do 
+generateProgram (SProgram _ funcs globals) = do 
+  traverse_ generateGlobal globals
   traverse_ generateFunctionDefn builtinFuncs
   traverse_ generateFunctionDecl customFuncs
   traverse_ generateFunctionDefn customFuncs

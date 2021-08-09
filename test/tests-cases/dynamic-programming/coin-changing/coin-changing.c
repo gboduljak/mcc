@@ -50,9 +50,6 @@ void print_exchange(int n) {
 int main() {
   coins_n = 0;
   amount = 0;
-  coins = (int *)NULL;
-  dp = (int *)NULL;
-  coin_used = (int *)NULL;
   infinity = 10000000;
 
   int i;

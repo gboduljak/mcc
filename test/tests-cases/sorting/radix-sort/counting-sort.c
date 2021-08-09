@@ -1,9 +1,14 @@
 #include "counting-sort.h"
 
-// #include <math.h>
-// #include <stdlib.h>
-// #include <string.h>
-int pow(int x, int y);
+int pow(int x, int y) {
+  int power;
+  power = 1;
+  while (y > 0) {
+    power = power * x;
+    y = y - 1;
+  }
+  return power;
+}
 
 int Digit(int num, int d) {
   int power;

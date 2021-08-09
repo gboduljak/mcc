@@ -1,4 +1,6 @@
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module CodegenSpec where
 
@@ -30,7 +32,11 @@ import Semant.Type
 import System.Console.Pretty (supportsPretty)
 import System.Directory (getDirectoryContents)
 import System.FilePath (takeExtension, replaceExtension)
-import System.Process ( callCommand )
+import System.IO
+import System.Process
+import System.Exit
+import Control.Exception
+import Control.Monad.IO.Class
 import Test.Hspec (Spec, SpecWith, describe, expectationFailure, it, shouldBe)
 import TestCases
   ( dynamicProgrammingPrograms,
@@ -43,7 +49,6 @@ import Prelude hiding (id, lex)
 import Codegen.Compiler (compile)
 import LLVM.Pretty (ppllvm)
 import Data.List
-
 
 jmoragProgramsSpec :: Spec
 jmoragProgramsSpec = do
@@ -81,15 +86,15 @@ codegenProgram folder = it ("compiles program " ++ folder ++ "...") $ do
       let input = folder ++ "input.in"
       let expectedOutput = folder ++ "expected-output.txt"
       let actualOutput = folder ++ "actual-output.txt"
-      let mccExecutable = folder ++ "compiled.out"
-      let clangExecutable = folder ++ "compiled-clang.out"
+      let !mccExecutable = folder ++ "compiled.out"
+      let !clangExecutable = folder ++ "compiled-clang.out"
       let clangSources = [folder ++ source | source <- sources]
       let execMccExecutableCmd = mccExecutable ++ " < " ++ input ++ " > " ++ actualOutput
       let execClangExecutableCmd = clangExecutable ++ " < " ++ input ++ " > " ++ expectedOutput
       
       writeFile llvmFile llvm
       
-      callCommand ("clang -Wno-everything " ++ llvmFile ++ " -o " ++ mccExecutable)
+      callCommand  ("clang -Wno-everything " ++ llvmFile ++ " -o " ++ mccExecutable)
       callCommand ("clang -Wno-everything " ++ unwords clangSources ++ " -o " ++ clangExecutable)
       callCommand execMccExecutableCmd
       callCommand execClangExecutableCmd
