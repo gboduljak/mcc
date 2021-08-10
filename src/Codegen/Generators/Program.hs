@@ -11,9 +11,11 @@ import Codegen.Generators.Globals (generateGlobal)
 import Data.Foldable (traverse_)
 import Semant.Builtins (isBuiltin)
 import Codegen.Generators.Structs (generateStruct)
+import Codegen.Intrinsics.Memcpy
 
 generateProgram :: SProgram -> LLVM ()
-generateProgram (SProgram structs funcs globals) = do 
+generateProgram (SProgram structs funcs globals) = do
+  generateMemcpy
   traverse_ generateStruct structs
   traverse_ generateGlobal globals
   traverse_ generateFunctionDefn builtinFuncs

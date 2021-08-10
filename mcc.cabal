@@ -33,9 +33,11 @@ library
       Codegen.Generators.Expression
       Codegen.Generators.Function
       Codegen.Generators.Globals
+      Codegen.Generators.Intrinsic
       Codegen.Generators.Program
       Codegen.Generators.Statement
       Codegen.Generators.Structs
+      Codegen.Intrinsics.Memcpy
       Codegen.Signatures.FuncSignature
       Codegen.Signatures.StructSignature
       Codegen.TypeMappings

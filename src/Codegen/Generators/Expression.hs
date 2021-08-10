@@ -4,7 +4,7 @@ where
 
 import LLVM.AST (Operand)
 import Codegen.Codegen
-import Semant.Ast.SemantAst
+import Semant.Ast.SemantAst hiding (getFieldOffset)
 import qualified LLVM.IRBuilder as L
 import Data.Char
 import LLVM.IRBuilder (freshName)
@@ -14,18 +14,29 @@ import LLVM.AST.Operand
 import Data.Maybe (fromJust)
 import SymbolTable.SymbolTable (lookupVar)
 import qualified Semant.Type
-import Debug.Trace (traceShowId)
+import Codegen.Signatures.StructSignature
 import Control.Monad.State
 import qualified Codegen.Env
 import qualified Data.Map
 import qualified Data.Map as Map
 import Codegen.TypeMappings (llvmType, llvmSizeOf)
-import Parser.Ast (InfixOp (Add, Sub, Less, Neq, Greater, Mul, Div, Mod, Equal, Leq, Geq, And, Or, BitwiseAnd, BitwiseOr, BitwiseXor), SizeofType (SizeofType))
-import Semant.Type (isPointer, isInt, isChar, isDouble, Type (Scalar, Array))
+import Parser.Ast (
+  InfixOp (..), 
+  SizeofType (SizeofType), 
+  Type (StructType)
+  )
+import Semant.Type
+    ( isPointer,
+      isInt,
+      isChar,
+      isDouble,
+      Type(Scalar, Array),
+      isStruct )
 import qualified LLVM.AST.Type
 import qualified LLVM.AST.IntegerPredicate as L.IntegerPredicate
 import qualified LLVM.AST.FloatingPointPredicate as L.FloatPredicate
 import Utils.Cond ((|>), (<||>), (||>))
+import Codegen.Intrinsics.Memcpy
 
 -- expressions return operand storing value or ptr in case of struct or array
 generateExpression :: SExpr -> Codegen Operand
@@ -53,7 +64,7 @@ generateExpression (_, SNegative expr@(exprTyp, _))
   | isInt exprTyp = L.sub (L.int32 0) =<< generateExpression expr
   | isDouble exprTyp = L.fsub (L.double 0) =<< generateExpression expr
   | otherwise = error ("semantic analysis failed on:" ++ show expr)
-generateExpression (_, SSizeof (Left (SizeofType baseTyp arraySizes))) = do 
+generateExpression (_, SSizeof (Left (SizeofType baseTyp arraySizes))) = do
   size <- fromIntegral <$> llvmSizeOf (Array baseTyp arraySizes)
   return (L.int32 size)
 generateExpression (_, SSizeof (Right (exprTyp, _))) = do
@@ -80,19 +91,14 @@ generateExpression (_, SCall func actualExprs) = do
   args <- mapM generateCallArg $ zip (fst <$> actualExprs) actuals
   callee <- lookupFunc func
   L.call callee [(arg, []) | arg <- args] -- handle pass struct byval
-  -- load depending on whether arr, struct or expr typ
-  -- expressions involving struct or expr type in identifier 
-  -- posn are all invalid except assign
 generateExpression (Array _ _, LVal val) = generateLVal val
-generateExpression (_, LVal val) = flip L.load 0 =<< generateLVal val
--- assign struct and array is special, perform copy there
-generateExpression (_, SAssign (_, LVal val) expr) = do
-  addr <- generateLVal val
-  assignVal <- generateExpression expr
-  L.store addr 0 assignVal
-  return assignVal
+generateExpression (typ, LVal val)
+ | isStruct typ = generateLVal val -- if struct, do not load
+ | otherwise = flip L.load 0 =<< generateLVal val -- if not struct or array, do load
+generateExpression (typ, SAssign (_, LVal target) expr)
+  | isStruct typ = generateAssignAggregate target expr -- struct and array are assigned by copying
+  | otherwise = generateAssignSimple target expr
 generateExpression (_, SAssign (_, _) expr) = error ("semantic analysis failed on:" ++ show expr)
-
 generateBinop :: SExpr -> Operand -> Operand -> Codegen Operand
 generateBinop expr@(_, SBinop left@(leftTyp, _) Add right@(rightTyp, _)) leftOp rightOp
   | isPointer leftTyp && isInt rightTyp = L.gep leftOp [rightOp]
@@ -184,5 +190,26 @@ generateLVal (SArrayAccess expr indexExprs) = do
   accessOp <- generateExpression expr
   indexers <- mapM generateExpression indexExprs
   L.gep accessOp (L.int32 0 : indexers)
-generateLVal (SNoAddrLVal) = error "semantic analyser failed to detect invalid lval"
+generateLVal (SFieldAccess target@(Scalar (StructType name 0), _) field) = do
+  struct <- lookupStruct name
+  target <- generateExpression target
+  let fieldOffset = fromIntegral $ getFieldOffset field struct
+  L.gep target (L.int32 0 : [L.int32 fieldOffset])
+
+generateLVal _= error "semantic analyser failed to detect invalid lval"
   -- expr is a pointer type, which is loaded by generateExpr
+
+generateAssignAggregate :: LValue -> SExpr -> Codegen Operand
+generateAssignAggregate target expr@(typ, _) = do
+  destPtr <- generateLVal target
+  assignPtr <- generateExpression expr
+  copyBytes <- llvmSizeOf typ
+  performMemcpy destPtr assignPtr (L.int64 (fromIntegral copyBytes))
+  return destPtr
+  
+generateAssignSimple :: LValue -> SExpr -> Codegen Operand
+generateAssignSimple target expr = do
+  addr <- generateLVal target
+  assignVal <- generateExpression expr
+  L.store addr 0 assignVal
+  return assignVal

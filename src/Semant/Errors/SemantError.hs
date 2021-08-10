@@ -116,8 +116,8 @@ instance Pretty SemantError where
     \case
       EmptyProgram -> pretty "There is nothing to compile. :)"
       RecursiveStructDecl structDecl@(Struct name _ _) decls _-> 
-        pretty "Struct definition error in: "
-          <+> pretty structDecl
+        pretty "Struct definition error in: " <> hardline
+          <+> indent indentAmount (pretty structDecl)
           <> hardline 
           <>  (
             pretty "Struct" <+> 

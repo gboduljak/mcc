@@ -28,7 +28,7 @@ llvmType (Scalar (PrimitiveType Void 1)) = return charPtr
 llvmType (Scalar (PrimitiveType typ ptrs)) = do
   innerTyp <- llvmType (Scalar (PrimitiveType typ (ptrs - 1)))
   return (LLVM.AST.ptr innerTyp)
-llvmType (Scalar (StructType name 0)) = return $ LLVM.AST.NamedTypeReference (mkName name)
+llvmType (Scalar (StructType name 0)) = return $ LLVM.AST.NamedTypeReference (llvmStructName name)
 llvmType (Scalar (StructType name ptrs)) = do
   innerTyp <- llvmType (Scalar (StructType name (ptrs - 1)))
   return (LLVM.AST.ptr innerTyp)
@@ -47,9 +47,8 @@ llvmSizeOf (Scalar (PrimitiveType Void 0)) = return 0
 llvmSizeOf (Scalar (PrimitiveType _ ptrs)) = return 8
 llvmSizeOf (Scalar (StructType name 0)) = do
   structFields <- fields <$> lookupStruct name
-  let types = fieldType <$> structFields
-  -- sizes <- mapM llvmSizeof types
-  undefined
+  structFieldSizes <- mapM llvmSizeOf (semantFieldType <$> structFields)
+  return (sum structFieldSizes)
 llvmSizeOf (Scalar (StructType _ ptrs)) = return 8
 llvmSizeOf (Array baseType arraySizes) = do
   baseTypSize <- llvmSizeOf (Scalar baseType)
@@ -59,5 +58,5 @@ llvmSizeOf Any = error "semantic analysis failed"
 llvmStructType :: StructSignature -> LLVM.AST.Type
 llvmStructType StructSignature{..} = StructureType {
   isPacked = True,
-  elementTypes = fieldType <$> fields
+  elementTypes = llvmFieldType <$> fields
 }

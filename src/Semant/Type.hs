@@ -33,6 +33,10 @@ voidTyp = Scalar (Ast.PrimitiveType Void 0)
 isVoid :: Type -> Bool 
 isVoid typ = typ == voidTyp
 
+isStruct :: Type -> Bool 
+isStruct (Scalar (Ast.StructType _ 0)) = True 
+isStruct _ = False
+
 isInt :: Type -> Bool
 isInt (Scalar (Ast.PrimitiveType Int 0)) = True
 isInt _ = False

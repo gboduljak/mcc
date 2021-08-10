@@ -28,7 +28,7 @@ import Codegen.Env (registerOperand, Env (funcs))
 import Codegen.Codegen (registerFunc, LLVM, Codegen)
 import Control.Monad.State (get, gets, MonadTrans (lift), MonadState)
 import qualified Data.Map as Map
-import Codegen.Signatures.FuncSignature (FuncSignature(..))
+import Codegen.Signatures.FuncSignature (FuncSignature(..), llvmFuncSignature, llvmFuncOperand)
 
 generateFunctionDecl :: SFunction -> LLVM ()
 generateFunctionDecl func@SFunction{..} =  do
@@ -51,27 +51,6 @@ generateFunctionDefn func@SFunction{..}
     funcBody = extractBody body
     hasBody = isJust
     extractBody = fromJust
-
-llvmFuncSignature :: MonadState (Env Operand) m => SFunction -> m FuncSignature
-llvmFuncSignature SFunction{..} = do 
-  funcRetTyp <- llvmType returnType
-  funcParams <- mapM (\(SFormal paramTyp paramName) -> do 
-      paramLlvmTyp <- llvmParamType paramTyp 
-      return (paramLlvmTyp, paramName)
-    ) formals
-  let funcTyp = FunctionType {
-      resultType = funcRetTyp,
-      argumentTypes = fst <$> funcParams,
-      isVarArg = False
-    }
-  return (FuncSignature funcName funcRetTyp funcParams funcTyp)
-
-llvmParamType :: MonadState (Env Operand) m => Semant.Type.Type -> m LLVM.AST.Type
-llvmParamType (Scalar (StructType name 0)) = return undefined -- implement as a byval struct pointer
-llvmParamType typ =  llvmType typ
-
-llvmFuncOperand :: LLVM.AST.Type -> Name -> LLVM Operand
-llvmFuncOperand funcTyp funcName = return (ConstantOperand $ GlobalReference funcTyp funcName)
 
 generateBody :: LLVM.AST.Type.Type -> SBlock -> [(LLVM.AST.Type.Type, String)] -> [Operand] -> Codegen ()
 generateBody retTyp  body opMeta ops = do
