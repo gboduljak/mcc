@@ -27,9 +27,8 @@ import Codegen.Env (registerOperand, Env (funcs))
 import Codegen.Codegen (registerFunc, LLVM, Codegen)
 import Control.Monad.State (get, gets, MonadTrans (lift), MonadState)
 import qualified Data.Map as Map
-import Codegen.Signatures.FuncSignature (FuncSignature(..))
-import Codegen.Signatures.FuncSignatureLogic
-    ( llvmFuncSignature, llvmFuncOperand )
+import Codegen.Signatures.FuncSignature (FuncSignature(..), FuncParamSignature)
+import Codegen.Signatures.FuncSignatureLogic(llvmFuncSignature, llvmFuncOperand)
 import Codegen.Intrinsics.Memcpy (performMemcpy)
 
 generateFunctionDecl :: SFunction -> LLVM ()
@@ -56,7 +55,7 @@ generateFunctionDefn func@SFunction{..}
     hasBody = isJust
     extractBody = fromJust
 
-generateBody :: LLVM.AST.Type.Type -> SBlock -> [(Semant.Type.Type, LLVM.AST.Type, String)] -> [Operand] -> Codegen ()
+generateBody :: LLVM.AST.Type.Type -> SBlock -> [FuncParamSignature] -> [Operand] -> Codegen ()
 generateBody retTyp body formalsMeta actuals = do
   L.block `L.named` cs "entry"
   enterScope
@@ -74,7 +73,7 @@ generateBody retTyp body formalsMeta actuals = do
         )
   where isVoid retTyp = retTyp == LLVM.AST.Type.void
 
-bindActualToFormal :: ((Semant.Type.Type, LLVM.AST.Type, String), Operand)  -> Codegen ()
+bindActualToFormal :: (FuncParamSignature, Operand)  -> Codegen ()
 bindActualToFormal ((semantTyp, llvmTyp, name), actual)
   -- bypass to accept structs 'by value'
   | isStruct semantTyp = do

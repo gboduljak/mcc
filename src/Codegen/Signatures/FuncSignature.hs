@@ -13,11 +13,13 @@ import LLVM.AST.Constant
 import qualified LLVM.AST.Type
 import qualified Data.Map as Map
 
+type FuncParamSignature = (Semant.Type.Type, LLVM.AST.Type, String)
+
 data FuncSignature = FuncSignature {
   funcName :: String,
   funcLLVMRetTyp :: LLVM.AST.Type,
   funcSemantRetTyp :: Semant.Type.Type,
-  funcParams :: [(Semant.Type.Type, LLVM.AST.Type, String)],
+  funcParams :: [FuncParamSignature],
   funcType :: LLVM.AST.Type,
   returnsStruct :: Bool
 } deriving (Show, Eq)

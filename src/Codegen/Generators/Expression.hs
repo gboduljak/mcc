@@ -40,7 +40,10 @@ import Codegen.Intrinsics.Memcpy
 import Codegen.Signatures.FuncSignatureLogic (llvmFuncSignature)
 import Codegen.Signatures.FuncSignature (returnsStruct, FuncSignature (funcSemantRetTyp))
 
--- expressions return operand storing value or ptr in case of struct or array
+-- invariant #1 : every expression generator returns the operand storing the VALUE of expression result
+--    Nota bene: expressions resulting in a struct or array return the operand storing 
+--    the ADDRESS of expression result
+
 generateExpression :: SExpr -> Codegen Operand
 generateExpression (_, SLitInt x) = return (L.int32 (fromIntegral x))
 generateExpression (_, SLitDouble x) = return (L.double x)
@@ -90,10 +93,8 @@ generateExpression expr@(targetTyp, STypecast _ srcExpr@(exprTyp, _)) = do
       )
 generateExpression (_, SCall func actualExprs) = do
   actuals <- mapM generateExpression actualExprs
-  args <- mapM generateCallArg $ zip (fst <$> actualExprs) actuals
   callee <- lookupFunc func
   calleeSign <- lookupFuncSignature func
-
   if returnsStruct calleeSign
     then do
       -- allocate space for struct on the caller stack
@@ -101,24 +102,24 @@ generateExpression (_, SCall func actualExprs) = do
       structSize <- fromIntegral <$> llvmSizeOf (funcSemantRetTyp calleeSign)
       structResultPtr <- L.alloca structTyp Nothing 0
       -- call
-      returnedStructPtr <- generateCall callee args
+      returnedStructPtr <- generateCall callee actuals
       -- copy the returned struct to the caller stack
       performMemcpy structResultPtr returnedStructPtr (L.int64 structSize)
       return structResultPtr
     else do
-      generateCall callee args
+      generateCall callee actuals
   
   where generateCall callee args = L.call callee [(arg, []) | arg <- args] 
 
--- handle pass struct byval
 generateExpression (Array _ _, LVal val) = generateLVal val
 generateExpression (typ, LVal val)
- | isStruct typ = generateLVal val -- if struct, do not load
- | otherwise = flip L.load 0 =<< generateLVal val -- if not struct or array, do load
+ | isStruct typ = generateLVal val -- By invariant #1, if we have a struct or array, do not issue load
+ | otherwise = flip L.load 0 =<< generateLVal val -- By invariant #1, for simple types, issue a load
 generateExpression (typ, SAssign (_, LVal target) expr)
-  | isStruct typ = generateAssignAggregate target expr -- struct and array are assigned by copying
-  | otherwise = generateAssignSimple target expr
+  | isStruct typ = generateAssignAggregate target expr -- By invariant #1, if we have a struct or array, assign is actually a copy
+  | otherwise = generateAssignSimple target expr -- By invariant #1, for simple types, assign is actually a store
 generateExpression (_, SAssign (_, _) expr) = error ("semantic analysis failed on:" ++ show expr)
+
 generateBinop :: SExpr -> Operand -> Operand -> Codegen Operand
 generateBinop expr@(_, SBinop left@(leftTyp, _) Add right@(rightTyp, _)) leftOp rightOp
   | isPointer leftTyp && isInt rightTyp = L.gep leftOp [rightOp]
@@ -199,10 +200,7 @@ generateBinop (_, SBinop _ BitwiseOr _) leftOp rightOp = L.or leftOp rightOp
 generateBinop (_, SBinop _ BitwiseXor _) leftOp rightOp = L.xor leftOp rightOp
 generateBinop expr _ _ =  error ("binop not a binop?" ++ show expr)
 
-generateCallArg :: (Semant.Type.Type, Operand) -> Codegen Operand
-generateCallArg (typ, op) = return op -- incorporate byval for structs
-
--- lvals return operand storing address
+-- invariant #2 : every LValue generator returns the operand storing the ADDRESS
 generateLVal :: LValue -> Codegen Operand
 generateLVal (SIdent name) = fromJust <$> lookupVar name
 generateLVal (SDeref expr) = generateExpression expr
@@ -215,12 +213,13 @@ generateLVal (SFieldAccess target@(Scalar (StructType name 0), _) field) = do
   target <- generateExpression target
   let fieldOffset = fromIntegral $ getFieldOffset field struct
   L.gep target (L.int32 0 : [L.int32 fieldOffset])
-
 generateLVal _= error "semantic analyser failed to detect invalid lval"
-  -- expr is a pointer type, which is loaded by generateExpr
 
 generateAssignAggregate :: LValue -> SExpr -> Codegen Operand
 generateAssignAggregate target expr@(typ, _) = do
+  -- Nota bene: By the first invariant, expr is an operand storing 
+  -- the ADDRESS of VALUE to be assigned
+  -- This is a case when LVAL appears as RVAL
   destPtr <- generateLVal target
   assignPtr <- generateExpression expr
   copyBytes <- llvmSizeOf typ
@@ -229,6 +228,8 @@ generateAssignAggregate target expr@(typ, _) = do
   
 generateAssignSimple :: LValue -> SExpr -> Codegen Operand
 generateAssignSimple target expr = do
+  -- Nota bene: In case of assigning an expr storing the VALUE to be assigned
+  -- it is correct and sufficient to simply emit a store
   addr <- generateLVal target
   assignVal <- generateExpression expr
   L.store addr 0 assignVal

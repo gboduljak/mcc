@@ -1,14 +1,9 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE UndecidableInstances #-} -- For MonadState s (IRBuilderT m) instance
-
 module Codegen.Generators.Intrinsic
 where
 
 import LLVM.IRBuilder
 import Data.String.Conversions
-import LLVM.AST.Global (name, Global (parameters, returnType, basicBlocks, linkage))
+import LLVM.AST.Global (Global (parameters, returnType, basicBlocks, linkage, name))
 import qualified LLVM.AST.Constant as C
 import Control.Monad
 import LLVM.AST.Type (ptr)
@@ -21,19 +16,22 @@ import LLVM.AST (
   Type (FunctionType), Operand (ConstantOperand, LocalReference))
 
 intrinsic :: (MonadModuleBuilder m) => LLVM.AST.Name -> [(LLVM.AST.Type, ParameterName)] -> LLVM.AST.Type -> m Operand
-intrinsic name args retTyp = do
-  let argTyps = fst <$> args
-  (paramNames', _) <-  runIRBuilderT emptyIRBuilder $ do
-      forM args $ \(_, paramName) -> case paramName of
+intrinsic intrinsicName formals retTyp = do
+  let formalTyps = fst <$> formals
+  (formalNames, _) <-  runIRBuilderT emptyIRBuilder $ do
+      forM formals $ \(_, formalName) -> case formalName of
         NoParameterName -> fresh
         ParameterName p -> fresh `named` p
   let
-    def = GlobalDefinition functionDefaults
-      { name        = name
-      , parameters  = (zipWith (\ty nm -> Parameter ty nm []) argTyps paramNames', False)
-      , returnType  = retTyp
-      , basicBlocks = []
+    intrinsicDefn = GlobalDefinition functionDefaults
+      { name        = intrinsicName, 
+        parameters  = (
+          zipWith (\formalTyp formalName -> Parameter formalTyp formalName []) 
+          formalTyps formalNames, False
+        ), 
+        returnType  = retTyp, 
+        basicBlocks = []
       }
-    funcTyp = ptr $ FunctionType retTyp argTyps False
-  emitDefn def
-  pure $ ConstantOperand $ C.GlobalReference funcTyp name
+    intrinsicTyp = ptr $ FunctionType retTyp formalTyps False
+  emitDefn intrinsicDefn
+  pure $ ConstantOperand $ C.GlobalReference intrinsicTyp intrinsicName
