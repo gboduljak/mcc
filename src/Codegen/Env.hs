@@ -15,10 +15,12 @@ import SymbolTable.SymbolTable (defineVar)
 import Control.Monad (void)
 import Data.Map (Map)
 import Codegen.Signatures.StructSignature (StructSignature)
+import Codegen.Signatures.FuncSignature
 
 data Env a = Env {
   structs :: Map String StructSignature,
   funcs :: Map String Operand,
+  funcSignatures :: Map String FuncSignature,
   stringLitsCount :: Int,
   scopes :: Map ScopeId (Scope a),
   currentScopeId :: ScopeId
@@ -29,6 +31,7 @@ emptyEnv :: Env Operand
 emptyEnv = Env {
   structs = Map.empty,
   funcs = Map.empty,
+  funcSignatures = Map.empty,
   stringLitsCount = 0,
   scopes = Map.fromList [(rootScopeId, rootScope)],
   currentScopeId = rootScopeId
@@ -46,7 +49,8 @@ modifyScopes Env{..} newScopes = Env {
   funcs,
   stringLitsCount,
   scopes = newScopes,
-  currentScopeId
+  currentScopeId,
+  funcSignatures
 }
 
 modifyCurrentScopeId :: Env a -> ScopeId-> Env a
@@ -55,7 +59,8 @@ modifyCurrentScopeId Env {..} scopeId = Env {
   funcs,
   stringLitsCount,
   scopes,
-  currentScopeId = scopeId
+  currentScopeId = scopeId,
+  funcSignatures
 }
 
 registerOperand :: forall e a m .

@@ -11,37 +11,43 @@ import Codegen.Generators.Intrinsic (intrinsic)
 import qualified LLVM.IRBuilder as L
 import LLVM.AST.Attribute (ParameterAttribute(Alignment))
 import LLVM.AST.Type (i1)
+import Parser.Ast (Type(PrimitiveType))
+import Lexer.Lexeme (BuiltinType(Char, Int))
+import Semant.Type
 
 
 
 memcpy :: FuncSignature
 memcpy = FuncSignature {
     funcName = "llvm.memcpy.p0i8.p0i8.i64",
-    funcRetTyp = memcpyRetType,
+    funcLLVMRetTyp = memcpyRetType,
+    funcSemantRetTyp = Scalar (PrimitiveType Char 1),
     funcParams = memcpyParams,
     funcType = FunctionType {
       resultType = memcpyRetType,
       argumentTypes = memcpyArgTypes,
       isVarArg = False
-    }
+    },
+    returnsStruct = False
   }
   where 
     memcpyRetType = LLVM.AST.Type.void
     memcpyParams = [
-      (charPtr, "dest"), 
-      (charPtr, "src"), 
-      (LLVM.AST.Type.i64, "len"),
-      (LLVM.AST.Type.i1, "isvolatile")
+      (Scalar (PrimitiveType Char 1), charPtr, "dest"), 
+      (Scalar (PrimitiveType Char 1), charPtr, "src"), 
+      (Scalar (PrimitiveType Int 0), LLVM.AST.Type.i64, "len"),
+      (Any, LLVM.AST.Type.i1, "isvolatile")
       ]
-    memcpyArgTypes = fst <$> memcpyParams
+    memcpyArgTypes = llvmTyp <$> memcpyParams
+    llvmTyp (_, typ, _) = typ
 
 generateMemcpy :: LLVM ()
 generateMemcpy = do 
   actualFuncOperand <- intrinsic
     (mkName (funcName memcpy))
-    [(paramTyp, NoParameterName) | (paramTyp, paramName) <- funcParams memcpy]
-    (funcRetTyp memcpy) 
-  registerFunc (funcName memcpy) actualFuncOperand
+    [(paramTyp, NoParameterName) | (_, paramTyp, paramName) <- funcParams memcpy]
+    (funcLLVMRetTyp memcpy) 
+  registerFunc (funcName memcpy) memcpy actualFuncOperand 
   
 performMemcpy :: Operand -> Operand -> Operand -> Codegen Operand
 performMemcpy destPtr sourcePtr copyBytes = do

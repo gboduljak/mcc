@@ -39,6 +39,7 @@ library
       Codegen.Generators.Structs
       Codegen.Intrinsics.Memcpy
       Codegen.Signatures.FuncSignature
+      Codegen.Signatures.FuncSignatureLogic
       Codegen.Signatures.StructSignature
       Codegen.TypeMappings
       Lexer.AdHoc.Lexer

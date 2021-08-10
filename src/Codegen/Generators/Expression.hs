@@ -37,6 +37,8 @@ import qualified LLVM.AST.IntegerPredicate as L.IntegerPredicate
 import qualified LLVM.AST.FloatingPointPredicate as L.FloatPredicate
 import Utils.Cond ((|>), (<||>), (||>))
 import Codegen.Intrinsics.Memcpy
+import Codegen.Signatures.FuncSignatureLogic (llvmFuncSignature)
+import Codegen.Signatures.FuncSignature (returnsStruct, FuncSignature (funcSemantRetTyp))
 
 -- expressions return operand storing value or ptr in case of struct or array
 generateExpression :: SExpr -> Codegen Operand
@@ -90,7 +92,25 @@ generateExpression (_, SCall func actualExprs) = do
   actuals <- mapM generateExpression actualExprs
   args <- mapM generateCallArg $ zip (fst <$> actualExprs) actuals
   callee <- lookupFunc func
-  L.call callee [(arg, []) | arg <- args] -- handle pass struct byval
+  calleeSign <- lookupFuncSignature func
+
+  if returnsStruct calleeSign
+    then do
+      -- allocate space for struct on the caller stack
+      structTyp <- llvmType (funcSemantRetTyp calleeSign) -- need to generate struct instead of struct*
+      structSize <- fromIntegral <$> llvmSizeOf (funcSemantRetTyp calleeSign)
+      structResultPtr <- L.alloca structTyp Nothing 0
+      -- call
+      returnedStructPtr <- generateCall callee args
+      -- copy the returned struct to the caller stack
+      performMemcpy structResultPtr returnedStructPtr (L.int64 structSize)
+      return structResultPtr
+    else do
+      generateCall callee args
+  
+  where generateCall callee args = L.call callee [(arg, []) | arg <- args] 
+
+-- handle pass struct byval
 generateExpression (Array _ _, LVal val) = generateLVal val
 generateExpression (typ, LVal val)
  | isStruct typ = generateLVal val -- if struct, do not load

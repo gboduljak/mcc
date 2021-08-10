@@ -20,14 +20,20 @@ import Data.String (fromString)
 import Data.Maybe (fromJust)
 import LLVM.AST.Name (mkName)
 import Codegen.Signatures.StructSignature (StructSignature)
+import Codegen.Signatures.FuncSignature
 
 type LLVM = ModuleBuilderT (State (Env Operand))
 type Codegen = IRBuilderT LLVM
 instance ConvertibleStrings String ShortByteString where
   convertString = fromString
 
-registerFunc :: String -> Operand -> LLVM ()
-registerFunc name func = modify (\env -> env { funcs = Map.insert name func (funcs env) })
+registerFunc ::  (MonadState (Env Operand)) m => String -> FuncSignature -> Operand -> m ()
+registerFunc name signature func = do 
+  modify (\env -> env { funcs = Map.insert name func (funcs env) })
+  modify (\env -> env { funcSignatures = Map.insert name signature (funcSignatures env) })
+
+lookupFuncSignature :: (MonadState (Env Operand)) m => String -> m FuncSignature 
+lookupFuncSignature name = gets (fromJust . Map.lookup name . funcSignatures)
 
 registerStruct :: String -> StructSignature  -> LLVM ()
 registerStruct name struct = modify (\env -> env { structs =  Map.insert name struct (structs env) })
