@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE RecordWildCards #-}
 module Codegen.Signatures.FuncSignature where 
 
 import qualified LLVM.AST
@@ -7,7 +6,7 @@ import Semant.Ast.SemantAst
 import Control.Monad.State (MonadState)
 import LLVM.AST (Type(FunctionType), Operand (ConstantOperand), Name)
 import qualified Semant.Type
-import Semant.Type (Type(Scalar), isStruct)
+import Semant.Type (Type(Scalar))
 import Parser.Ast (Type(StructType))
 import LLVM.AST.Constant
 import qualified LLVM.AST.Type

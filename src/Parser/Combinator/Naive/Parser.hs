@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-
 module Parser.Combinator.Naive.Parser where
 
 import qualified Data.List as DL
@@ -40,6 +38,7 @@ construct = do
   try structDecl <|> try funcDefOrFuncDeclOrVarDecl
   where
     structName (Ast.StructType x _) = x
+    structName _ = undefined
 
 structDecl :: Parser Ast.Construct
 structDecl = do
@@ -51,6 +50,7 @@ structDecl = do
   return (Ast.StructDecl $ Ast.Struct name vars off)
   where
     structName (Ast.Ident x _) = x
+    structName _ = undefined
 
 structFields :: Int -> Parser [Ast.VarDecl]
 structFields off = do
@@ -62,6 +62,7 @@ structFields off = do
       nameId <- ident
       varDecl off typ (name nameId)
     name (Ast.Ident x _) = x
+    name _ = undefined
 
 funcDefOrFuncDeclOrVarDecl :: Parser Ast.Construct
 funcDefOrFuncDeclOrVarDecl = do
@@ -75,6 +76,7 @@ funcDefOrFuncDeclOrVarDecl = do
       Ast.FuncDecl <$> funcDecl off typ name args <|> Ast.FuncDefn <$> funcDefn off typ name args
     varDecl' off typ nameId = Ast.VarDecl <$> varDecl off typ (name nameId)
     name (Ast.Ident x _) = x
+    name _ = undefined
 
 funcDecl :: Int -> Ast.Type -> String -> [Ast.Formal] -> Parser Ast.FuncDecl
 funcDecl off rettyp funcName formals = do
@@ -112,6 +114,7 @@ statement =
       return (Ast.VarDeclStatement decl off)
       where
         varName (Ast.Ident name _) = name
+        varName _ = undefined
 
 while :: Parser Ast.Statement
 while = do
@@ -324,6 +327,7 @@ indirect = do
   return (\left -> Ast.Indirect left (field id) (getExprOff left))
   where
     field (Ast.Ident x _) = x
+    field _ = undefined
 
 arrayAccess :: Parser (Ast.Expr -> Ast.Expr)
 arrayAccess = do
@@ -337,6 +341,7 @@ fieldAccess = do
   return (\left -> Ast.FieldAccess left (field id) (getExprOff left))
   where
     field (Ast.Ident x _) = x
+    field _ = undefined
 
 baseExpr :: Parser Ast.Expr
 baseExpr =
@@ -366,6 +371,7 @@ primitiveType = do
   Ast.PrimitiveType (getType typeTok) <$> stars
   where
     getType (T.Token (Type typ) _ _ _) = typ
+    getType _ = undefined
 
 structType :: Parser Ast.Type
 structType = do
@@ -374,7 +380,7 @@ structType = do
   Ast.StructType (structName id) <$> stars
   where
     structName (Ast.Ident x _) = x
-
+    structName _ = undefined
 end :: Parser L.Lexeme
 end = expect L.Eof
 
@@ -415,6 +421,7 @@ arraySizes = many (between (expect L.LBrack) (expect L.RBrack) size)
   where
     size = getSize <$> litInt
     getSize (Ast.LitInt x _) = x
+    getSize _ = undefined
 
 actuals :: Parser [Ast.Expr]
 actuals = sepBy expr (expect L.Comma)
@@ -430,6 +437,7 @@ formal = do
   return (Ast.Formal typ (formalName ident') off)
   where
     formalName (Ast.Ident x _) = x
+    formalName _ = undefined
 
 include :: Parser Ast.Directive
 include = do
@@ -437,6 +445,7 @@ include = do
   Ast.Include . file <$> litString
   where
     file (Ast.LitString name _) = name
+    file _ = undefined 
 
 includes :: Parser [Ast.Directive]
 includes = many include

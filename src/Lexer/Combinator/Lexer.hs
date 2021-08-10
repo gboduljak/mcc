@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-
 module Lexer.Combinator.Lexer (lex', lexIncludes, lexIncludes') where
 
 import Control.Applicative (Alternative ((<|>)), optional)
@@ -228,6 +226,7 @@ escapedChar = do
     'n' -> return '\n'
     'r' -> return '\r'
     't' -> return '\t'
+    x -> return x
 
 simpleChar :: Lexer Char
 simpleChar = noneOf "\""

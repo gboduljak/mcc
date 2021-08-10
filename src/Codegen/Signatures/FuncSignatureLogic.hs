@@ -15,6 +15,7 @@ import Codegen.Signatures.FuncSignature
 import LLVM.AST.Type (Type(..), ptr)
 import Codegen.TypeMappings (llvmType)
 import LLVM.AST.Constant
+import Semant.Type (isStruct)
 
 llvmFuncSignature :: MonadState (Env Operand) m => SFunction -> m FuncSignature
 llvmFuncSignature SFunction{..} = do 
@@ -28,7 +29,15 @@ llvmFuncSignature SFunction{..} = do
       argumentTypes = llvmType <$> funcParams,
       isVarArg = False
     }
-  return (FuncSignature funcName funcRetTyp returnType funcParams funcTyp (isStruct returnType))
+  return (
+    FuncSignature 
+      funcName 
+      funcRetTyp 
+      returnType 
+      funcParams 
+      funcTyp 
+      (isStruct returnType)
+    )
   where 
     llvmType (_, typ, _) = typ
 

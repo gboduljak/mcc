@@ -1,7 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-
 module Parser.Pratt.Parser where
 
 import Control.Monad.Except (runExceptT)
@@ -88,6 +84,7 @@ structField =
     (do Ast.VarDeclError <$> getOffset)
   where
     name (L.Ident x) = x
+    name _ = undefined
 
 funcDefOrFuncDeclOrVarDecl :: Int -> Ast.Type -> String -> Parser Ast.Construct
 funcDefOrFuncDeclOrVarDecl off typ name = do
@@ -160,6 +157,7 @@ localVarDecl = do
   return (Ast.VarDeclStatement decl off)
   where
     name (L.Ident x) = x
+    name _ = undefined
 
 varDecl :: Int -> Ast.Type -> String -> Parser Ast.VarDecl
 varDecl off typ name = do sizes <- arraySizes; return (Ast.Var typ name sizes off)
@@ -248,7 +246,9 @@ ctd lexeme
   | otherwise = expect startsType >> return Ast.ConstructError
   where
     nameFrom (L.Ident x) = x
+    nameFrom _ = undefined
     structName (Ast.StructType x _) = x
+    structName _ = undefined
 
 std :: L.Lexeme -> Parser Ast.Statement
 std lexeme
@@ -353,6 +353,7 @@ identOrFuncCall = do
     ]
   where
     name (L.Ident x) = x
+    name _ = undefined
 
 funcCall :: String -> Parser Ast.Expr
 funcCall func = do
@@ -378,6 +379,7 @@ fieldAccess = do
   return (\exp -> Ast.FieldAccess exp (fieldName field) (off - 1))
   where
     fieldName (L.Ident name) = name
+    fieldName _ = undefined
 
 indirect :: Parser (Ast.Expr -> Ast.Expr)
 indirect = do
@@ -387,6 +389,7 @@ indirect = do
   return (\exp -> Ast.Indirect exp (fieldName field) (off - 1))
   where
     fieldName (L.Ident name) = name
+    fieldName _ = undefined
 
 type' :: Parser Ast.Type
 type' =
@@ -401,6 +404,7 @@ primitiveType = do
   Ast.PrimitiveType (getType typeTok) <$> stars
   where
     getType (L.Type typ) = typ
+    getType _ = undefined
 
 structType :: Parser Ast.Type
 structType = do
@@ -409,6 +413,7 @@ structType = do
   Ast.StructType (structName id) <$> stars
   where
     structName (L.Ident x) = x
+    structName _ = undefined
 
 stars :: Parser Int
 stars = do
@@ -426,6 +431,7 @@ arraySize = do
   return (sizeOf size)
   where
     sizeOf (L.LitInt x) = x
+    sizeOf _ = undefined
 
 formals :: Parser [Ast.Formal]
 formals = sepBy formal' startsType L.Comma
@@ -442,6 +448,7 @@ formal = do
   return (Ast.Formal typ (formalName ident) off)
   where
     formalName (L.Ident x) = x
+    formalName _ = undefined
 
 actuals :: Parser [Ast.Expr]
 actuals = sepBy (expr 0) startsExpr L.Comma
@@ -471,6 +478,7 @@ include = do
   return (Ast.Include (file fileName))
   where
     file (L.LitString name) = name
+    file _ = undefined
 
 parseExprs :: String -> [T.Token] -> Either (ParseErrorBundle TokenStream Void) [Ast.Expr]
 parseExprs file tokens = case result of
@@ -559,14 +567,3 @@ parse file tokens = case result of
           pstateTabWidth = mkPos 8,
           pstateLinePrefix = ""
         }
-
--- For debugging
--- parse' file input = do
---   isPretty <- supportsPretty
---   case lex' file input of
---     (Right tokens) -> case parse file tokens of
---       (Right ast) -> putStrLn $ visualiseAst ast
---       (Left bundle) -> do
---         print bundle
---         putStrLn $ prettyPrintErrors bundle (pack input) isPretty
---     (Left bundle) -> putStrLn $ prettyPrintErrors bundle (pack input) isPretty

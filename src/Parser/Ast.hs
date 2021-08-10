@@ -1,5 +1,4 @@
 {-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE LambdaCase #-}
 
 module Parser.Ast where
 
@@ -130,27 +129,6 @@ isArray :: VarDecl -> Bool
 isArray (Var _ _ x _) = (not . null) x
 isArray _ = False
 
--- data Expr
---   = LitInt Int Int
---   | LitDouble Double Int
---   | LitString String Int
---   | LitChar Char Int
---   | Null Int
---   | Ident String Int
---   | Nested Expr Int
---   | Binop Expr InfixOp Expr Int
---   | Deref Expr Int
---   | AddressOf Expr Int
---   | Negate Expr Int
---   | Negative Expr Int
---   | FieldAccess Expr String Int
---   | ArrayAccess Expr Expr Int
---   | Indirect Expr String Int
---   | Sizeof (Either Type Expr) Int
---   | Typecast Type Expr Int
---   | Call String [Expr] Int
---   | Assign Expr Expr Int
---   | ExprError Int
 getExprOff :: Expr -> Int
 getExprOff (LitInt _ off) = off
 getExprOff (LitDouble _ off) = off

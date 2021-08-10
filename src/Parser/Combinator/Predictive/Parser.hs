@@ -1,5 +1,4 @@
 {-# LANGUAGE LambdaCase #-}
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
 module Parser.Combinator.Predictive.Parser where
 
@@ -63,8 +62,10 @@ construct =
     (return Ast.ConstructError)
   where
     nameFrom (Ast.Ident x _) = x
+    nameFrom _ = undefined
     structName (Ast.StructType x _) = x
-
+    structName _ = undefined 
+    
 structDecl :: Int -> String -> Parser Ast.Construct
 structDecl off name = do
   vars <- structFields off
@@ -72,6 +73,7 @@ structDecl off name = do
   return (Ast.StructDecl $ Ast.Struct name vars off)
   where
     structName (Ast.Ident x _) = x
+    structName _ = undefined
 
 structFields :: Int -> Parser [Ast.VarDecl]
 structFields off = do
@@ -84,6 +86,7 @@ structFields off = do
       nameId <- ident
       varDecl off typ (name nameId)
     name (Ast.Ident x _) = x
+    name _ = undefined
 
 funcDefOrFuncDeclOrVarDecl :: Ast.Type -> String -> Parser Ast.Construct
 funcDefOrFuncDeclOrVarDecl typ name = do
@@ -146,6 +149,7 @@ statement = do
       return (Ast.VarDeclStatement decl off)
       where
         varName (Ast.Ident name _) = name
+        varName _ = undefined
 
 while :: Parser Ast.Statement
 while = do
@@ -396,6 +400,7 @@ indirect = do
   return (\left -> Ast.Indirect left (field id) (getExprOff left))
   where
     field (Ast.Ident x _) = x
+    field _ = undefined
 
 arrayAccess :: Parser (Ast.Expr -> Ast.Expr)
 arrayAccess = do
@@ -409,6 +414,7 @@ fieldAccess = do
   return (\left -> Ast.FieldAccess left (field id) (getExprOff left))
   where
     field (Ast.Ident x _) = x
+    field _ = undefined
 
 baseExpr :: Parser Ast.Expr
 baseExpr =
@@ -446,6 +452,7 @@ primitiveType = do
   Ast.PrimitiveType (getType typeTok) <$> stars
   where
     getType (T.Token (Type typ) _ _ _) = typ
+    getType _ = undefined
 
 structType :: Parser Ast.Type
 structType = do
@@ -454,6 +461,7 @@ structType = do
   Ast.StructType (structName id) <$> stars
   where
     structName (Ast.Ident x _) = x
+    structName _ = undefined
 
 end :: Parser L.Lexeme
 end = expect L.Eof
@@ -495,6 +503,7 @@ arraySizes = many (between (expect L.LBrack) (expect L.RBrack) size)
   where
     size = getSize <$> litInt
     getSize (Ast.LitInt x _) = x
+    getSize _ = undefined
 
 actuals :: Parser [Ast.Expr]
 actuals = sepBy expr (expect L.Comma)
@@ -510,6 +519,7 @@ formal = do
   return (Ast.Formal typ (formalName ident') off)
   where
     formalName (Ast.Ident x _) = x
+    formalName _ = undefined
 
 include :: Parser Ast.Directive
 include = do
@@ -517,20 +527,10 @@ include = do
   Ast.Include . file <$> litString
   where
     file (Ast.LitString name _) = name
+    file _ = undefined
 
 includes :: Parser [Ast.Directive]
 includes = many include
-
--- streamify :: String -> TokenStream
--- streamify input = case lex' "" input of
---   (Left error) -> TokenStream {tokenStreamInput = input, unTokenStream = []}
---   (Right stream) -> TokenStream {tokenStreamInput = input, unTokenStream = stream}
-
--- parse'' input tokens = Text.Megaparsec.parse baseExpr "" $ stream input tokens
-
--- parseComb input = case Text.Megaparsec.parse statement "" (streamify input) of
---   (Left error) -> putStrLn (errorBundlePretty error)
---   (Right ast) -> putStrLn $ visualiseAst ast
 
 stream :: String -> [T.Token] -> TokenStream
 stream input tokens =
