@@ -216,7 +216,7 @@ litChar =
 escapedChar :: Lexer Char
 escapedChar = do
   char '\\'
-  x <- oneOf "\\\"abfnrt"
+  x <- oneOf "\\\"abfnrt0"
   case x of
     '\\' -> return x
     '"' -> return x
@@ -226,6 +226,7 @@ escapedChar = do
     'n' -> return '\n'
     'r' -> return '\r'
     't' -> return '\t'
+    '0' -> return '\0'
     x -> return x
 
 simpleChar :: Lexer Char

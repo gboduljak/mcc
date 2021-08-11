@@ -30,6 +30,10 @@ isCond condTyp =
 voidTyp :: Type
 voidTyp = Scalar (Ast.PrimitiveType Void 0)
 
+voidPtrTyp :: Type
+voidPtrTyp = Scalar (Ast.PrimitiveType Void 1)
+
+
 isVoid :: Type -> Bool 
 isVoid typ = typ == voidTyp
 
@@ -71,3 +75,8 @@ decreasePointerLevel (Scalar typ@(Ast.PrimitiveType _ _)) n = Scalar (Ast.decrea
 decreasePointerLevel (Scalar typ@(Ast.StructType _ _)) n = Scalar (Ast.decreasePointerLevel typ n)
 decreasePointerLevel Any _ = Any
 decreasePointerLevel _ _ = error "pointer to array disallowed"
+
+getPointerBaseType :: Type -> Type
+getPointerBaseType (Scalar (Ast.PrimitiveType typ _)) = Scalar (Ast.PrimitiveType typ 0)
+getPointerBaseType (Scalar (Ast.StructType struct _)) = Scalar (Ast.StructType struct 0)
+getPointerBaseType _  = error "not a pointer?"

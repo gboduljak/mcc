@@ -93,9 +93,9 @@ codegenProgram folder = it ("compiles program " ++ folder ++ "...") $ do
       let execClangExecutableCmd = clangExecutable ++ " < " ++ input ++ " > " ++ expectedOutput
       
       writeFile llvmFile llvm
-      
-      callCommand  ("clang -Wno-everything " ++ llvmFile ++ " -o " ++ mccExecutable)
-      callCommand ("clang -Wno-everything " ++ unwords clangSources ++ " -o " ++ clangExecutable)
+      createProcess (shell ("clang -Wno-everything " ++ llvmFile ++ " -o " ++ mccExecutable))
+      createProcess (shell ("clang -Wno-everything " ++ unwords clangSources ++ " -o " ++ clangExecutable))
+
       callCommand execMccExecutableCmd
       callCommand execClangExecutableCmd
 

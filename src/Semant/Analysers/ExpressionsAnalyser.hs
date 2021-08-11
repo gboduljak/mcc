@@ -164,6 +164,12 @@ analyseExpr expr@(Assign left right _) = do
     else case (leftTyp, rightTyp) of
       (Any, _) -> return (Any, SAssign left' right')
       (_, Any) -> return (Any, SAssign left' right')
+      (_, Scalar (PrimitiveType Void 1)) -> do
+        if isPointer leftTyp
+          then return (leftTyp, SAssign left' right')
+          else do
+            registerError (AssignmentError left right)
+            return (Any, SAssign left' right')
       (_, _) -> do
         if leftTyp == rightTyp && (not . isArray) leftTyp -- arrays are not assignable
           then return (leftTyp, SAssign left' right')

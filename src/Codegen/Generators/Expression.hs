@@ -31,7 +31,7 @@ import Semant.Type
       isChar,
       isDouble,
       Type(Scalar, Array),
-      isStruct )
+      isStruct, getPointerBaseType, voidPtrTyp )
 import qualified LLVM.AST.Type
 import qualified LLVM.AST.IntegerPredicate as L.IntegerPredicate
 import qualified LLVM.AST.FloatingPointPredicate as L.FloatPredicate
@@ -116,8 +116,8 @@ generateExpression (typ, LVal val)
  | isStruct typ = generateLVal val -- By invariant #1, if we have a struct or array, do not issue load
  | otherwise = flip L.load 0 =<< generateLVal val -- By invariant #1, for simple types, issue a load
 generateExpression (typ, SAssign (_, LVal target) expr)
-  | isStruct typ = generateAssignAggregate target expr -- By invariant #1, if we have a struct or array, assign is actually a copy
-  | otherwise = generateAssignSimple target expr -- By invariant #1, for simple types, assign is actually a store
+  | isStruct typ = generateAssignAggregate typ target expr -- By invariant #1, if we have a struct or array, assign is actually a copy
+  | otherwise = generateAssignSimple typ target expr -- By invariant #1, for simple types, assign is actually a store
 generateExpression (_, SAssign (_, _) expr) = error ("semantic analysis failed on:" ++ show expr)
 
 generateBinop :: SExpr -> Operand -> Operand -> Codegen Operand
@@ -133,7 +133,7 @@ generateBinop expr@(_, SBinop left@(leftTyp, _) Sub right@(rightTyp, _)) leftOp 
       leftOp' <- L.ptrtoint leftOp LLVM.AST.Type.i64
       rightOp' <- L.ptrtoint rightOp  LLVM.AST.Type.i64
       ptrDiff <- L.sub leftOp' rightOp'
-      elemSize <- L.int64 . fromIntegral <$> llvmSizeOf leftTyp
+      elemSize <- L.int64 . fromIntegral <$> llvmSizeOf (getPointerBaseType leftTyp)
       L.sdiv ptrDiff elemSize
   | isPointer leftTyp && isInt rightTyp = do
      leftOp' <- L.ptrtoint leftOp LLVM.AST.Type.i64
@@ -215,22 +215,36 @@ generateLVal (SFieldAccess target@(Scalar (StructType name 0), _) field) = do
   L.gep target (L.int32 0 : [L.int32 fieldOffset])
 generateLVal _= error "semantic analyser failed to detect invalid lval"
 
-generateAssignAggregate :: LValue -> SExpr -> Codegen Operand
-generateAssignAggregate target expr@(typ, _) = do
+generateAssignAggregate :: Semant.Type.Type -> LValue -> SExpr -> Codegen Operand
+generateAssignAggregate targetTyp target expr@(typ, _)
+  | typ == voidPtrTyp = do
+    ptrTyp <- llvmType targetTyp
+    addr <- generateLVal target
+    assignVal <- L.inttoptr (L.int64 0) ptrTyp
+    L.store addr 0 assignVal
+    return assignVal
+  | otherwise = do
   -- Nota bene: By the first invariant, expr is an operand storing 
   -- the ADDRESS of VALUE to be assigned
   -- This is a case when LVAL appears as RVAL
-  destPtr <- generateLVal target
-  assignPtr <- generateExpression expr
-  copyBytes <- llvmSizeOf typ
-  performMemcpy destPtr assignPtr (L.int64 (fromIntegral copyBytes))
-  return destPtr
+    destPtr <- generateLVal target
+    assignPtr <- generateExpression expr
+    copyBytes <- llvmSizeOf typ
+    performMemcpy destPtr assignPtr (L.int64 (fromIntegral copyBytes))
+    return destPtr
   
-generateAssignSimple :: LValue -> SExpr -> Codegen Operand
-generateAssignSimple target expr = do
-  -- Nota bene: In case of assigning an expr storing the VALUE to be assigned
-  -- it is correct and sufficient to simply emit a store
-  addr <- generateLVal target
-  assignVal <- generateExpression expr
-  L.store addr 0 assignVal
-  return assignVal
+generateAssignSimple :: Semant.Type.Type -> LValue -> SExpr -> Codegen Operand
+generateAssignSimple targetTyp target expr@(typ, _) 
+  | typ == voidPtrTyp = do
+    ptrTyp <- llvmType targetTyp
+    addr <- generateLVal target
+    assignVal <- L.inttoptr (L.int64 0) ptrTyp
+    L.store addr 0 assignVal
+    return assignVal
+  | otherwise = do
+    -- Nota bene: In case of assigning an expr storing the VALUE to be assigned
+    -- it is correct and sufficient to simply emit a store
+    addr <- generateLVal target
+    assignVal <- generateExpression expr
+    L.store addr 0 assignVal
+    return assignVal

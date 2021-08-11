@@ -285,10 +285,11 @@ escape 'f' = '\f'
 escape 'n' = '\n'
 escape 'r' = '\r'
 escape 't' = '\t'
+escape '0' = '\0'
 escape x = x
 
 escapeable :: [[Char]]
-escapeable = ["\\", "\"", "a", "b", "n", "r", "t"]
+escapeable = ["\\", "\"", "a", "b", "n", "r", "t", "0"]
 
 include :: Lexer Token
 include = do
