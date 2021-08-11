@@ -44,12 +44,14 @@ generateFunctionDefn func@SFunction{..}
   | otherwise = do
       funcSign <- llvmFuncSignature func
       let funcName' = mkName funcName
-      actualFuncOperand <- L.function
-        funcName'
-        [(paramLlvmTyp, ParameterName (cs paramName)) | (_, paramLlvmTyp, paramName) <- funcParams funcSign]
-        (funcLLVMRetTyp funcSign) 
-        (generateBody (funcLLVMRetTyp funcSign) funcBody (funcParams funcSign))
-      registerFunc funcName funcSign actualFuncOperand
+      let funcParams' = [
+            (llvmTyp, ParameterName (cs name)) | 
+            (_, llvmTyp, name) <- funcParams funcSign
+            ]
+      let funcRetTyp' = funcLLVMRetTyp funcSign
+      let funcBody' = generateBody funcRetTyp' funcBody (funcParams funcSign)
+      func <- L.function funcName' funcParams' funcRetTyp' funcBody'
+      registerFunc funcName funcSign func
   where
     funcBody = extractBody body
     hasBody = isJust

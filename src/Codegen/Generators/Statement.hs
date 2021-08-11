@@ -67,7 +67,6 @@ generateStatement (SIf cond conseq alt) = do
 
   L.emitBlockStart mergeName
 
--- handle return struct by value, we know we are sreting so write into sret arg
 generateStatement (SReturn (_, SEmptyExpr)) = L.retVoid 
 generateStatement (SReturn expr) = do
   exp <- generateExpression expr

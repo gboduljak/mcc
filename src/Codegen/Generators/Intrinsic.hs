@@ -34,4 +34,4 @@ intrinsic intrinsicName formals retTyp = do
       }
     intrinsicTyp = ptr $ FunctionType retTyp formalTyps False
   emitDefn intrinsicDefn
-  pure $ ConstantOperand $ C.GlobalReference intrinsicTyp intrinsicName
+  return $ ConstantOperand $ C.GlobalReference intrinsicTyp intrinsicName

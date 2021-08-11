@@ -28,8 +28,8 @@ generateStruct struct@SStruct{..} = do
 llvmStructSignature :: MonadState (Env Operand) m => SStruct -> m StructSignature
 llvmStructSignature struct@SStruct{..} = do
   fields' <- mapM (\(SVar typ name) -> do
-    typ' <- llvmType typ
-    let offset = fromJust $ getFieldOffset name struct
-    return (FieldSignature name typ' typ offset)
+      typ' <- llvmType typ
+      let offset = fromJust $ getFieldOffset name struct
+      return (FieldSignature name typ' typ offset)
     ) fields
   return (StructSignature (llvmStructName structName) fields')
