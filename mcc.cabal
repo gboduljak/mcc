@@ -41,6 +41,7 @@ library
       Codegen.Signatures.FuncSignatureLogic
       Codegen.Signatures.StructSignature
       Codegen.TypeMappings
+      Interface.Options
       Lexer.AdHoc.Lexer
       Lexer.AdHoc.LexError
       Lexer.AdHoc.LexState
@@ -113,6 +114,7 @@ library
     , llvm-hs-pure ==9.*
     , megaparsec
     , mtl
+    , optparse-applicative
     , pretty-terminal
     , prettyprinter >=1.7.0
     , process
@@ -140,6 +142,7 @@ executable mcc-exe
     , mcc
     , megaparsec
     , mtl
+    , optparse-applicative
     , pretty-terminal
     , prettyprinter >=1.7.0
     , process
@@ -178,6 +181,7 @@ test-suite mcc-test
     , mcc
     , megaparsec
     , mtl
+    , optparse-applicative
     , pretty-terminal
     , prettyprinter >=1.7.0
     , process

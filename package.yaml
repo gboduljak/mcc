@@ -36,6 +36,7 @@ dependencies:
 - bytestring
 - string-conversions
 - process
+- optparse-applicative
 library:
   source-dirs: src
 
