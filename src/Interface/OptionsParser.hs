@@ -22,33 +22,33 @@ outFolder = strOption (
       <> long "out"
       <> metavar "FOLDER PATH"
       <> value "build"
-      <> help "Compilation output folder"
+      <> help "Compilation output folder."
   )
 
 task :: Parser Task
 task = flag' Lex (
     long "lex" <>
-    help "Perform outDependencyGraph lexical analysis"
+    help "Perform only lexical analysis."
   )
   <|> flag' Parse (
     long "parse" <>
-    help "Perform lexical and syntactic analysis"
+    help "Perform lexical and syntactic analysis."
   )
   <|> flag' Semant (
     long "semant" <>
-    help "Perform lexical, syntactic and sematic analysis"
+    help "Perform lexical, syntactic and sematic analysis."
   ) <*>
       strOption (long "semant-to" <> help "semantic analysis output filename" <> value "merged-semant-ast.dot")
   <|> flag' LLVM (
       long "llvm" <>
       help "Perform compilation to LLVM IR"
     ) <*>
-        strOption (long "semant-to" <> help "LLVM output filename" <> value "merged-semant-ast.dot")
+        strOption (long "semant-to" <> help "semantic analysis output output filename" <> value "merged-semant-ast.dot")
       <*>
         strOption (long "llvm-to" <> help "LLVM output filename" <> value "compiled.ll")
   <|> LLVM 
       <$>
-        strOption (long "semant-to" <> help "LLVM output filename" <> value "merged-semant-ast.dot")
+        strOption (long "semant-to" <> help "semantic analysis output output filename" <> value "merged-semant-ast.dot")
       <*>
         strOption (long "llvm-to" <> help "LLVM output filename" <> value "compiled.ll")
 
