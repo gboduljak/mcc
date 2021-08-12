@@ -106,6 +106,15 @@ performPreprocess opts@Options{..} = do
   lift $ putStrLn "Constructing dependency graph ...💡 "
   ((result, graph), _) <- lift $ preprocess sourceFiles
   lift $ putStrLn "Resolving compilation order ... 🔍 "
+
+  if outputDependencyGraph 
+    then do 
+      outDir <- baseOutDir opts
+      let graphFilePath = outDir </> "compilation-order.dot"
+      let graphFileContents = draw graph
+      lift $ writeFile graphFilePath graphFileContents
+    else mzero
+
   case result of 
     (Left errors) -> do 
       lift $ putStrLn "Compilation halted due to: "
@@ -113,14 +122,8 @@ performPreprocess opts@Options{..} = do
       mzero
     (Right processOrder) -> do 
       lift $ putStrLn ("Compilation order is : " ++ show processOrder ++ ".")
-      if outputDependencyGraph 
-        then do 
-          outDir <- baseOutDir opts
-          let graphFilePath = outDir </> "compilation-order.dot"
-          let graphFileContents = draw graph
-          lift $ writeFile graphFilePath graphFileContents
-          return processOrder
-        else do return processOrder
+      return processOrder
+
   
 performLex :: Options -> [FilePath] -> MaybeT IO [(FilePath, String, [Token])]
 performLex opts@Options{..} sourceFilesOrder = do
