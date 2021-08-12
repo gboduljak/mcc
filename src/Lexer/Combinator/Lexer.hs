@@ -377,8 +377,5 @@ lexIncludes = parse (junk >> includes)
 lexIncludes' :: String -> String -> Either (ParseErrorBundle Text Void) [String]
 lexIncludes' file input = parse (junk >> includes) file (pack input)
 
-lex :: String -> Text -> Either (ParseErrorBundle Text Void) [Token]
-lex = parse tokens
-
 lex' :: String -> String -> Either (ParseErrorBundle Text Void) [Token]
 lex' file input = parse tokens file (pack input)

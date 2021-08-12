@@ -51,6 +51,7 @@ bundleSemantErrors file tokens errors =
 toFancyError :: SemantError -> ParseError TokenStream Void
 toFancyError EmptyProgram = makeFancyError EmptyProgram 0
 toFancyError NoMain = makeFancyError NoMain 0
+toFancyError error@(InvalidMainReturnType _) = makeFancyError error 0
 toFancyError error@(IllegalBinding _ _ _ (Var _ _ _ loc)) = makeFancyError error loc
 toFancyError error@(IllegalBinding _ _ _ (VarDeclError loc)) = makeFancyError error loc
 toFancyError error@(UndefinedSymbol _ _ _ loc) = makeFancyError error loc

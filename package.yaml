@@ -37,6 +37,8 @@ dependencies:
 - string-conversions
 - process
 - optparse-applicative
+- transformers
+
 library:
   source-dirs: src
 

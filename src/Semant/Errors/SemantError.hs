@@ -72,6 +72,7 @@ data SemantError
   | Redeclaration String RedeclarationKind Int
   | EmptyProgram
   | NoMain
+  | InvalidMainReturnType Type
   | AddressError Expr
   | ReturnTypeMismatchError
       { actualRetTyp :: Type,
@@ -252,6 +253,14 @@ instance Pretty SemantError where
           <+> pretty globalVarName
           <> dot
       NoMain -> pretty "Error: main function not defined."
+      InvalidMainReturnType typ -> 
+        pretty "Error: main function has invalid return type" <> dot 
+          <> hardline
+          <> indent indentAmount (
+            pretty "Expected main to return an int, but it returns" 
+              <+> pretty typ 
+              <> dot
+          )
       AssignmentError lhs rhs ->
         pretty "Cannot assign" <+> pretty rhs <+> pretty "to" <+> pretty lhs <> dot
       AddressError expr ->

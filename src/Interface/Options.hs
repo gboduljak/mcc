@@ -2,9 +2,9 @@ module Interface.Options
 
 where 
 
-data LexerType = Combinator | AdHoc
-data ParserType = NaiveCombinator | PredictiveCombinator | Pratt
-data Task = Lex | Parse | Semant FilePath | LLVM FilePath
+data LexerType = Combinator deriving Show
+data ParserType = NaiveCombinator | PredictiveCombinator | Pratt deriving Show
+data Task = Lex | Parse | Semant FilePath | LLVM FilePath FilePath deriving Show
 
 data Options = Options {
   lexerType :: LexerType,
@@ -13,4 +13,4 @@ data Options = Options {
   sourceFiles :: [FilePath],
   outputFolder :: FilePath,
   outputDependencyGraph :: Bool
-}
+} deriving Show

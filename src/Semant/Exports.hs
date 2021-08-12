@@ -14,7 +14,7 @@ import Control.Monad.State (evalState, runState)
 import Control.Monad.Writer (runWriterT)
 import Semant.Analysers.StatementsAnalyser (analyseStatement)
 import Semant.Analysers.ExpressionsAnalyser as ExprAnalyser  (analyseExpr)
-import Semant.Semant ( getBaseEnv )
+import Semant.Semant ( getBaseEnv, ensureHasMain, runSemant )
 import Semant.Errors.SemantErrorBundle (bundleSemantErrors)
 import Semant.SemanticAnalyser (analyse)
 import System.Console.Pretty ( supportsPretty )
@@ -61,9 +61,16 @@ analyseProgs :: [(String, String, [Token], Ast.Program)] -> Env Type -> Either (
 analyseProgs [] _ = Left (bundleSemantErrors "" [] [EmptyProgram], "")
 analyseProgs [(file, input, tokens, program)] env = case analyseProg file input tokens program env of
   (Left errors) -> Left errors
-  (Right success) -> Right [analysedProg success]
+  (Right analysisResult) -> do
+    let mainErrors = hasMainErrors $ resultingEnv analysisResult
+    if null mainErrors
+      then Right [analysedProg analysisResult]
+      else Left (bundleSemantErrors "" [] mainErrors, "")
   where
     analysedProg = fst
+    resultingEnv = snd
+    hasMainErrors env = snd $ evalState (runWriterT ensureHasMain) env
+
 analyseProgs ((file, input, tokens, program) : programs) env = case analyseProg file input tokens program env of
   (Left errors) -> Left errors
   (Right analysisResult) -> case analyseProgs programs (nextEnv analysisResult) of
@@ -72,28 +79,3 @@ analyseProgs ((file, input, tokens, program) : programs) env = case analyseProg 
   where
     analysedProg = fst
     nextEnv = snd
-
-runAnalyse' :: String -> String -> IO ()
-runAnalyse' file input = do
-  isPretty <- supportsPretty
-  case lex' file input of
-    (Right tokens) -> case parse file tokens of
-      (Right prog) -> case fst $ analyseProg'' prog of
-        (sast, []) -> do
-          putStrLn $ visualiseAst prog
-          putStrLn $ visualiseSemantAst sast
-        (sast, errors) -> do
-          putStrLn $ visualiseSemantAst sast
-          print errors
-          let displayedErrors = map prettyPrintSemantError errors
-
-          traverse_ putStrLn displayedErrors
-      (Left bundle) -> do
-        print bundle
-        putStrLn $ prettyPrintErrors bundle (pack input) isPretty
-    (Left bundle) -> putStrLn $ prettyPrintErrors bundle (pack input) isPretty
-  where
-    analyseProg'' prog = runState (runWriterT (analyse prog)) getBaseEnv
-
-prettyPrintSemantError :: SemantError -> String
-prettyPrintSemantError = renderString . layoutSmart defaultLayoutOptions . pretty

@@ -304,7 +304,7 @@ int won(char mark) {
 }
 
 // Main entry point
-void main() {
+int main() {
   int playing;
   int player;
   char mark;

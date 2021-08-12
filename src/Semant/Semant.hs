@@ -13,8 +13,8 @@ import Semant.Builtins (builtins)
 import Semant.Env hiding (defineFunc, defineStruct, lookupFunc, lookupStruct)
 import qualified Semant.Env (defineFunc, defineStruct, lookupFunc, lookupStruct)
 import qualified Semant.Env as Env
-import Semant.Errors.SemantError (BindingLoc (Toplevel), SemantError)
-import Semant.Type (Type)
+import Semant.Errors.SemantError (BindingLoc (Toplevel), SemantError (NoMain, InvalidMainReturnType))
+import Semant.Type (Type, isVoid, isInt)
 import Prelude hiding (id)
 import SymbolTable.SymbolTable (currentScope, getScope)
 import SymbolTable.Scope (Scope(symbolTable), rootScopeId, rootScope)
@@ -80,3 +80,12 @@ lookupFunc func = gets (Semant.Env.lookupFunc func)
 
 lookupStruct :: String -> Semant (Maybe SStruct)
 lookupStruct struct = gets (Semant.Env.lookupStruct struct)
+
+ensureHasMain :: Semant ()
+ensureHasMain = do
+  result <- lookupFunc "main"
+  case result of
+    Nothing -> registerError NoMain
+    (Just func) ->
+      unless (isInt . returnType $ func) $ 
+        registerError (InvalidMainReturnType (returnType func))

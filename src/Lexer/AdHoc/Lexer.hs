@@ -50,14 +50,16 @@ advance = do
 unexpectedChar :: Char -> [String] -> Lexer Token
 unexpectedChar unexpected expected = do
   pos <- gets LexSt.pos
-  recoverFrom (UnexpectedChar pos unexpected expected)
+  off <- gets LexSt.offset
+  recoverFrom (UnexpectedChar pos off unexpected expected)
   tokenise Error pos
 
 unexpectedEndOfFile :: [String] -> Lexer Token
 unexpectedEndOfFile expected = do
-  pos' <- gets LexSt.pos
-  recoverFrom (UnexpectedEof pos' expected)
-  tokenise Error pos'
+  pos <- gets LexSt.pos
+  off <- gets LexSt.offset
+  recoverFrom (UnexpectedEof pos off expected)
+  tokenise Error pos
 
 recoverFrom :: LexError -> Lexer ()
 recoverFrom error = do
@@ -108,11 +110,9 @@ multiLineComment = do
           return ()
         (Just x) -> multiLineComment
         Nothing -> do
-          pos <- gets LexSt.pos
-          recoverFrom (UnexpectedEof pos ["/", "character"])
+          void (unexpectedEndOfFile  ["/", "character"])
     _ -> do
-      pos <- gets LexSt.pos
-      recoverFrom (UnexpectedEof pos ["*"])
+      void (unexpectedEndOfFile ["*"])
 
 keyword :: String -> Maybe Lexeme
 keyword "for" = Just For
@@ -178,6 +178,7 @@ identifierOrKeywordOrDirective = do
 integerOrReal :: Lexer Token
 integerOrReal = do
   pos <- gets LexSt.pos
+  off <- gets LexSt.offset
   xs <- takeWhile isDigit
   lookAhead >>= \case
     (Just '.') -> do
@@ -188,10 +189,10 @@ integerOrReal = do
           pos <- gets LexSt.pos
           lookAhead >>= \case
             (Just x) -> do
-              recoverFrom (UnexpectedChar pos x ["digit"])
+              recoverFrom (UnexpectedChar pos off x ["digit"])
               tokenise Error pos
             Nothing -> do
-              modify (reportError (UnexpectedEof pos ["digit"]))
+              modify (reportError (UnexpectedEof pos off ["digit"]))
               tokenise Error pos
         else do
           tokenise (LitDouble (read (xs ++ "." ++ ys) :: Double)) pos
@@ -200,6 +201,7 @@ integerOrReal = do
 string :: Lexer Token
 string = do
   pos <- gets LexSt.pos
+  off <- gets LexSt.offset
   advance
   chars <- processStringContent
   case chars of
@@ -218,14 +220,16 @@ string = do
         >>= ( \case
                 Nothing -> do
                   pos <- gets LexSt.pos
-                  return (Left (UnexpectedEof pos ["string character", "\""]))
+                  off <- gets LexSt.offset
+                  return (Left (UnexpectedEof pos off ["string character", "\""]))
                 (Just '\"') -> advance >> return (Right simpleChars)
                 (Just '\\') -> do
                   advance
                   lookAhead >>= (`handleEscaped` simpleChars)
                 (Just newline) -> do
                   pos <- gets LexSt.pos
-                  return (Left (UnexpectedChar pos newline ["string character", "\""]))
+                  off <- gets LexSt.offset
+                  return (Left (UnexpectedChar pos off newline ["string character", "\""]))
             )
     handleEscaped lookahead prefix = case lookahead of
       (Just x) -> do
@@ -234,10 +238,12 @@ string = do
             processRest (escape x) prefix
           else do
             pos <- gets LexSt.pos
-            return (Left (UnexpectedChar pos x escapeable))
+            off <- gets LexSt.offset
+            return (Left (UnexpectedChar pos off x escapeable))
       Nothing -> do
         pos <- gets LexSt.pos
-        return (Left (UnexpectedEof pos ["string character", "\""]))
+        off <- gets LexSt.offset
+        return (Left (UnexpectedEof pos off ["string character", "\""]))
     processRest char prefix = do
       advance
       content <- processStringContent
@@ -269,11 +275,13 @@ char = do
         (Just '\'') -> tokeniseAndAdvance (LitChar char) pos
         (Just x) -> do
           pos' <- gets LexSt.pos
-          recoverFrom (UnexpectedChar pos' x ["\'"])
+          off' <- gets LexSt.offset
+          recoverFrom (UnexpectedChar pos' off' x ["\'"])
           tokenise Error pos'
         Nothing -> do
           pos' <- gets LexSt.pos
-          recoverFrom (UnexpectedEof pos' ["\'"])
+          off' <- gets LexSt.offset
+          recoverFrom (UnexpectedEof pos' off' ["\'"])
           tokenise Error pos'
 
 escape :: Char -> Char
@@ -303,6 +311,7 @@ scan :: Lexer Token
 scan = do
   junk
   pos <- gets LexSt.pos
+  off <- gets LexSt.offset
   lookAhead >>= \case
     (Just '#') -> include
     (Just '-') -> matchOrFallback '>' Arrow Minus pos
@@ -336,7 +345,7 @@ scan = do
             then do integerOrReal
             else do
               error <- tokenise Error pos
-              recoverFrom (UnexpectedChar pos x expected)
+              recoverFrom (UnexpectedChar pos off x expected)
               return error
     Nothing -> tokenise Eof pos
   where
