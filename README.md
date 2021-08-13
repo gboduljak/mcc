@@ -407,7 +407,7 @@ The following sequence of commands should setup the project:
 
 To start the compiler, run ```stack run``` in the root folder on some program you want to compile. Those are usually in [tests-cases](./test/tests-cases/) folder. Using ```stack install```, you can install **mcc** in your path.
 
-**mcc** supports some options. By default, **mcc** creates a builder folder, outputs dependency graph, lexemes, abstract syntax trees, semantic analysis trees and compiled LLVM IR.
+**mcc** supports some options. By default, **mcc** creates a build folder, outputs dependency graph, tokens, abstract syntax trees, semantic analysis trees and compiled LLVM IR.
 
 ![](./readme-resources/mcc.png)
 
