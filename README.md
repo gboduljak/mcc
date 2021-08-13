@@ -111,8 +111,8 @@ The algorithm used is a classic DFS topological ordering, described in [CLRS](ht
 
 ### [Syntax Analysis](src/Parser)
 
-Prior to the syntax analysis, we have manually rewritten the grammar to remove ambiguity by stratifying expression productions
-into precedence levels. We have also factored the grammar where it improved readability. You can find grammars [here](./grammar).
+Prior to the syntax analysis, we manually rewrote the grammar to remove ambiguity. This is done by stratifying expression productions
+into precedence levels. We also factored the grammar where it improved readability. You can find grammars [here](./grammar).
 
 From theoretical standpoint, every parser we implemented is a predictive LL(K) recursive descent.
 
