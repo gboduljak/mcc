@@ -72,16 +72,14 @@ compile name program = evalState (buildModuleT (cs name) (generateProgram progra
 
 We use parser combinators to implement both lexical and syntax analysis.
 
-There are two parsers written using [Megaparsec](https://hackage.haskell.org/package/megaparsec-9.1.0) parser combinators. However, the default parser used is a custom, parser combinator parser based on [Pratt](https://tdop.github.io/)'s top down operator precedence algorithm.
-
-### Lexical Analysis
+### [Lexical Analysis](src/Lexer)
 
 
 Lexical Analysis is implemented in two ways. We have an **ad hoc** and **parser combinator** version.
 From theoretical standpoint, **ad hoc** is a classic hand-coded DFA lexer. **Parser combinator** lexer is a top down parser for regular grammar describing the lexical structure of **mini C**.
 
 We use **alex** generated lexer as a ground truth in unit testing, but it is not a part of compiler itself. 
-### Includes Preprocessor
+### [Includes Preprocessor](src/Preprocessor/)
 
 Prior to the parsing stage, **mcc** constructs a dependency graph induced by includes and attempts to construct the **topological ordering**, reporting if such an ordering is impossible (i.e cyclic dependencies). 
 
@@ -109,18 +107,48 @@ int main () {
 ![](readme-resources/dep-error.png)
 
 
-The algorithm used is classic DFS.
+The algorithm used is a classic DFS topological ordering, described in [CLRS](https://en.wikipedia.org/wiki/Introduction_to_Algorithms).
 
-### Syntax Analysis
+### [Syntax Analysis](src/Parser)
 
-The default method (method of choice) is a variant of **Pratt** top down operator precedence parser with error recovery.
+Prior to the syntax analysis, we have manually rewritten the grammar to remove ambiguity by stratifying expression productions
+into precedence levels. We have also factored the grammar where it improved readability. You can find grammars [here](./grammar).
 
-Apart from **Pratt** parser, there are two more parsers implemented using **Megaparsec** combinator library. 
+From theoretical standpoint, every parser we implemented is a predictive LL(K) recursive descent.
+
+The default parser (method of choice) is a variant of **Pratt** top down operator precedence parser with custom error recovery.
+Error recovery is classical panic mode based on FOLLOW sets of expression, statement and construct level productions.
+
+There are two parsers written using [Megaparsec](https://hackage.haskell.org/package/megaparsec-9.1.0) parser combinators. However, the default parser used is a custom, parser combinator parser based on [Pratt](https://tdop.github.io/)'s top down operator precedence algorithm.
 
 **Pratt** is implemented from scratch, delivering (probably) best error messages and overall the best error recovery.
 
-We use **happy** generated parser (LR(k)) as a ground truth in unit testing, but it is not a part of compiler itself.
+Example:
 
+```c
+struct problematic
+{
+  int double +
+  double x;
+};
+
+double f() {
+  int x;
+  int y;
+  z = x + ;
+}
+
+int main() {
+  if (i <)
+  {
+    /* code */
+  
+}
+```
+
+![](readme-resources/parse-errors.png)
+
+We use **happy** generated parser (LR(k)) as a ground truth in unit testing, but it is not a part of compiler itself.
 ### Semantic Analysis
 
 Classic tree walk typechecking, adapted to functional programming paradigm.

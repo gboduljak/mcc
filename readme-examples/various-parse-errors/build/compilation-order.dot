@@ -1,0 +1,3 @@
+digraph g {
+   node0[label="problematic.c"]
+}
