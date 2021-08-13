@@ -1,0 +1,8 @@
+digraph g {
+   node0[label="data.c"]
+   node1[label="infrastructure.c"]
+   node2[label="main.c"]
+   node0->node1
+   node1->node0
+   node2->node1
+}

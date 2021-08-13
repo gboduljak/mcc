@@ -1,18 +1,21 @@
 # mcc
 
-> "clang done wrong"
+> "clang done worse :P"
 
 **mcc** is a toy compiler compiling a (relatively) large subset of **C** language to **LLVM IR**. 
+
+**mcc** is written entirely in Haskell and it started as a hobby project, done by [@me](https://github.com/gboduljak) and [@its-sami](https://github.com/its-sami). Most of this compiler has been **pair programmed** during our summer break.
 
 There are a few differences between the subset of **C** in specification of **C** language and the language being compiled by **mcc**. **mcc** compiles the subset which we call **mini C**.
 
 **mini C** is an extension of the programming language used in [compiling techniques](https://www.inf.ed.ac.uk/teaching/courses/ct/19-20/) course by The University of Edinburgh.
 
-Features of **mini C**:
-- syntax exactly the same as **C**
+Features of **mini C** are:
+- the syntax exactly the same as **C**
 - **mini C**'s primitive types are only **void, int, double, char**
 - structs and arrays of arbitrary dimension are supported
-- **mini C** passing struct by reference, passing struct by value
+- passing structs by reference
+- passing structs by value
 
 Key differences between **mini C** and **C** are:
 - **mini C** has a built-in includes preprocessor which either resolves the compilation order of given source files or logs the presence of a cycle
@@ -27,16 +30,94 @@ Syntax of **mini C** is formally specified by the [grammar](./grammar).
 
 ## Architecture
 **mcc** follows the classical guidelines of compiler construction,
-adapted to the functional programming paradigm.
+adapted to the functional programming paradigm. 
+
+Therefore, **mcc** is split in five stages:
+-  lexical analysis
+-  preprocessing includes
+-  syntax analysis (parsing)
+-  semantic analysis (typechecking and abstract syntax tree rewriting)
+-  LLVM code generator
+
+In design of a **mcc**'s frontend, we employ various functional programming concepts.
+
+We make use of monads and monad transformers to isolate effectfull computation. This means that each stage is encapsulated in its own monad stack and exposed as a pure function. 
+
+Examples:
+
+**Pratt Parser** is a monad stack exposed as a pure function **parse**.
+
+```haskell
+data ParserState = ParserState
+  { input :: [T.Token],
+    offset :: Int,
+    errors :: [ParserError]
+  }
+
+type Parser a = ExceptT ParserError (State ParserState) a
+
+parse :: String -> [T.Token] -> Either (ParseErrorBundle TokenStream Void) Ast.Program
+parse file tokens = ...
+```
+
+**Codegen Monad** exposed as a pure function **compile**.
+
+```haskell
+type LLVM = ModuleBuilderT (State (Env Operand))
+type Codegen = IRBuilderT LLVM
+
+compile :: String -> SProgram -> LLVM.AST.Module
+compile name program = evalState (buildModuleT (cs name) (generateProgram program)) emptyEnv
+```
+**Codegen Monad** exposed as a pure function **compile**.
+
+
+We use parser combinators to implement both lexical and syntax analysis.
+
+There are two parsers written using [Megaparsec](https://hackage.haskell.org/package/megaparsec-9.1.0) parser combinators and one custom parser combinator parser based on [Pratt](https://tdop.github.io/)'s top down operator precedence parser.
 
 ### Lexical Analysis
 
+
 Lexical Analysis is implemented in two ways. We have an **ad hoc** and **parser combinator** version.
+From theoretical standpoint, **ad hoc** is a classic hand-coded DFA lexer. **Parser combinator** lexer is a top down parser for regular grammar describing the lexical structure of **mini C**.
 
 We use **alex** generated lexer as a ground truth in unit testing, but it is not a part of compiler itself. 
-### Includes Preprocessor (Topological Resolver)
+### Includes Preprocessor
 
-Prior to the parsing stage, **mcc** constructs a dependency graph induced by includes and attempts to construct the **topological ordering**, reporting if such an ordering is impossible (i.e cyclic dependencies). The algorithm used is classic DFS.
+Prior to the parsing stage, **mcc** constructs a dependency graph induced by includes and attempts to construct the **topological ordering**, reporting if such an ordering is impossible (i.e cyclic dependencies). 
+
+An example program:
+
+-  main.c
+```c
+#include "infrastructure.c"
+
+int main () {
+  printf("I am cyclic :(");
+}
+```
+-  data.c
+```c
+#include "infrastructure.c"
+
+int main () {
+  printf("I am cyclic :(");
+}
+
+```
+- infrastructure.c
+```c
+#include "infrastructure.c"
+
+int main () {
+  printf("I am cyclic :(");
+}
+```
+**mcc** will output the following graph in the build folder an report an error:
+
+
+The algorithm used is classic DFS.
 
 ### Syntax Analysis
 
@@ -61,7 +142,6 @@ Apart from just typechecking, we perform:
 Classic tree walk compilation, adapted to functional programming paradigm.
 ## Fun Facts
 
-**mcc** is written entirely in Haskell and it started as a hobby project, done by @me and @its-sami. Most of this compiler has been **pair programmed**.
 
 ## Appendix - Syntax of mini C
 

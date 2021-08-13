@@ -40,7 +40,7 @@ import Data.Text (pack)
 import Data.Text.Lazy (unpack)
 import Data.Text (split)
 
-mcc :: String 
+mcc :: String
 mcc = "\
   \,--.   ,--. ,-----. ,-----. \
   \|   `.'   |'  .--./'  .--./ \
@@ -67,7 +67,7 @@ entry = do
        \Passing no flags will attempt to compile the program and emit LLVM IR to ./compiled.ll ."
 
 runOpts :: Options -> MaybeT IO ()
-runOpts opts@Options{..} = do 
+runOpts opts@Options{..} = do
   order <- performPreprocess opts
   case task of
     Lex -> void $ performLex opts order
@@ -75,12 +75,12 @@ runOpts opts@Options{..} = do
       lexResults <- performLex opts order
       parseResults <- performParse opts lexResults
       return ()
-    Semant semantOut -> do 
+    Semant semantOut -> do
        lexResults <- performLex opts order
        parseResults <- performParse opts lexResults
        semantResults <- performSemant opts parseResults semantOut
        return ()
-    LLVM semantOut llvmOut -> do 
+    LLVM semantOut llvmOut -> do
        lexResults <- performLex opts order
        parseResults <- performParse opts lexResults
        semantResults <- performSemant opts parseResults semantOut
@@ -102,29 +102,29 @@ ensureAllExist files = and <$> mapM (
   ) files
 
 performPreprocess :: Options -> MaybeT IO [FilePath]
-performPreprocess opts@Options{..} = do 
+performPreprocess opts@Options{..} = do
   lift $ putStrLn "Constructing dependency graph ...💡 "
   ((result, graph), _) <- lift $ preprocess sourceFiles
   lift $ putStrLn "Resolving compilation order ... 🔍 "
 
-  if outputDependencyGraph 
-    then do 
+  if outputDependencyGraph
+    then do
       outDir <- baseOutDir opts
       let graphFilePath = outDir </> "compilation-order.dot"
       let graphFileContents = draw graph
       lift $ writeFile graphFilePath graphFileContents
     else mzero
 
-  case result of 
-    (Left errors) -> do 
+  case result of
+    (Left errors) -> do
       lift $ putStrLn "Compilation halted due to: "
-      lift $ print errors
+      mapM_ (lift . print) errors
       mzero
-    (Right processOrder) -> do 
+    (Right processOrder) -> do
       lift $ putStrLn ("Compilation order is : " ++ show processOrder ++ ".")
       return processOrder
 
-  
+
 performLex :: Options -> [FilePath] -> MaybeT IO [(FilePath, String, [Token])]
 performLex opts@Options{..} sourceFilesOrder = do
   supportsFancyTerminal <- lift supportsPretty
@@ -167,27 +167,27 @@ performParse opts@Options{..} lexResults = do
   supportsFancyTerminal <- lift supportsPretty
 
   let parse = (
-        case parserType of 
+        case parserType of
           Pratt -> PrattParser.parse
           NaiveCombinator -> NaiveCombinatorParser.parse
           PredictiveCombinator -> PredictiveCombinatorParser.parse
         )
 
   parseResults <- mapM (
-        \(fileName, input, tokens) -> do 
+        \(fileName, input, tokens) -> do
             lift $ putStrLn ("Parsing " ++ fileName ++ "... 🌴")
             lift $ putStrLn "Done."
             return (fileName, input, tokens, parse fileName tokens)
         ) lexResults
 
   let errorBundles = [
-              (fileName, input, tokens, errors) | 
-              (fileName, input, tokens, Left errors) <- 
+              (fileName, input, tokens, errors) |
+              (fileName, input, tokens, Left errors) <-
               parseResults
             ]
       astBundles = [
-              (fileName, input, tokens, ast) | 
-              (fileName, input, tokens, Right ast) <- 
+              (fileName, input, tokens, ast) |
+              (fileName, input, tokens, Right ast) <-
               parseResults
             ]
   outDir <- baseOutDir opts
@@ -206,7 +206,7 @@ performParse opts@Options{..} lexResults = do
       return ()
     ) astBundles
 
-  case errorBundles of 
+  case errorBundles of
     [] -> return astBundles
     _ -> do
       mapM_ (\(fileName, input, _, bundle) -> do
@@ -220,7 +220,7 @@ performSemant opts@Options{..} parseResults semantOutFile = do
   lift $ putStrLn "Performing semantic analysis ... 📚"
   supportsFancyTerminal <- lift supportsPretty
   lift $ putStrLn "Done."
-  case analyseProgs parseResults getBaseEnv of 
+  case analyseProgs parseResults getBaseEnv of
     Left (errorBundle, errorInput) -> do
       let errorsToDisplay = prettyPrintErrors errorBundle (pack errorInput) supportsFancyTerminal
       lift $ putStrLn errorsToDisplay
@@ -235,17 +235,17 @@ performSemant opts@Options{..} parseResults semantOutFile = do
           let fileName' = takeFileName fileName
               sastOutName = replaceExtension fileName' ".sast.dot"
               drawnSast = visualiseSemantAst sast
-          lift $ writeFile (semantDir </> sastOutName) drawnSast     
+          lift $ writeFile (semantDir </> sastOutName) drawnSast
           return ()
         )
         (zip (map fileName parseResults) programs)
       let compilationBundle = bundle programs
           bundleSast = visualiseSemantAst compilationBundle
-      lift $ writeFile (outDir </> semantOutFile) bundleSast           
+      lift $ writeFile (outDir </> semantOutFile) bundleSast
       return compilationBundle
   where fileName (name, _, _, _) = name
 
-performCodegen :: Options -> SProgram -> FilePath -> MaybeT IO () 
+performCodegen :: Options -> SProgram -> FilePath -> MaybeT IO ()
 performCodegen opts compilationBundle outFile = do
   lift $ putStrLn "Emitting LLVM ... 🖨️ "
   lift $ putStrLn "Done. 😎 "
