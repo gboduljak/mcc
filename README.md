@@ -69,12 +69,10 @@ type Codegen = IRBuilderT LLVM
 compile :: String -> SProgram -> LLVM.AST.Module
 compile name program = evalState (buildModuleT (cs name) (generateProgram program)) emptyEnv
 ```
-**Codegen Monad** exposed as a pure function **compile**.
-
 
 We use parser combinators to implement both lexical and syntax analysis.
 
-There are two parsers written using [Megaparsec](https://hackage.haskell.org/package/megaparsec-9.1.0) parser combinators and one custom parser combinator parser based on [Pratt](https://tdop.github.io/)'s top down operator precedence parser.
+There are two parsers written using [Megaparsec](https://hackage.haskell.org/package/megaparsec-9.1.0) parser combinators. However, the default parser used is a custom, parser combinator parser based on [Pratt](https://tdop.github.io/)'s top down operator precedence algorithm.
 
 ### Lexical Analysis
 
@@ -87,7 +85,7 @@ We use **alex** generated lexer as a ground truth in unit testing, but it is not
 
 Prior to the parsing stage, **mcc** constructs a dependency graph induced by includes and attempts to construct the **topological ordering**, reporting if such an ordering is impossible (i.e cyclic dependencies). 
 
-An example program:
+[An example program](readme-examples/cyclic-program/)
 
 -  main.c
 ```c
@@ -100,21 +98,15 @@ int main () {
 -  data.c
 ```c
 #include "infrastructure.c"
-
-int main () {
-  printf("I am cyclic :(");
-}
-
 ```
 - infrastructure.c
 ```c
-#include "infrastructure.c"
-
-int main () {
-  printf("I am cyclic :(");
-}
+#include "data.c"
 ```
-**mcc** will output the following graph in the build folder an report an error:
+**mcc** will output the following graph in the build folder (**build/compilation-order.dot**).
+
+![](readme-resources/dep-graph.png)
+![](readme-resources/dep-error.png)
 
 
 The algorithm used is classic DFS.
@@ -140,7 +132,6 @@ Apart from just typechecking, we perform:
 ### LLVM Code generation
 
 Classic tree walk compilation, adapted to functional programming paradigm.
-## Fun Facts
 
 
 ## Appendix - Syntax of mini C
