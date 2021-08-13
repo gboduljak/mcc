@@ -397,6 +397,22 @@ generateBinop expr@(_, SBinop left@(leftTyp, _) Add right@(rightTyp, _)) leftOp 
 
 We emit packed structs.
 
+## Build & Run
+
+To build & run this project, you will need a [Haskell Stack](https://docs.haskellstack.org/en/stable/README/). If you want to compile LLVM into executables, you will need LLVM toolchain installation.
+
+The following sequence of commands should setup the project:
+- clone the project
+- run ```stack build``` in the root folder
+
+To start the compiler, run ```stack run``` in the root folder on some program you want to compile. Those are usually in [tests-cases](./test/tests-cases/) folder. Using ```stack install```, you can install **mcc** in your path.
+
+**mcc** supports some options. By default, **mcc** creates a builder folder, outputs dependency graph, lexemes, abstract syntax trees, semantic analysis trees and compiled LLVM IR.
+
+![](./readme-resources/mcc.png)
+
+To run tests, execute ```stack test``` in the root folder.
+
 ## Appendix - Syntax of mini C
 
 ```

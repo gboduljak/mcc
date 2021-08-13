@@ -64,7 +64,7 @@ entry = do
   withInfo opts desc = info (helper <*> opts) $ progDesc desc
   infoString
     = "Run mcc on the given list of files. \
-       \Passing no flags will attempt to compile the program and emit LLVM IR to ./compiled.ll ."
+       \Passing no flags will attempt to compile the program and emit LLVM IR to ./build/compiled.ll ."
 
 runOpts :: Options -> MaybeT IO ()
 runOpts opts@Options{..} = do
