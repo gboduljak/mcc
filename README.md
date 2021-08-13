@@ -148,19 +148,254 @@ int main() {
 
 ![](readme-resources/parse-errors.png)
 
-We use **happy** generated parser (LR(k)) as a ground truth in unit testing, but it is not a part of compiler itself.
+Parser combinator approach proved to be very readable. 
+Most of subparsers are very simple descriptions of parsing
+actions to be performed, closely resembling grammar itself. 
+
+```haskell
+while :: Parser Ast.Statement
+while = do
+  off <- getOffset
+  expect L.While
+  cond <- between (expect L.LParen) (expect L.RParen) expr
+  body <- statement
+  return (Ast.While cond body off)
+
+statement :: Parser Ast.Statement
+statement =
+  exprStmt <|> varDeclStmt
+    <|> blockStmt
+    <|> returnStmt
+    <|> while
+    <|> for
+    <|> if'
+  where
+    exprStmt = do exp <- expr; expect Semi; return (Ast.Expr exp (getExprOff exp))
+    blockStmt = do block' <- block; Ast.BlockStatement block' <$> getOffset
+    returnStmt = do ret <- return'; expect Semi; return ret
+    varDeclStmt = do
+      off <- getOffset
+      typ <- type'
+      nameId <- ident
+      decl <- varDecl off typ (varName nameId)
+      return (Ast.VarDeclStatement decl off)
+      where
+        varName (Ast.Ident name _) = name
+        varName _ = undefined
+```
+Main reason why we decided to make Pratt parser default is significantly better error recovery, which is still far away from being 'good' :)
+
+Pratt parser was very interesting to implement and it required development of various custom combinators, such as [lookchainl1](src/Parser/Pratt/Combinator/../Combinators/Chains.hs) which is based on **chainl1** combinator described in [Monadic parsing paper](http://www.cs.nott.ac.uk/~pszgmh/pearl.pdf) by E.Meijer and G.Hutton. This combinator conveniently captures left recursion ocurring in expressions.
+
+```haskell
+lookchainl1 :: Parser a -> (L.Lexeme -> Bool) -> Parser (a -> a) -> Parser a
+lookchainl1 p pred op = do left <- p; rest left
+  where
+    rest left =
+      lookahead >>= \lexeme -> do
+        if pred lexeme
+          then do
+            f <- op
+            rest (f left)
+          else do return left
+```
+
+We use **happy** generated LR(k) parser as a ground truth in unit testing, but it is not a part of compiler itself.
 ### Semantic Analysis
 
-Classic tree walk typechecking, adapted to functional programming paradigm.
+#### [Monadic Symbol Table](src/SymbolTable)
+
+Both Semantic Analysis and Code Generation rely heavily on generic monadic Symbol Table,
+used to capture lexical scoping and provide convenient interface for scoping management.
+
+Interesting note is that Symbol Table does not exist as a data structure itself, but it is a collection of monadic actions operating on **State Monads** storing **Scoping Environments**.
+
+```haskell
+data Scope a = Scope
+  { id :: ScopeId,
+    parentId :: Maybe ScopeId,
+    symbolTable :: Map String a
+  }
+  deriving (Show, Eq)
+
+class ScopingEnv e where 
+    scopes :: e a -> Map ScopeId (Scope a)
+    currentScopeId :: e a -> ScopeId
+    modifyScopes :: e a -> Map ScopeId (Scope a) -> e a
+    modifyCurrentScopeId :: e a -> ScopeId -> e a
+```
+
+**enterScope** defined on any scoping state monad.
+```haskell
+enterScope :: forall e a m .
+  (
+    ScopingEnv e,
+    MonadState (e a) m,
+    Show a,
+    Eq a
+  ) =>  m (Scope a)
+enterScope = do
+  scopes <- gets scopes
+  scopeId <- gets currentScopeId
+  newScope <- createScope (Just scopeId)
+  let newScopeId = id newScope
+  let newScopes = Map.insert (id newScope) newScope scopes
+  modify (`modifyScopes` newScopes)
+  modify (`modifyCurrentScopeId` newScopeId)
+  return newScope
+```
+Semantic Analyser is module divided into several smaller analysers:
+  - [Expressions Analyser](src/Semant/Analysers/ExpressionsAnalyser.hs)
+  - [Statements Analyser](src/Semant/Analysers/StatementsAnalyser.hs)
+  - [Funcs Analyser](src/Semant/Analysers/FuncsAnalyser.hs)
+  - [Structs Analyser](src/Semant/Analysers/StructsAnalyser.hs)
+
+Each analyser is a module exporting monadic semantic analysis actions which usually destruct nodes of abstract syntax tree.
+
+Semantic analysis implements classic tree walk typechecking, adapted to functional programming paradigm.
+We do not employ attributed grammars. Instead, we directly implement typing rules, relying on Haskell's powerful pattern matching capabilities.
+
+
+
+Example of pattern matching on types and expression structure.
+
+```haskell
+analyseExpr expr@(Assign left right _) = do
+  left'@(leftTyp, leftExpr) <- analyseExpr left
+  right'@(rightTyp, _) <- analyseExpr right
+
+  if (not . isLValue) leftExpr
+    then
+      registerError (AssignmentError left right)
+        >> return (Any, SAssign left' right')
+    else case (leftTyp, rightTyp) of
+      (Any, _) -> return (Any, SAssign left' right')
+      (_, Any) -> return (Any, SAssign left' right')
+      (_, Scalar (PrimitiveType Void 1)) -> do
+        if isPointer leftTyp
+          then return (leftTyp, SAssign left' right')
+          else do
+            registerError (AssignmentError left right)
+            return (Any, SAssign left' right')
+      (_, _) -> do
+        if leftTyp == rightTyp && (not . isArray) leftTyp -- arrays are not assignable
+          then return (leftTyp, SAssign left' right')
+          else
+            registerError (AssignmentError left right)
+              >> return (Any, SAssign left' right')
+```
+
 
 Apart from just typechecking, we perform:
 - rewriting of pointer indirection (```->```) into a field access on dereferenced expression
 - we rewrite all loops into do while to simplify code generation
 
-### LLVM Code generation
+Rewriting loops into do-whiles.
+```haskell
+rewriteAsDoWhile :: SExpr -> SExpr -> SStatement -> SExpr -> SStatement
+rewriteAsDoWhile init' (_, SEmptyExpr) body' incr' =
+  SBlockStatement
+    ( blockify
+        [ SExpr init',
+          SDoWhile
+            (Scalar (PrimitiveType Int 0), SLitInt 1)
+            (SBlockStatement $ blockify [body', SExpr incr'])
+        ]
+    )
+rewriteAsDoWhile init' cond' body' incr' =
+  SBlockStatement
+    ( blockify
+        [ SExpr init',
+          SIf
+            cond'
+            ( SDoWhile
+                cond'
+                (SBlockStatement $ blockify [body', SExpr incr'])
+            )
+            Nothing
+        ]
+    )
 
-Classic tree walk compilation, adapted to functional programming paradigm.
+blockify :: [SStatement] -> SBlock
+blockify stmts = SBlock [stmt | stmt <- stmts, stmt /= emptyStmt]
+  where
+    emptyStmt = SExpr (voidTyp, SEmptyExpr)
+```
 
+Rewriting struct pointer indirects into field accesses. 
+
+```haskell
+analyseExpr expr@(Ast.Indirect targetExpr field off) = do
+  sexpr'@(typ, sexpr) <- analyseExpr targetExpr
+  case typ of
+    (Scalar (StructType name 1)) -> do
+      maybeStruct <- lookupStruct name
+      case maybeStruct of
+        (Just struct) -> case getFields field struct of
+          [SVar typ' _] -> return (typ', rewriteAsDeref typ sexpr' field)
+      ...
+    rewriteAsDeref typ accessExpr@(accessTyp, _) field =
+      LVal
+        ( SFieldAccess
+            (Semant.Type.decreasePointerLevel accessTyp 1, LVal (SDeref accessExpr))
+            field
+        )
+```
+
+### [LLVM Code generation](src/Codegen)
+
+As in Semantic Analyser, we divide code generation in smaller code generation modules:
+
+- [Expression Generator](src/Codegen/Generators/Expression.hs)
+- [Statement Generator](src/Codegen/Generators/Statement.hs)
+- [Function Generator](src/Codegen/Generators/Function.hs)
+- [Struct Generator](src/Codegen/Generators/Struct.hs)
+
+
+We use [llvm-hs-pure](https://hackage.haskell.org/package/llvm-hs-pure) library providing implementation of monadic module and IR builder monad transformers. We transform those over our codegen environment state monad, providing the symbol table in which we store LLVM operands.
+
+```haskell
+type LLVM = ModuleBuilderT (State (Env Operand))
+type Codegen = IRBuilderT LLVM
+```
+
+Code generation is essentially emission of LLVM basic blocks.
+Usually, code generation destructs semantic attributed syntax tree
+and emits relevant LLVM instructions, possibly creating new blocks.
+
+```haskell
+generateStatement (SIf cond conseq alt) = do
+  conseqName <- freshName (cs "if.conseq")
+  altName <- freshName (cs "if.alt")
+  mergeName <- freshName (cs "if.merge")
+
+  condExpr <- generateExpression cond
+  thruty <- L.icmp L.IntegerPredicate.NE condExpr (L.int32 0)
+  L.condBr thruty conseqName altName
+
+  L.emitBlockStart conseqName
+  generateStatement conseq
+  generateTerm (L.br mergeName)
+
+  L.emitBlockStart altName
+  generateMaybeStatement alt 
+  generateTerm (L.br mergeName)
+
+  L.emitBlockStart mergeName
+```
+
+```haskell
+generateBinop :: SExpr -> Operand -> Operand -> Codegen Operand
+generateBinop expr@(_, SBinop left@(leftTyp, _) Add right@(rightTyp, _)) leftOp rightOp
+  | isPointer leftTyp && isInt rightTyp = L.gep leftOp [rightOp]
+  | isInt leftTyp && isPointer rightTyp = L.gep rightOp [leftOp]
+  | isInt leftTyp = L.add leftOp rightOp
+  | isChar leftTyp = L.add leftOp rightOp
+  | isDouble leftTyp = L.fadd leftOp rightOp
+  | otherwise = error ("semantic analysis failed on:" ++ show expr)
+```
+
+We emit packed structs.
 
 ## Appendix - Syntax of mini C
 
