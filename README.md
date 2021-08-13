@@ -4,7 +4,7 @@
 
 **mcc** is a toy compiler compiling a (relatively) large subset of **C** language to **LLVM IR**. 
 
-**mcc** is written entirely in Haskell and it started as a hobby project, done by [@me](https://github.com/gboduljak) and [@its-sami](https://github.com/its-sami). Most of this compiler has been **pair programmed** during our summer break.
+**mcc** is written entirely in Haskell and it started as a hobby project, done by [@me](https://github.com/gboduljak) and [@its-sami](https://github.com/its-sami).
 
 There are a few differences between the subset of **C** in specification of **C** language and the language being compiled by **mcc**. **mcc** compiles the subset which we call **mini C**.
 
@@ -413,7 +413,7 @@ To start the compiler, run ```stack run``` in the root folder on some program yo
 
 To run tests, execute ```stack test``` in the root folder.
 
-## Appendix - Syntax of mini C
+## Appendix - Syntax of mini C (see [grammars folder](./grammar))
 
 ```
 program ::= (include)* (construct)* EOF
