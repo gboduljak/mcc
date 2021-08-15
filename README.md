@@ -21,7 +21,6 @@ Key differences between **mini C** and **C** are:
 - **mini C** has a built-in includes preprocessor which either resolves the compilation order of given source files or logs the presence of a cycle
 - **mini C** does not support function pointers
 - **mini C** does not support many implicit casts
-- **mini C** does not support postfix operators such as ```i++```
 - **mini C** does not support variable declaration and assignment in the same line
 - **mini C** does not have formal and operational semantics :(
 
@@ -480,6 +479,8 @@ expr ::= LitInt
        | assign
        | sizeof
        | typecast
+       | expr Increment
+       | expr Decrement
 
 op ::= Less
      | Leq
