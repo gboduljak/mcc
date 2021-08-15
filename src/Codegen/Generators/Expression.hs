@@ -139,12 +139,12 @@ generateBinop expr@(_, SBinop left@(leftTyp, _) Sub right@(rightTyp, _)) leftOp 
      leftOp' <- L.ptrtoint leftOp LLVM.AST.Type.i64
      let zero = L.int64 0
      off <- L.sub zero rightOp
-     L.gep leftOp' [off]
+     L.gep leftOp [off]
   | isInt leftTyp && isPointer rightTyp = do
     rightOp' <- L.ptrtoint rightOp  LLVM.AST.Type.i64
     let zero = L.int64 0
     off <- L.sub zero leftOp
-    L.gep rightOp' [off]
+    L.gep rightOp [off]
   | isInt leftTyp = L.sub leftOp rightOp
   | isChar leftTyp = L.sub leftOp rightOp
   | isDouble leftTyp = L.fsub leftOp rightOp

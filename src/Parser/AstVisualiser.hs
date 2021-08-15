@@ -3,7 +3,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 
 module Parser.AstVisualiser where
 
@@ -92,7 +91,10 @@ instance AstDrawable Construct where
   visualise (FuncDefn defn) = visualise defn
   visualise (StructDecl decl) = visualise decl
   visualise (VarDecl decl) = visualise decl
-
+  visualise ConstructError = do
+    errorId <- nextId
+    emitNode errorId "ConstructError"
+    return errorId
 instance AstDrawable Directive where
   visualise (Include file) = do
     includeId <- nextId
@@ -137,6 +139,10 @@ instance AstDrawable VarDecl where
               ++ "\", shape=record]"
           )
         return declNodeId
+  visualise (VarDeclError _) = do
+    errorId <- nextId
+    emitNode errorId "VarDeclError"
+    return errorId
 
 instance AstDrawable StructDecl where
   visualise decl@(Struct name vardecls _) = do
@@ -172,6 +178,10 @@ instance AstDrawable Formal where
           ++ "\", shape=record]"
       )
     return formalId
+  visualise (FormalError _) = do
+    errorId <- nextId
+    emitNode errorId "FormalError"
+    return errorId
 
 instance AstDrawable FuncDef where
   visualise decl@(FuncDef rettyp name formals body _) = do
@@ -365,6 +375,10 @@ instance AstDrawable Statement where
           ++ "\", shape=record]"
       )
     return returnId
+  visualise (StatementError _) = do
+    errorId <- nextId
+    emitNode errorId "StatementError"
+    return errorId
 
 instance AstDrawable Expr where
   visualise (Assign target value _) = do
@@ -499,6 +513,18 @@ instance AstDrawable Expr where
     innerId <- visualise expr
     connect derefId innerId
     return derefId
+  visualise (Increment expr _) = do
+    incrId <- nextId
+    emitNode incrId "Increment"
+    targetId <- visualise expr
+    connect incrId targetId
+    return incrId
+  visualise (Decrement expr _) = do
+    decrId <- nextId
+    emitNode decrId "Decrement"
+    targetId <- visualise expr
+    connect decrId targetId
+    return decrId
   visualise (Binop left op right _) = do
     binopId <- nextId
     emitNode binopId (display op)
@@ -618,7 +644,10 @@ instance AstDrawable Expr where
           ++ "\", shape=record]"
       )
     return litId
-
+  visualise (ExprError _) = do
+    errorId <- nextId
+    emitNode errorId "ExprError"
+    return errorId
 instance AstDrawable () where
   visualise _ = gets id
 

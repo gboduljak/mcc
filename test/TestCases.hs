@@ -9,7 +9,8 @@ miniPrograms =
     "./test/tests-cases/mini/fizzbuzz/",
     "./test/tests-cases/mini/hello/",
     "./test/tests-cases/mini/leap-year/",
-    "./test/tests-cases/mini/palindrome/"
+    "./test/tests-cases/mini/palindrome/",
+    "./test/tests-cases/mini/increment/"
   ]
 
 jmoragPrograms :: [String]

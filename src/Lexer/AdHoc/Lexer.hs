@@ -152,6 +152,16 @@ matchOrFallback char desired fallback pos = do
         else tokenise fallback pos
     _ -> tokenise fallback pos
 
+matchManyOrFallback :: [(Char, Lexeme)] -> Lexeme -> SourcePos -> Lexer Token
+matchManyOrFallback desired fallback pos = do
+  advance 
+  lookAhead >>= \case 
+    (Just lookChar) -> 
+      case [ lexeme | (char, lexeme) <- desired, char == lookChar ] of 
+        [] -> tokenise fallback pos 
+        lexeme : _ -> tokeniseAndAdvance lexeme pos 
+    _ -> tokenise fallback pos
+
 takeWhile :: (Char -> Bool) -> Lexer String
 takeWhile pred = do
   lookAhead >>= \case
@@ -314,7 +324,7 @@ scan = do
   off <- gets LexSt.offset
   lookAhead >>= \case
     (Just '#') -> include
-    (Just '-') -> matchOrFallback '>' Arrow Minus pos
+    (Just '-') -> matchManyOrFallback [('>', Arrow), ('-', Decrement)] Minus pos
     (Just '&') -> matchOrFallback '&' And Ampers pos
     (Just '|') -> matchOrFallback '|' Or Bar pos
     (Just '<') -> matchOrFallback '=' Leq Less pos
@@ -324,7 +334,7 @@ scan = do
     (Just ';') -> tokeniseAndAdvance Semi pos
     (Just ',') -> tokeniseAndAdvance Comma pos
     (Just '.') -> tokeniseAndAdvance Dot pos
-    (Just '+') -> tokeniseAndAdvance Plus pos
+    (Just '+') -> matchOrFallback '+' Increment Plus pos
     (Just '*') -> tokeniseAndAdvance Asterisk pos
     (Just '/') -> tokeniseAndAdvance Div pos
     (Just '%') -> tokeniseAndAdvance Mod pos

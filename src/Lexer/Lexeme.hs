@@ -54,6 +54,8 @@ data Lexeme
   | Sizeof
   | Eof
   | Include
+  | Increment
+  | Decrement
   | Error
   deriving (Show, Eq, Ord)
 
@@ -153,6 +155,8 @@ instance Pretty Lexeme where
     Sizeof -> pretty "sizeof"
     Include -> pretty "#include"
     Error -> pretty "error"
+    Increment -> pretty "++"
+    Decrement -> pretty "--"
     Eof -> emptyDoc
 
 display :: Lexeme -> String
@@ -204,6 +208,8 @@ display = \case
   Sizeof -> "sizeof"
   Include -> "#include"
   Error -> "error"
+  Increment -> "++"
+  Decrement -> "--"
   Eof -> "EOF"
 
 defaultLexemes :: [Lexeme]
@@ -255,5 +261,7 @@ defaultLexemes =
     Sizeof,
     Eof,
     Include,
+    Increment,
+    Decrement,
     Error
   ]

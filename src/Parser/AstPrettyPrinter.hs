@@ -60,6 +60,8 @@ instance Pretty Expr where
   pretty (Typecast typ expr _) = parens (pretty typ) <> pretty expr
   pretty (Call function actuals _) = pretty function <> (tupled . map pretty) actuals
   pretty (Assign left value _) = pretty left <+> pretty "=" <+> pretty value
+  pretty (Increment expr _) = pretty expr <> pretty "++"
+  pretty (Decrement expr _) = pretty expr <> pretty "--"
   pretty (ExprError _) = pretty "expr error"
 
 instance Pretty VarDecl where

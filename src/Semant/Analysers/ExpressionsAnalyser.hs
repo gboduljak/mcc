@@ -25,6 +25,8 @@ import Utils.Cond ((<||>), (|>), (||>))
 import Semant.Semant
 import Semant.Type
 import SymbolTable.SymbolTable (lookupVar)
+import qualified Lexer.Lexeme as L
+import Data.Char
 
 analyseMaybeExpr :: Maybe Expr -> Semant SExpr
 analyseMaybeExpr (Just expr) = analyseExpr expr
@@ -153,6 +155,98 @@ analyseExpr expr@Ast.ArrayAccess {} = do
     _ -> analyseArrayAccess expr baseExpr' indices'
   where
     (baseExpr, indexExprs) = flattenArrayAccess expr
+analyseExpr expr@(Ast.Increment targetExpr off)= do
+  targetExpr'@(targetTyp, targetExpr'') <- analyseExpr targetExpr
+  if not . isLValue $ targetExpr''
+    then do
+      registerError (IncrementError targetExpr L.Increment off)
+      return (Any, SEmptyExpr)
+    else do
+      (|>)
+        ( (targetTyp == Any, return (Any,SEmptyExpr ))
+            <||> (
+              isPointer targetTyp,
+              return (targetTyp, SAssign targetExpr' (
+                targetTyp,
+                SBinop targetExpr' Add (Scalar (PrimitiveType Int 0), SLitInt 1)
+                )
+              )
+            )
+            <||> (
+              isInt targetTyp,
+              return (targetTyp, SAssign targetExpr' (
+                targetTyp,
+                SBinop targetExpr' Add (Scalar (PrimitiveType Int 0), SLitInt 1)
+                )
+              )
+            )
+            <||> (
+              isChar targetTyp,
+              return (targetTyp, SAssign targetExpr' (
+                targetTyp,
+                SBinop targetExpr' Add (Scalar (PrimitiveType Char 0), SLitChar (chr 1))
+                )
+              )
+            )
+            <||> (
+              isDouble targetTyp,
+              return (targetTyp, SAssign targetExpr' (
+                targetTyp,
+                SBinop targetExpr' Add (Scalar (PrimitiveType Double 0), SLitDouble 1)
+                )
+              )
+            )
+            ||> (
+              registerError (IncrementError targetExpr L.Increment off)
+                >> return (Any, SEmptyExpr)
+            )
+        )
+analyseExpr expr@(Ast.Decrement targetExpr off)= do
+  targetExpr'@(targetTyp, targetExpr'') <- analyseExpr targetExpr
+  if not . isLValue $ targetExpr''
+    then do
+      registerError (IncrementError targetExpr L.Decrement off)
+      return (Any, SEmptyExpr)
+    else do
+      (|>)
+        ( (targetTyp == Any, return (Any,SEmptyExpr ))
+            <||> (
+              isPointer targetTyp,
+              return (targetTyp, SAssign targetExpr' (
+                targetTyp,
+                SBinop targetExpr' Sub (Scalar (PrimitiveType Int 0), SLitInt 1)
+                )
+              )
+            )
+            <||> (
+              isInt targetTyp,
+              return (targetTyp, SAssign targetExpr' (
+                targetTyp,
+                SBinop targetExpr' Sub (Scalar (PrimitiveType Int 0), SLitInt 1)
+                )
+              )
+            )
+            <||> (
+              isChar targetTyp,
+              return (targetTyp, SAssign targetExpr' (
+                targetTyp,
+                SBinop targetExpr' Sub (Scalar (PrimitiveType Char 0), SLitChar (chr 1))
+                )
+              )
+            )
+            <||> (
+              isDouble targetTyp,
+              return (targetTyp, SAssign targetExpr' (
+                targetTyp,
+                SBinop targetExpr' Sub (Scalar (PrimitiveType Double 0), SLitDouble 1)
+                )
+              )
+            )
+            ||> (
+              registerError (IncrementError targetExpr L.Decrement off)
+                >> return (Any, SEmptyExpr)
+            )
+        )
 analyseExpr expr@(Assign left right _) = do
   left'@(leftTyp, leftExpr) <- analyseExpr left
   right'@(rightTyp, _) <- analyseExpr right

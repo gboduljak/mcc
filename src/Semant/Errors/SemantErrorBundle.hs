@@ -71,6 +71,7 @@ toFancyError error@FieldAccessError {..} = makeFancyError error (getExprOff fiel
 toFancyError error@ArrayAccessError {..} = makeFancyError error (getExprOff targetArray)
 toFancyError error@(DeadCode _ _ loc) = makeFancyError error loc
 toFancyError error@(RecursiveStructDecl _ _ loc) = makeFancyError error loc
+toFancyError error@(IncrementError _ _ loc) = makeFancyError error loc
 
 makeFancyError :: SemantError -> Int -> ParseError TokenStream Void
 makeFancyError error offset =

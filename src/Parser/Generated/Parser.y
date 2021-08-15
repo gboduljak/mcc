@@ -56,6 +56,8 @@ import Prelude hiding (fst, snd)
   '^'    { L.Caret }
   '.'    { L.Dot }
   '->'   { L.Arrow }
+  '++'   { L.Increment }
+  '--'   { L.Decrement }
   sizeof { L.Sizeof }
   include { L.Include }
   eof { L.Eof }
@@ -72,7 +74,7 @@ import Prelude hiding (fst, snd)
 %left '*' '/' '%'
 %right CAST
 %left '!' NEG
-%left '.' '->' '[' 
+%left '.' '->' '++' '--' '[' 
 %nonassoc NOELSE
 %nonassoc else
 %%
@@ -155,8 +157,9 @@ expr:
   | sizeof '(' expr ')'    { P.Sizeof (Right $3) 0 }
   | '(' type ')' expr %prec CAST { P.Typecast $2 $4 0}
   | ident '(' actuals ')'  { P.Call $1 (reverse $3) 0 }
-  | ident '(' ')'          { P.Call $1 [] 0}
-
+  | ident '(' ')'          { P.Call $1 [] 0 }
+  | expr '++'              { P.Increment $1 0 }
+  | expr '--'              { P.Decrement $1 0 }
 opt_expr:  {- empty -} { Nothing }
         | expr { Just $1 }
 

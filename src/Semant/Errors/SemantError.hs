@@ -17,6 +17,7 @@ import Parser.Ast
 import Parser.AstPrettyPrinter
 import Semant.Ast.SemantAst
 import Semant.Type (Type)
+import Lexer.Lexeme hiding (Void)
 
 data SemantError
   = IllegalBinding
@@ -85,6 +86,7 @@ data SemantError
       { lhs :: Expr,
         rhs :: Expr
       }
+  | IncrementError { lhs :: Expr,  op :: Lexeme, off :: Int }
   | FieldAccessError
       { targetStruct :: String,
         field :: Expr,
@@ -116,7 +118,7 @@ instance Pretty SemantError where
   pretty =
     \case
       EmptyProgram -> pretty "There is nothing to compile. :)"
-      RecursiveStructDecl structDecl@(Struct name _ _) decls _-> 
+      RecursiveStructDecl structDecl@(Parser.Ast.Struct name _ _) decls _-> 
         pretty "Struct definition error in: " <> hardline
           <+> indent indentAmount (pretty structDecl)
           <> hardline 
@@ -279,6 +281,8 @@ instance Pretty SemantError where
           <+> pretty "with"
           <+> pretty field
           <> dot
+      IncrementError expr op off ->
+        pretty "Cannot perform" <+> pretty op <+> pretty "on" <+> pretty expr <> dot
       ReturnTypeMismatchError {..} ->
         pretty "Invalid return type"
           <+> pretty actualRetTyp

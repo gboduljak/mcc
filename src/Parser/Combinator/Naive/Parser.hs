@@ -304,6 +304,8 @@ callLevelExpr =
     `chainl1'` ( fieldAccess
                    <|> arrayAccess
                    <|> indirect
+                   <|> increment
+                   <|> decrement
                )
 
 baseExprOrFuncCall :: Parser Ast.Expr
@@ -328,6 +330,16 @@ indirect = do
   where
     field (Ast.Ident x _) = x
     field _ = undefined
+
+increment :: Parser (Ast.Expr -> Ast.Expr)
+increment = do 
+  expect L.Increment
+  return (\left -> Ast.Increment left (getExprOff left))
+
+decrement :: Parser (Ast.Expr -> Ast.Expr)
+decrement = do 
+  expect L.Decrement
+  return (\left -> Ast.Decrement left (getExprOff left))
 
 arrayAccess :: Parser (Ast.Expr -> Ast.Expr)
 arrayAccess = do

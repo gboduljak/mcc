@@ -373,7 +373,9 @@ callLevelExpr =
   baseExprOrFuncCall
     `lookchainl1'` [ (L.is Dot, fieldAccess),
                      (L.is LBrack, arrayAccess),
-                     (L.is Arrow, indirect)
+                     (L.is Arrow, indirect),
+                     (L.is Increment, increment),
+                     (L.is Decrement, decrement)
                    ]
 
 baseExprOrFuncCall :: Parser Ast.Expr
@@ -392,6 +394,16 @@ funcCall func off = do
   actuals <- actuals
   expect RParen
   return (Ast.Call func actuals off)
+
+increment :: Parser (Ast.Expr -> Ast.Expr)
+increment = do 
+  expect L.Increment
+  return (\left -> Ast.Increment left (getExprOff left))
+
+decrement :: Parser (Ast.Expr -> Ast.Expr)
+decrement = do 
+  expect L.Decrement
+  return (\left -> Ast.Decrement left (getExprOff left))
 
 indirect :: Parser (Ast.Expr -> Ast.Expr)
 indirect = do

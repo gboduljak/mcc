@@ -118,6 +118,8 @@ sizeof    ::= Sizeof LParen type RParen
 call_level_expr ::= call_level_expr arrayaccess
                   | call_level_expr fieldaccess
                   | call_level_expr indirect
+                  | call_level_expr Increment
+                  | call_level_expr Decrement
                   | base_expr_or_call
 
 base_expr_or_call ::= base_expr

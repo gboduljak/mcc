@@ -648,6 +648,20 @@
     {
         "left": "call_level_expr",
         "right": [
+            "call_level_expr",
+            "Increment"
+        ]
+    },
+    {
+        "left": "call_level_expr",
+        "right": [
+            "call_level_expr",
+            "Decrement"
+        ]
+    },
+    {
+        "left": "call_level_expr",
+        "right": [
             "base_expr"
         ]
     },

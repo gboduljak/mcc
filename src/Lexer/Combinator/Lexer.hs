@@ -161,6 +161,12 @@ dot = symbol "." >> return Dot
 arrow :: Lexer Lexeme
 arrow = symbol "->" >> return Arrow
 
+increment :: Lexer Lexeme 
+increment = do symbol "+"; do symbol "+"; return Increment;
+
+decrement :: Lexer Lexeme 
+decrement = do symbol "-"; do symbol "-"; return Decrement;
+
 comma :: Lexer Lexeme
 comma = symbol "," >> return Comma
 
@@ -278,6 +284,8 @@ operator =
     <|> try geq
     <|> try equal
     <|> try notEqual
+    <|> try increment 
+    <|> try decrement
     <|> semi
     <|> assign
     <|> comma

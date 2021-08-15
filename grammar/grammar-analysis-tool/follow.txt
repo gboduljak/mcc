@@ -475,6 +475,8 @@
         "LBrack",
         "Dot",
         "Arrow",
+        "Increment",
+        "Decrement",
         "RBrack",
         "Comma"
     ],
@@ -502,6 +504,8 @@
         "LBrack",
         "Dot",
         "Arrow",
+        "Increment",
+        "Decrement",
         "RBrack",
         "Comma"
     ],
@@ -529,6 +533,8 @@
         "LBrack",
         "Dot",
         "Arrow",
+        "Increment",
+        "Decrement",
         "RBrack",
         "Comma"
     ],
@@ -556,6 +562,8 @@
         "LBrack",
         "Dot",
         "Arrow",
+        "Increment",
+        "Decrement",
         "RBrack",
         "Comma"
     ],
@@ -583,6 +591,8 @@
         "LBrack",
         "Dot",
         "Arrow",
+        "Increment",
+        "Decrement",
         "RBrack",
         "Comma"
     ],
@@ -610,6 +620,8 @@
         "LBrack",
         "Dot",
         "Arrow",
+        "Increment",
+        "Decrement",
         "RBrack",
         "Comma"
     ],

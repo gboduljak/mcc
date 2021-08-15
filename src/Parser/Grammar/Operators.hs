@@ -48,6 +48,8 @@ precedence L.Mod = 110
 precedence L.Dot = callPrecedence
 precedence L.LBrack = callPrecedence
 precedence L.Arrow = callPrecedence
+precedence L.Increment = callPrecedence
+precedence L.Decrement = callPrecedence
 precedence _ = 0
 
 typecastPrecedence :: Int

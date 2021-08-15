@@ -77,6 +77,8 @@ data Expr
   | Typecast Type Expr Int
   | Call String [Expr] Int
   | Assign Expr Expr Int
+  | Increment Expr Int
+  | Decrement Expr Int
   | ExprError Int
   deriving (Show, Eq)
 
@@ -150,6 +152,8 @@ getExprOff (Typecast _ _ off) = off
 getExprOff (Call _ _ off) = off
 getExprOff (Assign _ _ off) = off
 getExprOff (ExprError off) = off
+getExprOff (Increment _ off) = off 
+getExprOff (Decrement _ off) = off
 
 getBlockOffset :: Block -> Int
 getBlockOffset (Block _ off) = off

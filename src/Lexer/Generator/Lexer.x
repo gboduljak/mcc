@@ -23,7 +23,9 @@ tokens :-
  \;         { const Semi     }
  \,         { const Comma    }
  \+         { const Plus     }
+ \+\+       { const Increment }
  \-         { const Minus    }
+ \-\-       { const Decrement }
  \*         { const Asterisk }
  \/         { const Div      }
  \=         { const Assign   }

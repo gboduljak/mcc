@@ -743,56 +743,60 @@
         "LParen"
     ],
     "90": [
-        "Ident"
-    ],
-    "91": [
-        "Ident"
-    ],
-    "92": [
-        "LBrack"
-    ],
-    "93": [
-        "Dot"
-    ],
-    "94": [
-        "Arrow"
-    ],
-    "95": [
-        "LitInt"
-    ],
-    "96": [
-        "LitString"
-    ],
-    "97": [
-        "LitChar"
-    ],
-    "98": [
-        "LitDouble"
-    ],
-    "99": [
-        "LitNull"
-    ],
-    "100": [
-        "Ident"
-    ],
-    "101": [
-        "LParen"
-    ],
-    "102": [
-        "LParen",
-        "Minus",
-        "Not",
-        "Asterisk",
-        "Ampers",
-        "Sizeof",
         "LitInt",
         "LitString",
         "LitChar",
         "LitDouble",
         "LitNull",
+        "Ident",
+        "LParen"
+    ],
+    "91": [
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident",
+        "LParen"
+    ],
+    "92": [
+        "Ident"
+    ],
+    "93": [
+        "Ident"
+    ],
+    "94": [
+        "LBrack"
+    ],
+    "95": [
+        "Dot"
+    ],
+    "96": [
+        "Arrow"
+    ],
+    "97": [
+        "LitInt"
+    ],
+    "98": [
+        "LitString"
+    ],
+    "99": [
+        "LitChar"
+    ],
+    "100": [
+        "LitDouble"
+    ],
+    "101": [
+        "LitNull"
+    ],
+    "102": [
         "Ident"
     ],
     "103": [
+        "LParen"
+    ],
+    "104": [
         "LParen",
         "Minus",
         "Not",
@@ -806,18 +810,32 @@
         "LitNull",
         "Ident"
     ],
-    "104": [
+    "105": [
+        "LParen",
+        "Minus",
+        "Not",
+        "Asterisk",
+        "Ampers",
+        "Sizeof",
+        "LitInt",
+        "LitString",
+        "LitChar",
+        "LitDouble",
+        "LitNull",
+        "Ident"
+    ],
+    "106": [
         "LBrack"
     ],
-    "105": [
+    "107": [
         "Semi",
         "LBrack",
         "RParen"
     ],
-    "106": [
+    "108": [
         "Asterisk"
     ],
-    "107": [
+    "109": [
         "Ident",
         "LBrack",
         "RParen"

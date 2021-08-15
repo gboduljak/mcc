@@ -309,6 +309,8 @@ led lexeme = case lexeme of
   L.LBrack -> arrayAccess
   L.Dot -> fieldAccess
   L.Arrow -> indirect
+  L.Increment -> increment
+  L.Decrement -> decrement
   _ -> do
     expect isInfix
     const . Ast.ExprError <$> getOffset
@@ -390,6 +392,18 @@ indirect = do
   where
     fieldName (L.Ident name) = name
     fieldName _ = undefined
+
+increment :: Parser (Ast.Expr -> Ast.Expr)
+increment = do 
+  off <- getOffset
+  expect (L.is L.Increment)
+  return (\exp -> Ast.Increment exp (off - 1))
+
+decrement :: Parser (Ast.Expr -> Ast.Expr)
+decrement = do 
+  off <- getOffset
+  expect (L.is L.Decrement)
+  return (\exp -> Ast.Decrement exp (off - 1))
 
 type' :: Parser Ast.Type
 type' =
