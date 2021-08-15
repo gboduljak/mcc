@@ -4,7 +4,7 @@
 
 **mcc** is a toy compiler compiling a (relatively) large subset of **C** language to **LLVM IR**. 
 
-**mcc** is written entirely in Haskell and it started as a hobby project, done by [@me](https://github.com/gboduljak) and [@its-sami](https://github.com/its-sami). Most of this compiler has been **pair programmed** during our summer break.
+**mcc** is written entirely in Haskell and it started as a hobby project, done by [@me](https://github.com/gboduljak) and [@its-sami](https://github.com/its-sami).
 
 There are a few differences between the subset of **C** in specification of **C** language and the language being compiled by **mcc**. **mcc** compiles the subset which we call **mini C**.
 
@@ -111,8 +111,8 @@ The algorithm used is a classic DFS topological ordering, described in [CLRS](ht
 
 ### [Syntax Analysis](src/Parser)
 
-Prior to the syntax analysis, we have manually rewritten the grammar to remove ambiguity by stratifying expression productions
-into precedence levels. We have also factored the grammar where it improved readability. You can find grammars [here](./grammar).
+Prior to the syntax analysis, we manually rewrote the grammar to remove ambiguity. This is done by stratifying expression productions
+into precedence levels. We also factored the grammar where it improved readability. You can find grammars [here](./grammar).
 
 From theoretical standpoint, every parser we implemented is a predictive LL(K) recursive descent.
 
@@ -407,13 +407,13 @@ The following sequence of commands should setup the project:
 
 To start the compiler, run ```stack run``` in the root folder on some program you want to compile. Those are usually in [tests-cases](./test/tests-cases/) folder. Using ```stack install```, you can install **mcc** in your path.
 
-**mcc** supports some options. By default, **mcc** creates a builder folder, outputs dependency graph, lexemes, abstract syntax trees, semantic analysis trees and compiled LLVM IR.
+**mcc** supports some options. By default, **mcc** creates a build folder, outputs dependency graph, tokens, abstract syntax trees, semantic analysis trees and compiled LLVM IR.
 
 ![](./readme-resources/mcc.png)
 
 To run tests, execute ```stack test``` in the root folder.
 
-## Appendix - Syntax of mini C
+## Appendix - Syntax of mini C (see [grammars folder](./grammar))
 
 ```
 program ::= (include)* (construct)* EOF
